@@ -136,49 +136,60 @@ const Dashboard = () => {
               </div>
 
               {/* Quản lý khác */}
-              <div className="mt-6 pb-12">
-                <p className="text-[14px] font-semibold px-4 text-gray-400 uppercase tracking-wider mb-2">
-                  Quản lý khác
-                </p>
-                <ul className="space-y-1">
-                  <li>
-                    <Link
-                      to="/admin/contacts"
-                      className="flex items-center text-[15px] px-4 py-2.5 rounded-md hover:bg-gray-700 font-medium"
-                    >
-                      <i className="fas fa-envelope mr-3 text-indigo-400"></i>
-                      Liên hệ
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/admin/customers"
-                      className="flex items-center text-[15px] px-4 py-2.5 rounded-md hover:bg-gray-700 font-medium"
-                    >
-                      <i className="fas fa-users mr-3 text-indigo-400"></i>
-                      Khách hàng
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/admin/orders"
-                      className="flex items-center text-[15px] px-4 py-2.5 rounded-md hover:bg-gray-700 font-medium"
-                    >
-                      <i className="fas fa-shopping-cart mr-3 text-indigo-400"></i>
-                      Đơn hàng
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/admin/users"
-                      className="flex items-center text-[15px] px-4 py-2.5 rounded-md hover:bg-gray-700 font-medium"
-                    >
-                      <i className="fas fa-user-shield mr-3 text-indigo-400"></i>
-                      Thành viên
-                    </Link>
-                  </li>
-                </ul>
-              </div>
+          <div className="mt-6 pb-12">
+            <p className="text-[14px] font-semibold px-4 text-gray-400 uppercase tracking-wider mb-2">
+              Quản lý khác
+            </p>
+            <ul className="space-y-1">
+              {/* Nhân viên */}
+              <li>
+                <Link
+                  to="/admin/employees"
+                  className="flex items-center text-[15px] px-4 py-2.5 rounded-md hover:bg-gray-700 font-medium"
+                >
+                  <i className="fas fa-id-badge mr-3 text-indigo-400"></i>
+                  Nhân viên
+                </Link>
+              </li>
+
+              <li>
+                <Link
+                  to="/admin/contacts"
+                  className="flex items-center text-[15px] px-4 py-2.5 rounded-md hover:bg-gray-700 font-medium"
+                >
+                  <i className="fas fa-envelope mr-3 text-indigo-400"></i>
+                  Liên hệ
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/admin/customers"
+                  className="flex items-center text-[15px] px-4 py-2.5 rounded-md hover:bg-gray-700 font-medium"
+                >
+                  <i className="fas fa-users mr-3 text-indigo-400"></i>
+                  Khách hàng
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/admin/orders"
+                  className="flex items-center text-[15px] px-4 py-2.5 rounded-md hover:bg-gray-700 font-medium"
+                >
+                  <i className="fas fa-shopping-cart mr-3 text-indigo-400"></i>
+                  Đơn hàng
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/admin/users"
+                  className="flex items-center text-[15px] px-4 py-2.5 rounded-md hover:bg-gray-700 font-medium"
+                >
+                  <i className="fas fa-user-shield mr-3 text-indigo-400"></i>
+                  Thành viên
+                </Link>
+              </li>
+            </ul>
+            </div>
             </nav>
           </aside>
 

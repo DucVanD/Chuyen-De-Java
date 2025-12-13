@@ -1,46 +1,52 @@
 // dashboard
 import Dashboard from "../pages/admin/Dashboard";
+
 // category
 import ListCat from "../pages/admin/Category/ListCat";
 import DelCat from "../pages/admin/Category/DelCat";
 import AddCat from "../pages/admin/Category/AddCat";
 import EditCat from "../pages/admin/Category/EditCat";
 import TrashCat from "../pages/admin/Category/TrashCat";
+
 // product
 import ListProduct from "../pages/admin/Product/ListProduct";
 import DelProduct from "../pages/admin/Product/DelProduct";
 import EditProduct from "../pages/admin/Product/Editproduct";
 import AddProduct from "../pages/admin/Product/AddProduct";
 import TrashProduct from "../pages/admin/Product/TrashProduct";
+
 // post
 import ListPost from "../pages/admin/post/ListPost";
 import EditPost from "../pages/admin/post/EditPost";
 import AddPost from "../pages/admin/post/AddPost";
+
 // topic
 import ListTopic from "../pages/admin/Topic/ListTopic";
 import EditTopic from "../pages/admin/Topic/EditTopic";
 import AddTopic from "../pages/admin/Topic/Addtopic";
-// brand
 
+// brand
 import ListBrand from "../pages/admin/Brand/listBrand";
+
 // order
 import listOrder from "../pages/admin/Order/listOrder";
 import EditOrder from "../pages/admin/Order/EditOrder";
 import OrderDetail from "../pages/admin/Order/detailOrder";
+
 // user
 import ListUser from "../pages/admin/UserAdmin/ListUser";
 import UserDetail from "../pages/admin/UserAdmin/UserDetail";
-//
+
+// inventory
 import Inventory from "../pages/admin/Inventory/ListInventory";
 import FormNhapKho from "../pages/admin/Inventory/FormNhapKho";
 import FormXuatKho from "../pages/admin/Inventory/FormXuatKho";
 import FormDieuChinh from "../pages/admin/Inventory/FormDieuChinh";
 
+// employee 
+import EmployeeManagement from "../pages/admin/EmployeeManagement/EmployeeManagement";
 
 // định nghĩa các route cho trang admin
-
-// import AdminLogin from "../pages/admin/AdminLogin";
-
 const AdminRoute = [
   { path: "dashboard", component: Dashboard },
   { path: "", component: Dashboard },
@@ -79,6 +85,9 @@ const AdminRoute = [
   // user
   { path: "users/:page?", component: ListUser },
   { path: "userDetail/:id", component: UserDetail },
+
+  // employee 
+  { path: "employees", component: EmployeeManagement },
 
   // inventory
   { path: "inventory", component: Inventory },
