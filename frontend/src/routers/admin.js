@@ -1,61 +1,53 @@
-// ================= DASHBOARD =================
+// dashboard
 import Dashboard from "../pages/admin/Dashboard";
 
-// ================= CATEGORY =================
+// category
 import ListCat from "../pages/admin/Category/ListCat";
 import DelCat from "../pages/admin/Category/DelCat";
 import AddCat from "../pages/admin/Category/AddCat";
 import EditCat from "../pages/admin/Category/EditCat";
 import TrashCat from "../pages/admin/Category/TrashCat";
 
-// ================= PRODUCT =================
+// product
 import ListProduct from "../pages/admin/Product/ListProduct";
 import DelProduct from "../pages/admin/Product/DelProduct";
 import EditProduct from "../pages/admin/Product/Editproduct";
 import AddProduct from "../pages/admin/Product/AddProduct";
 import TrashProduct from "../pages/admin/Product/TrashProduct";
 
-// ================= POST =================
+// post
 import ListPost from "../pages/admin/post/ListPost";
 import EditPost from "../pages/admin/post/EditPost";
 import AddPost from "../pages/admin/post/AddPost";
 
-// ================= TOPIC =================
+// topic
 import ListTopic from "../pages/admin/Topic/ListTopic";
 import EditTopic from "../pages/admin/Topic/EditTopic";
 import AddTopic from "../pages/admin/Topic/Addtopic";
 
-// ================= BRAND =================
+// brand
 import ListBrand from "../pages/admin/Brand/listBrand";
 
-// ================= ORDER =================
-import ListOrder from "../pages/admin/Order/listOrder";
+// order
+import listOrder from "../pages/admin/Order/listOrder";
 import EditOrder from "../pages/admin/Order/EditOrder";
 import OrderDetail from "../pages/admin/Order/detailOrder";
 
-// ================= USER =================
+// user
 import ListUser from "../pages/admin/UserAdmin/ListUser";
 import UserDetail from "../pages/admin/UserAdmin/UserDetail";
 
-// ================= INVENTORY =================
+// inventory
 import Inventory from "../pages/admin/Inventory/ListInventory";
 import FormNhapKho from "../pages/admin/Inventory/FormNhapKho";
 import FormXuatKho from "../pages/admin/Inventory/FormXuatKho";
 import FormDieuChinh from "../pages/admin/Inventory/FormDieuChinh";
 
-// ================= EMPLOYEE =================
+// employee 
 import EmployeeManagement from "../pages/admin/EmployeeManagement/EmployeeManagement";
 
-// ================= VOUCHER =================
-import VoucherManagement from "../pages/admin/Voucher/VoucherManagement";
-
-// ================= CONTACT ✅ =================
-import ContactList from "../pages/admin/Contact/ContactList";
-import ContactDetail from "../pages/admin/Contact/ContactDetail";
-
-// ================= ROUTES =================
+// định nghĩa các route cho trang admin
 const AdminRoute = [
-  // dashboard
   { path: "dashboard", component: Dashboard },
   { path: "", component: Dashboard },
 
@@ -86,7 +78,7 @@ const AdminRoute = [
   { path: "brands/:page?", component: ListBrand },
 
   // order
-  { path: "orders/:page?", component: ListOrder },
+  { path: "orders/:page?", component: listOrder },
   { path: "editOrder/:id", component: EditOrder },
   { path: "orderDetail/:id", component: OrderDetail },
 
@@ -94,15 +86,8 @@ const AdminRoute = [
   { path: "users/:page?", component: ListUser },
   { path: "userDetail/:id", component: UserDetail },
 
-  // employee
+  // employee 
   { path: "employees", component: EmployeeManagement },
-
-  // voucher
-  { path: "vouchers", component: VoucherManagement },
-
-  // contact ✅
-  { path: "contacts", component: ContactList },
-  { path: "contacts/:id", component: ContactDetail },
 
   // inventory
   { path: "inventory", component: Inventory },
