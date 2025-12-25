@@ -1,33 +1,31 @@
-import { Link, useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import apiCategory from "../../../api/apiCategory";
+import apiCategory from "../../../api/apiCategory"; // Import file vừa sửa
 import { imageURL } from "../../../api/config";
-import {
-  FaPlus,
-  FaTrash,
-  FaToggleOn,
-  FaToggleOff,
-  FaEye,
-  FaEdit,
-} from "react-icons/fa";
+import { FaPlus, FaTrash, FaEdit, FaEye } from "react-icons/fa"; // Bỏ Toggle tạm nếu chưa làm API toggle
 
 const ListCat = () => {
-  const { page } = useParams(); // Lấy page từ URL
+  const { page } = useParams();
   const navigate = useNavigate();
 
   const [categories, setCategories] = useState([]);
-  const [currentPage, setCurrentPage] = useState(Number(page) || 1);
-  const [lastPage, setLastPage] = useState(1);
+
+  // Tạm thời bỏ phân trang backend vì Spring Boot đang trả về List<All>
+  // const [currentPage, setCurrentPage] = useState(Number(page) || 1);
+  // const [lastPage, setLastPage] = useState(1);
 
   // ✅ Hàm lấy danh sách danh mục
-  const fetchCategories = async (page = 1) => {
+  const fetchCategories = async () => {
     try {
-      const res = await apiCategory.getAllPage(page);
-      if (res.status) {
-        setCategories(res.data.data);
-        setCurrentPage(res.data.current_page);
-        setLastPage(res.data.last_page);
+      const data = await apiCategory.getAll(); // data lúc này là mảng []
+      console.log("Danh mục lấy về:", data);
+      // Kiểm tra xem data có phải là mảng không
+      if (Array.isArray(data)) {
+        setCategories(data);
+      } else {
+        // Phòng trường hợp bạn bọc trong ResponseEntity
+        setCategories(data.data || []);
       }
     } catch (err) {
       console.error("Lỗi khi lấy danh mục:", err);
@@ -36,48 +34,29 @@ const ListCat = () => {
   };
 
   useEffect(() => {
-    fetchCategories(Number(page) || 1);
-  }, [page]);
-
-  // ✅ Chuyển trang
-  const goToPage = (pageNumber) => {
-    if (pageNumber >= 1 && pageNumber <= lastPage) {
-      navigate(`/admin/categories/${pageNumber}`);
-    }
-  };
-
-  // ✅ Toggle trạng thái danh mục
-  const handleToggleStatus = async (id) => {
-    try {
-      const res = await apiCategory.toggleStatus(id);
-      if (res.status) {
-        toast.success(res.message);
-        fetchCategories(currentPage);
-      } else {
-        toast.error(res.message);
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("Không thể cập nhật trạng thái danh mục!");
-    }
-  };
+    fetchCategories();
+  }, []);
 
   // ✅ Xóa danh mục
   const handleDelete = async (id) => {
     if (!window.confirm("Bạn có chắc muốn xóa danh mục này không?")) return;
     try {
-      const res = await apiCategory.delete(id);
-      if (res.status) {
-        toast.success(res.message);
-        fetchCategories(currentPage);
-      } else {
-        toast.error(res.message); // ví dụ: danh mục đang có sản phẩm
-      }
+      await apiCategory.delete(id);
+      toast.success("Xóa thành công!");
+
+      // Load lại danh sách
+      fetchCategories();
     } catch (err) {
       console.error(err);
-      toast.error(err.response?.data?.message || "Xóa danh mục thất bại!");
+      toast.error("Xóa thất bại!");
     }
   };
+
+
+  const categoryMap = Object.fromEntries(
+    categories.map(cat => [cat.id, cat.name])
+  );
+
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -93,12 +72,6 @@ const ListCat = () => {
           >
             <FaPlus className="mr-2" /> Thêm mới
           </Link>
-          <Link
-            to="/admin/trashCat"
-            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded flex items-center transition duration-200"
-          >
-            <FaTrash className="mr-2" /> Thùng rác
-          </Link>
         </div>
       </div>
 
@@ -108,24 +81,11 @@ const ListCat = () => {
           <table className="w-full border-collapse text-center">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ID
-                </th>
-                <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Hình ảnh
-                </th>
-                <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Tên danh mục
-                </th>
-                <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Thứ tự
-                </th>
-                <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Trạng thái
-                </th>
-                <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Chức năng
-                </th>
+                <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Hình ảnh</th>
+                <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Tên danh mục</th>
+                <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Thứ tự</th>
+                <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Chức năng</th>
               </tr>
             </thead>
 
@@ -133,124 +93,56 @@ const ListCat = () => {
               {categories.length > 0 ? (
                 categories.map((category) => (
                   <tr key={category.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm text-gray-900">
-                      {category.id}
-                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{category.id}</td>
+
                     <td className="px-4 py-3 flex justify-center">
+                      {/* Cần đảm bảo category.image trả về đúng tên file */}
                       <img
                         className="h-20 w-32 object-cover border border-gray-200 rounded-md"
-                        src={`${imageURL}/category/${category.image}?v=${
-                          category.updated_at || Date.now()
-                        }`}
+                        src={category.image ? `${imageURL}/category/${category.image}` : 'https://placehold.co/100'}
                         alt={category.name}
                       />
                     </td>
+
+                    <td className="px-4 py-3 text-sm text-gray-800">{category.name}</td>
+
+
                     <td className="px-4 py-3 text-sm text-gray-800">
-                      {category.name}
+                      {category.parentId
+                        ? `Con của ${categoryMap[category.parentId] || "Danh mục cha"}`
+                        : "Danh mục cha"}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-800">
-                      {category.sort_order}
-                    </td>
+
+
+
                     <td className="px-4 py-3">
-                      {category.status ? (
-                        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                          Hoạt động
-                        </span>
-                      ) : (
-                        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-200 text-gray-700">
-                          Ẩn
-                        </span>
-                      )}
-                    </td>
-                    <td>
                       <div className="flex items-center justify-center space-x-3">
-                        {/* Bật/Tắt trạng thái */}
                         <Link
-                          to="#"
-                          onClick={() => handleToggleStatus(category.id)}
-                          className="text-green-500 hover:text-green-700"
-                        >
-                          {category.status ? (
-                            <FaToggleOn className="text-xl" />
-                          ) : (
-                            <FaToggleOff className="text-xl" />
-                          )}
-                        </Link>
-
-                        {/* Xem chi tiết */}
-                        <Link
-                          to="#"
-                          className="text-indigo-500 hover:text-indigo-700"
-                        >
-                          <FaEye className="text-lg" />
-                        </Link>
-
-                        {/* Sửa danh mục */}
-                        <Link
-                          onClick={() =>
-                            localStorage.setItem(
-                              "currentCategoryPage",
-                              currentPage
-                            )
-                          }
                           to={`/admin/editcat/${category.id}`}
                           className="text-blue-500 hover:text-blue-700"
                         >
                           <FaEdit className="text-lg" />
                         </Link>
 
-                        {/* Xóa danh mục */}
-                        <Link
-                          to="#"
+                        <button
                           onClick={() => handleDelete(category.id)}
                           className="text-red-500 hover:text-red-700"
                         >
                           <FaTrash className="text-lg" />
-                        </Link>
+                        </button>
                       </div>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" className="text-center py-6 text-gray-500">
+                  <td colSpan="5" className="text-center py-6 text-gray-500">
                     Không có danh mục nào.
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
-
-          {/* Pagination */}
-          <div className="flex justify-center mt-4 space-x-2">
-            <button
-              onClick={() => goToPage(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
-            >
-              Trước
-            </button>
-            {Array.from({ length: lastPage }, (_, i) => (
-              <button
-                key={i}
-                onClick={() => goToPage(i + 1)}
-                className={`px-3 py-1 rounded ${
-                  currentPage === i + 1
-                    ? "bg-indigo-600 text-white"
-                    : "bg-gray-200 hover:bg-gray-300"
-                }`}
-              >
-                {i + 1}
-              </button>
-            ))}
-            <button
-              onClick={() => goToPage(currentPage + 1)}
-              disabled={currentPage === lastPage}
-              className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
-            >
-              Sau
-            </button>
-          </div>
         </div>
       </div>
     </div>
