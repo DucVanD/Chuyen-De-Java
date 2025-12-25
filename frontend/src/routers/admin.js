@@ -52,7 +52,9 @@ const AdminRoute = [
   { path: "", component: Dashboard },
 
   // category
-  { path: "categories/:page?", component: ListCat },
+  // { path: "categories/:page?", component: ListCat },
+    { path: "categories", component: ListCat },
+
   { path: "addCat", component: AddCat },
   { path: "delCat", component: DelCat },
   { path: "editCat/:id", component: EditCat },

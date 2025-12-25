@@ -1,83 +1,46 @@
-import axios from "axios";
 import axiosInstance from "./axios";
 
 const apiCategory = {
+  // ✅ 1. Lấy tất cả (Spring Boot trả về mảng [])
   getAll: async () => {
-    const res = await axiosInstance.get("/category/all");
-    return res;
+    const res = await axiosInstance.get("/categories");
+    return res.data; 
   },
 
-  // Lấy sản phẩm phân trang (kèm page)
+  // ⚠️ Lưu ý: Backend hiện tại của bạn chưa viết phân trang (Pagination), 
+  // nên tạm thời hàm này sẽ lấy tất cả dữ liệu luôn.
   getAllPage: async (page = 1) => {
-    const res = await axiosInstance.get(`/category?page=${page}`);
-    return res.data;
-  },
-
-  // Lấy danh mục cha (parent_id = 0)
-  getParents: async () => {
-    const res = await axiosInstance.get(`/category/parents`);
-    return res.data;
-  },
-
-  //
-  getParentsWithChildren: async () => {
-    const res = await axiosInstance.get("/category/parentsWithChildren");
-    return res.data;
-  },
-
-
-
-  getBySlug: async (slug) => {
-    const res = await axiosInstance.get(`/category/slug/${slug}`);
-    return res.data;
-  },
-  //
-  Addcategory: async (FormData) => {
-    axiosInstance.enableUploadFile(); // chuyển sang multipart/form-data
-    const res = await axiosInstance.post("/category", FormData);
-    axiosInstance.enableJson();
-    return res.data;
+    const res = await axiosInstance.get(`/categories`); 
+    return res.data; 
   },
 
   getCategoryById: async (id) => {
-    const res = await axiosInstance.get(`/category/${id}`);
-    return res;
-  },
-
-  editCategory: async (id, formData) => {
-    axiosInstance.enableUploadFile(); // BẮT BUỘC để gửi file
-    const res = await axiosInstance.post(
-      `/category/${id}?_method=PUT`,
-      formData
-    );
-    axiosInstance.enableJson(); // đổi lại JSON cho các request sau
+    const res = await axiosInstance.get(`/categories/${id}`);
     return res.data;
   },
 
+  // ✅ 2. Thêm mới
+  create: async (formData) => {
+    // Nếu có upload file thì giữ enableUploadFile, không thì bỏ
+    // axiosInstance.enableUploadFile(); 
+    const res = await axiosInstance.post("/categories", formData);
+    // axiosInstance.enableJson();
+    return res.data;
+  },
+
+  // ✅ 3. Cập nhật (Dùng method PUT chuẩn của Spring)
+  update: async (id, formData) => {
+    // axiosInstance.enableUploadFile();
+    const res = await axiosInstance.put(`/categories/${id}`, formData);
+    // axiosInstance.enableJson();
+    return res.data;
+  },
+
+  // ✅ 4. Xóa
   delete: async (id) => {
-    const res = await axiosInstance.get(`/category/delete/${id}`); // dùng GET như route
-    return res.data;
-  },
-
-  restore: async (id) => {
-    const res = await axiosInstance.get(`/category/restore/${id}`);
-    return res.data;
-  },
-
-  // Lấy danh sách Trash
-  getTrash: async (page = 1) => {
-    const res = await axiosInstance.get(`/category/trash?page=${page}`);
-    return res.data; // nên trả { status: true, data: { data: [...], current_page: 1, last_page: 3 } }
-  },
-
-  // Xoá vĩnh viễn
-  forceDelete: async (id) => {
-    const res = await axiosInstance.delete(`/category/${id}`);
-    return res.data;
-  },
-
-
-
+    const res = await axiosInstance.delete(`/categories/${id}`);
+    return res; // Trả về nguyên object để check status 204
+  }
 };
 
 export default apiCategory;
