@@ -37,16 +37,26 @@ public class CategoryServiceImpl implements CategoryService {
         return CategoryMapper.todto(category);
     }
 
-    @Override
-    public CategoryDto create(CategoryDto dto) {
-        Objects.requireNonNull(dto, "CategoryDto must not be null");
+   @Override
+public CategoryDto create(CategoryDto dto) {
+    Objects.requireNonNull(dto, "CategoryDto must not be null");
 
-        // ✅ Bọc Objects.requireNonNull để đảm bảo kết quả từ Mapper không null trước
-        // khi lưu
-        Category category = Objects.requireNonNull(CategoryMapper.toEntity(dto), "Mapped Entity must not be null");
+    Category category = CategoryMapper.toEntity(dto);
 
-        return CategoryMapper.todto(categoryRepository.save(category));
+    // ✅ XỬ LÝ PARENT ID (QUAN TRỌNG)
+    if (dto.getParentId() != null) {
+
+        Category parent = categoryRepository
+                .findById(dto.getParentId())
+                .orElseThrow(() -> new RuntimeException("Parent category not found"));
+
+        category.setParent(parent);
     }
+
+    Category saved = categoryRepository.save(category);
+    return CategoryMapper.todto(saved);
+}
+
 
     @Override
     public CategoryDto update(Integer id, CategoryDto dto) {
