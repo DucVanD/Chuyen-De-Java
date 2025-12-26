@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
   FaEye,
@@ -9,261 +9,163 @@ import {
   FaToggleOff,
   FaPlus,
 } from "react-icons/fa";
-import { imageURL } from "../../../api/config";
 import apiUser from "../../../api/apiUser";
 
 const ListUser = () => {
-  const { page } = useParams();
-  const navigate = useNavigate();
-
   const [users, setUsers] = useState([]);
-  const [currentPage, setCurrentPage] = useState(Number(page) || 1);
-  const [lastPage, setLastPage] = useState(1);
+  const [loading, setLoading] = useState(false);
 
-  // ✅ Lấy danh sách người dùng theo trang
-  const fetchUsers = async (page = 1) => {
+  // ======================
+  // FETCH USERS
+  // ======================
+  const fetchUsers = async () => {
+    setLoading(true);
     try {
-      const res = await apiUser.getAllPage(page);
-      if (res.status) {
-        setUsers(res.data.data);
-        setCurrentPage(res.data.current_page);
-        setLastPage(res.data.last_page);
-      } else {
-        toast.error("Không thể tải danh sách người dùng!");
-      }
+      const data = await apiUser.getAll(); // backend trả List<UserDto>
+      setUsers(data);
     } catch (err) {
-      console.error("Lỗi khi tải danh sách user:", err);
-      toast.error("Không thể tải danh sách người dùng!");
+      console.error(err);
+      toast.error("Không thể tải danh sách người dùng");
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchUsers(Number(page) || 1);
-  }, [page]);
+    fetchUsers();
+  }, []);
 
-  // ✅ Chuyển trang
-  const goToPage = (pageNumber) => {
-    if (pageNumber >= 1 && pageNumber <= lastPage) {
-      navigate(`/admin/users/${pageNumber}`);
+  // ======================
+  // TOGGLE STATUS
+  // ======================
+  const handleToggleStatus = async (user) => {
+    try {
+      if (user.status === 1) {
+        await apiUser.lock(user.id);
+        toast.success("Đã khóa người dùng");
+      } else {
+        await apiUser.unlock(user.id);
+        toast.success("Đã mở khóa người dùng");
+      }
+      fetchUsers();
+    } catch (err) {
+      console.error(err);
+      toast.error("Không thể cập nhật trạng thái");
     }
   };
 
-  // ✅ Toggle trạng thái
-  const handleToggleStatus = async (id) => {
-    try {
-      const res = await apiUser.toggleStatus(id);
-      if (res.status) {
-        toast.success(res.message);
-        fetchUsers(currentPage);
-      } else {
-        toast.error(res.message);
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("Không thể cập nhật trạng thái người dùng!");
-    }
-  };
-
-  // ✅ Xóa người dùng
-  const handleDelete = async (id) => {
-    if (!window.confirm("Bạn có chắc muốn xóa người dùng này không?")) return;
-    try {
-      const res = await apiUser.delete(id);
-      if (res.status) {
-        toast.success(res.message);
-        fetchUsers(currentPage);
-      } else {
-        toast.error(res.message);
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error(err.response?.data?.message || "Xóa người dùng thất bại!");
-    }
+  // ======================
+  // DELETE (TẠM THỜI)
+  // ======================
+  const handleDelete = () => {
+    toast.warning("Backend chưa hỗ trợ xóa user");
   };
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      {/* Header */}
-      <div className="p-6 flex flex-col sm:flex-row justify-between items-center border-b border-gray-200">
-        <h3 className="text-2xl font-semibold text-gray-800 mb-3 sm:mb-0">
-          Danh sách thành viên
-        </h3>
-        <div className="flex space-x-3">
-          <Link
-            to="/admin/user/create"
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded flex items-center transition duration-200"
-          >
-            <FaPlus className="mr-2" /> Thêm mới
-          </Link>
-          <Link
-            to="/admin/user/trash"
-            className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded flex items-center transition duration-200"
-          >
-            <FaTrash className="mr-2" /> Thùng rác
-          </Link>
-        </div>
+      {/* HEADER */}
+      <div className="p-6 flex justify-between items-center border-b">
+        <h3 className="text-2xl font-semibold">Danh sách người dùng</h3>
+
+        <Link
+          to="/admin/user/createUser"
+          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded flex items-center"
+        >
+          <FaPlus className="mr-2" /> Thêm mới
+        </Link>
       </div>
 
-      {/* Table */}
+      {/* CONTENT */}
       <div className="p-6">
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-center">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ID
-                </th>
-                <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Ảnh đại diện
-                </th>
-                <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Họ tên / Liên hệ
-                </th>
-                <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Tài khoản / Địa chỉ
-                </th>
-                <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Trạng thái
-                </th>
-                <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Chức năng
-                </th>
-              </tr>
-            </thead>
+        {loading ? (
+          <p className="text-center text-gray-500">Đang tải...</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-center">
+              <thead>
+                <tr className="bg-gray-50 border-b">
+                  <th className="px-4 py-3 text-xs uppercase">ID</th>
+                  <th className="px-4 py-3 text-xs uppercase">Họ tên</th>
+                  <th className="px-4 py-3 text-xs uppercase">Email</th>
+                  <th className="px-4 py-3 text-xs uppercase">SĐT</th>
+                  <th className="px-4 py-3 text-xs uppercase">Vai trò</th>
+                  <th className="px-4 py-3 text-xs uppercase">Trạng thái</th>
+                  <th className="px-4 py-3 text-xs uppercase">Hành động</th>
+                </tr>
+              </thead>
 
-            <tbody className="divide-y divide-gray-200 text-center">
-              {users.length > 0 ? (
-                users.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm text-gray-900">
-                      {user.id}
-                    </td>
+              <tbody className="divide-y">
+                {users.length > 0 ? (
+                  users.map((user) => (
+                    <tr key={user.id} className="hover:bg-gray-50">
+                      <td className="py-2">{user.id}</td>
+                      <td className="py-2 font-medium">{user.name}</td>
+                      <td className="py-2">{user.email}</td>
+                      <td className="py-2">{user.phone}</td>
+                      <td className="py-2">{user.role}</td>
+                      <td className="py-2">
+                        {user.status === 1 ? (
+                          <span className="px-2 py-1 text-xs rounded bg-green-100 text-green-700">
+                            Hoạt động
+                          </span>
+                        ) : (
+                          <span className="px-2 py-1 text-xs rounded bg-gray-200 text-gray-700">
+                            Khóa
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-2">
+                        <div className="flex justify-center space-x-3">
+                          {/* TOGGLE */}
+                          <button
+                            onClick={() => handleToggleStatus(user)}
+                            className="text-green-600 hover:text-green-800"
+                          >
+                            {user.status === 1 ? (
+                              <FaToggleOn size={20} />
+                            ) : (
+                              <FaToggleOff size={20} />
+                            )}
+                          </button>
 
-                    {/* Ảnh đại diện */}
-                    <td className="px-4 py-3 flex justify-center">
-                      <img
-                        className="h-14 w-14 object-cover rounded-full border border-gray-200"
-                        src={`${imageURL}/avatar/${user.avatar}?v=${
-                          user.updated_at || Date.now()
-                        }`}
-                        alt={user.name}
-                      />
-                    </td>
+                          {/* DETAIL (CHƯA LÀM) */}
+                          <Link
+                            to="#"
+                            className="text-indigo-600 hover:text-indigo-800"
+                          >
+                            <FaEye />
+                          </Link>
 
-                    {/* Họ tên + Liên hệ */}
-                    <td className="px-4 py-3 text-sm text-gray-800">
-                      <div className="font-medium text-gray-900">
-                        {user.name}
-                      </div>
-                      <div className="text-gray-500 text-sm">{user.email}</div>
-                      <div className="text-gray-500 text-sm">{user.phone}</div>
-                    </td>
+                          {/* EDIT */}
+                          <Link
+                            to={`/admin/user/editUser/${user.id}`}
+                            className="text-blue-600 hover:text-blue-800"
+                          >
+                            <FaEdit />
+                          </Link>
 
-                    {/* Tài khoản + địa chỉ */}
-                    <td className="px-4 py-3 text-sm text-gray-800">
-                      <div className="text-gray-900">{user.username}</div>
-                      <div className="text-gray-500 text-sm truncate max-w-xs">
-                        {user.address}
-                      </div>
-                    </td>
-
-                    {/* Trạng thái */}
-                    <td className="px-4 py-3">
-                      {user.status ? (
-                        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                          Hoạt động
-                        </span>
-                      ) : (
-                        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-200 text-gray-700">
-                          Ẩn
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Hành động */}
-                    <td>
-                      <div className="flex items-center justify-center space-x-3">
-                        <Link
-                          to="#"
-                          onClick={() => handleToggleStatus(user.id)}
-                          className="text-green-500 hover:text-green-700"
-                        >
-                          {user.status ? (
-                            <FaToggleOn className="text-xl" />
-                          ) : (
-                            <FaToggleOff className="text-xl" />
-                          )}
-                        </Link>
-
-                        <Link
-                          to={`/admin/userDetail/${user.id}`}
-                          className="text-indigo-500 hover:text-indigo-700"
-                        >
-                          <FaEye className="text-lg" />
-                        </Link>
-
-                        <Link
-                          onClick={() =>
-                            localStorage.setItem("currentUserPage", currentPage)
-                          }
-                          to={`/admin/user/edit/${user.id}`}
-                          className="text-blue-500 hover:text-blue-700"
-                        >
-                          <FaEdit className="text-lg" />
-                        </Link>
-
-                        <Link
-                          to="#"
-                          onClick={() => handleDelete(user.id)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <FaTrash className="text-lg" />
-                        </Link>
-                      </div>
+                          {/* DELETE (TẠM) */}
+                          <button
+                            onClick={handleDelete}
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            <FaTrash />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="7" className="py-6 text-gray-500">
+                      Không có người dùng nào
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="6" className="text-center py-6 text-gray-500">
-                    Không có người dùng nào.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-
-          {/* Pagination */}
-          <div className="flex justify-center mt-4 space-x-2">
-            <button
-              onClick={() => goToPage(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
-            >
-              Trước
-            </button>
-            {Array.from({ length: lastPage }, (_, i) => (
-              <button
-                key={i}
-                onClick={() => goToPage(i + 1)}
-                className={`px-3 py-1 rounded ${
-                  currentPage === i + 1
-                    ? "bg-indigo-600 text-white"
-                    : "bg-gray-200 hover:bg-gray-300"
-                }`}
-              >
-                {i + 1}
-              </button>
-            ))}
-            <button
-              onClick={() => goToPage(currentPage + 1)}
-              disabled={currentPage === lastPage}
-              className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
-            >
-              Sau
-            </button>
+                )}
+              </tbody>
+            </table>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

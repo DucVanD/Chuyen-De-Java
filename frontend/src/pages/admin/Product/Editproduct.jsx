@@ -1,362 +1,224 @@
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { FaArrowLeft } from "react-icons/fa";
-import { useState, useEffect } from "react";
-import { Editor } from "@tinymce/tinymce-react";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "react-toastify";
+
 import apiProduct from "../../../api/apiProduct";
 import apiCategory from "../../../api/apiCategory";
 import apiBrand from "../../../api/apiBrand";
-import { imageURL } from "../../../api/config";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 
 const EditProduct = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
-  const { id } = useParams(); // lấy id từ URL
 
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
-  const [thumbnail, setThumbnail] = useState(null);
-  const [thumbPreview, setThumbPreview] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
-  const savedPage = localStorage.getItem("currentProductPage") || 1;
 
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState({
     name: "",
+    slug: "",
+    categoryId: "",
+    brandId: "",
+    image: "",
     description: "",
     detail: "",
-    price_root: "",
-    price_sale: "",
-    qty: 1,
-    category_id: "",
-    brand_id: "",
+    // costPrice: "",
+    salePrice: "",
+    discountPrice: "",
     status: 1,
+   
   });
 
-  // Load categories & brands
   useEffect(() => {
-    (async () => {
-      try {
-        const [resCat, resBrand] = await Promise.all([
-          apiCategory.getAll(),
-          apiBrand.getAll(),
-        ]);
-        setCategories(resCat.data?.data || []);
-        setBrands(resBrand.data?.data || []);
-      } catch (err) {
-        console.error("Lỗi khi load category/brand:", err);
-      }
-    })();
-  }, []);
+  const fetchData = async () => {
+    const product = await apiProduct.getById(id);
+    setForm(product);
 
-  console.log("Form Data:", formData);
+    const cateRes = await apiCategory.getAll();
+    setCategories(cateRes);
 
-  // Load chi tiết sản phẩm cần sửa
-  useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        const res = await apiProduct.getProductId(id);
-        let product = res.data?.data || res.data;
+    const brandRes = await apiBrand.getAll();
+    setBrands(brandRes);
+  };
 
-        if (product) {
-          setFormData({
-            name: product.name || "",
-            description: product.description || "",
-            detail: product.detail || "",
-            price_root: product.price_root || "",
-            // ✅ Nếu có giá giảm thì dùng, không thì mặc định 0
-            price_sale: product.price_sale ?? 0,
-            qty: product.qty || 1,
-            category_id: product.category_id || "",
-            brand_id: product.brand_id || "",
-            status: product.status ?? 1,
-          });
+  fetchData();
+}, [id]);
 
-          if (product.thumbnail) {
-            setThumbPreview(
-              `${imageURL}/product/${product.thumbnail}?v=${Date.now()}`
-            );
-          }
-        } else {
-          alert("Không tìm thấy sản phẩm");
-          navigate("/admin/products");
-        }
-      } catch (error) {
-        console.error("Lỗi khi lấy dữ liệu sản phẩm:", error);
-        alert("Không load được sản phẩm");
-        navigate("/admin/products");
-      }
-    };
-
-    fetchProduct();
-  }, [id, navigate]);
-
-  // Cleanup preview
-  useEffect(() => {
-    return () => {
-      if (thumbPreview && thumbPreview.startsWith("blob:")) {
-        URL.revokeObjectURL(thumbPreview);
-      }
-    };
-  }, [thumbPreview]);
-
+console.log("askj",categories)
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    setThumbnail(file || null);
-    setThumbPreview(file ? URL.createObjectURL(file) : thumbPreview);
-  };
-
-  const handleEditorChange = (content) => {
-    setFormData((prev) => ({ ...prev, detail: content }));
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setErrors({});
 
-    try {
-      const data = new FormData();
-      const numericKeys = ["price_root", "price_sale", "qty"];
-
-      Object.keys(formData).forEach((key) => {
-        let value = formData[key];
-        if (typeof value === "string" && numericKeys.includes(key)) {
-          value = value.replace(/[, ]+/g, "");
-        }
-        data.append(key, value ?? "");
-      });
-
-      if (thumbnail) data.append("thumbnail", thumbnail);
-
-      const res = await apiProduct.EditProduct(id, data);
-      toast.success(res.message || "✅ Cập nhật sản phẩm thành công!");
-      setTimeout(() => navigate(`/admin/products/${savedPage}`), 1500);
-    } catch (error) {
-      console.error("❌ Lỗi khi cập nhật:", error);
-      toast.error(
-        error.response?.data?.message ||
-        `Lỗi từ server (status ${error.response?.status || "?"})`
-      );
-    } finally {
-      setLoading(false);
-    }
-
+    await apiProduct.update(id, form);
+    toast.success("Cập nhật sản phẩm thành công");
+    navigate("/admin/products");
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      {/* Header */}
-      <div className="p-6 flex flex-col sm:flex-row justify-between items-center border-b border-gray-200">
-        <h3 className="text-2xl font-semibold text-gray-800 mb-3 sm:mb-0">
-          Chỉnh sửa sản phẩm
-        </h3>
-        <Link
-          to={`/admin/products/${savedPage}`}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded inline-flex items-center"
-        >
-          <FaArrowLeft className="mr-2" /> Về danh sách
-        </Link>
-      </div>
+    <div className="max-w-3xl mx-auto bg-white p-6 rounded shadow">
+      <h2 className="text-xl font-semibold mb-4">Sửa sản phẩm</h2>
 
-      {/* Form */}
-      <div className="p-6">
-        <form onSubmit={handleSubmit} encType="multipart/form-data">
-          <div className="flex flex-col lg:flex-row gap-6">
-            {/* Thông tin cơ bản */}
-            <div className="lg:w-2/3">
-              <div className="bg-gray-50 p-6 rounded-lg shadow-sm mb-6">
-                <h4 className="text-lg font-semibold text-gray-700 mb-4 pb-2 border-b border-gray-200">
-                  Thông tin cơ bản
-                </h4>
+      <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
 
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-1">
-                    Tên sản phẩm
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="w-full p-2.5 border rounded-md"
-                    placeholder="Nhập tên sản phẩm"
-                  />
-                </div>
+        {/* Tên */}
+        <div className="col-span-2">
+          <label className="block mb-1">Tên sản phẩm</label>
+          <input
+            name="name"
+            value={form.name || ""}
+            onChange={handleChange}
+            className="w-full border p-2 rounded"
+            required
+          />
+        </div>
 
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-1">
-                    Mô tả ngắn
-                  </label>
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    rows="3"
-                    className="w-full p-2.5 border rounded-md"
-                    placeholder="Nhập mô tả sản phẩm"
-                  ></textarea>
-                </div>
+        {/* Slug */}
+        <div className="col-span-2">
+          <label className="block mb-1">Slug</label>
+          <input
+            name="slug"
+            value={form.slug || ""}
+            onChange={handleChange}
+            className="w-full border p-2 rounded"
+            required
+          />
+        </div>
 
-                {/* Chi tiết sản phẩm (TinyMCE) */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-1">
-                    Chi tiết sản phẩm
-                  </label>
-                  <Editor
-                    apiKey="08g2njx5rtkfad5tsq5p91c0bos9siwvip1tcsinbsduna70"
-                    value={formData.detail}
-                    init={{
-                      height: 400,
-                      menubar: true,
-                      plugins: [
-                        "advlist",
-                        "autolink",
-                        "lists",
-                        "link",
-                        "image",
-                        "charmap",
-                        "preview",
-                        "anchor",
-                        "searchreplace",
-                        "visualblocks",
-                        "code",
-                        "fullscreen",
-                        "insertdatetime",
-                        "media",
-                        "table",
-                        "help",
-                        "wordcount",
-                      ],
-                      toolbar:
-                        "undo redo | formatselect | bold italic underline | " +
-                        "alignleft aligncenter alignright | bullist numlist outdent indent | link image media | code fullscreen",
-                      content_style:
-                        "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
-                    }}
-                    onEditorChange={handleEditorChange}
-                  />
-                </div>
-              </div>
+        {/* Danh mục */}
+        <div>
+          <label className="block mb-1">Danh mục</label>
+          <select
+            name="categoryId"
+            value={form.categoryId || ""}
+            onChange={handleChange}
+            className="w-full border p-2 rounded"
+            required
+          >
+            <option value="">-- Chọn danh mục --</option>
+            {categories?.map(c => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        </div>
 
-              {/* Giá & Số lượng */}
-              <div className="bg-indigo-50 p-6 rounded-lg shadow-sm mb-6">
-                <h4 className="text-lg font-semibold text-indigo-700 mb-4 pb-2 border-b border-indigo-200">
-                  Giá & Số lượng
-                </h4>
+        {/* Thương hiệu */}
+        <div>
+          <label className="block mb-1">Thương hiệu</label>
+          <select
+            name="brandId"
+            value={form.brandId || ""}
+            onChange={handleChange}
+            className="w-full border p-2 rounded"
+            required
+          >
+            <option value="">-- Chọn thương hiệu --</option>
+            {brands?.map(b => (
+              <option key={b.id} value={b.id}>{b.name}</option>
+            ))}
+          </select>
+        </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <input
-                    type="number"
-                    name="price_root"
-                    value={formData.price_root}
-                    onChange={handleChange}
-                    className="w-full p-2.5 border rounded-md"
-                    placeholder="Giá bán"
-                  />
-                  <input
-                    type="number"
-                    name="price_sale"
-                    value={formData.price_sale}
-                    onChange={handleChange}
-                    className="w-full p-2.5 border rounded-md"
-                    placeholder="Giá khuyến mãi"
-                  />
-                  <input
-                    type="number"
-                    name="qty"
-                    value={formData.qty}
-                    onChange={handleChange}
-                    className="w-full p-2.5 border rounded-md"
-                    placeholder="Số lượng"
-                  />
-                </div>
-              </div>
-            </div>
+        {/* Giá */}
+        <div>
+          <label className="block mb-1">Giá nhập</label>
+          <input
+            type="number"
+            name="costPrice"
+            value={form.costPrice || ""}
+            onChange={handleChange}
+            className="w-full border p-2 rounded"
+          />
+        </div>
 
-            {/* Phân loại & Hình ảnh */}
-            <div className="lg:w-1/3">
-              <div className="bg-purple-50 p-6 rounded-lg shadow-sm mb-6">
-                <h4 className="text-lg font-semibold text-purple-700 mb-4 pb-2 border-b border-purple-200">
-                  Phân loại
-                </h4>
+        <div>
+          <label className="block mb-1">Giá bán</label>
+          <input
+            type="number"
+            name="salePrice"
+            value={form.salePrice || ""}
+            onChange={handleChange}
+            className="w-full border p-2 rounded"
+          />
+        </div>
 
-                <select
-                  name="category_id"
-                  value={formData.category_id}
-                  onChange={handleChange}
-                  className="w-full p-2.5 border rounded-md mb-4"
-                >
-                  <option value="">Chọn danh mục</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
+        <div>
+          <label className="block mb-1">Giá khuyến mãi</label>
+          <input
+            type="number"
+            name="discountPrice"
+            value={form.discountPrice || ""}
+            onChange={handleChange}
+            className="w-full border p-2 rounded"
+          />
+        </div>
 
-                <select
-                  name="brand_id"
-                  value={formData.brand_id}
-                  onChange={handleChange}
-                  className="w-full p-2.5 border rounded-md"
-                >
-                  <option value="">Chọn thương hiệu</option>
-                  {brands.map((br) => (
-                    <option key={br.id} value={br.id}>
-                      {br.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+        {/* Trạng thái */}
+        <div>
+          <label className="block mb-1">Trạng thái</label>
+          <select
+            name="status"
+            value={form.status}
+            onChange={handleChange}
+            className="w-full border p-2 rounded"
+          >
+            <option value={1}>Hoạt động</option>
+            <option value={0}>Ẩn</option>
+          </select>
+        </div>
 
-              <div className="bg-gray-50 p-6 rounded-lg shadow-sm mb-6">
-                <h4 className="text-lg font-semibold text-gray-700 mb-4 pb-2 border-b border-gray-200">
-                  Hình ảnh & Trạng thái
-                </h4>
+        {/* Tồn kho – CHỈ ĐỌC */}
+        <div>
+          <label className="block mb-1">Tồn kho</label>
+          <input
+            value={form.qty}
+            disabled
+            className="w-full border p-2 bg-gray-100 rounded"
+          />
+        </div>
 
-                <input
-                  type="file"
-                  name="thumbnail"
-                  onChange={handleFileChange}
-                  className="w-full p-2 border rounded-md mb-4"
-                />
+        <div>
+          <label className="block mb-1">Đang giữ</label>
+          <input
+            value={form.lockedQty}
+            disabled
+            className="w-full border p-2 bg-gray-100 rounded"
+          />
+        </div>
 
-                {thumbPreview && (
-                  <img
-                    src={thumbPreview}
-                    alt="Xem trước"
-                    className="rounded-md mb-4"
-                  />
-                )}
+        {/* Mô tả */}
+        <div className="col-span-2">
+          <label className="block mb-1">Mô tả ngắn</label>
+          <textarea
+            name="description"
+            value={form.description || ""}
+            onChange={handleChange}
+            className="w-full border p-2 rounded"
+            rows={3}
+          />
+        </div>
 
-                <select
-                  name="status"
-                  value={formData.status}
-                  onChange={handleChange}
-                  className="w-full p-2.5 border rounded-md mb-6"
-                >
-                  <option value="1">Xuất bản</option>
-                  <option value="0">Không xuất bản</option>
-                </select>
+        {/* Chi tiết */}
+        <div className="col-span-2">
+          <label className="block mb-1">Chi tiết</label>
+          <textarea
+            name="detail"
+            value={form.detail || ""}
+            onChange={handleChange}
+            className="w-full border p-2 rounded"
+            rows={5}
+          />
+        </div>
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-indigo-600 text-white py-2.5 px-4 rounded-md hover:bg-indigo-700 transition duration-200"
-                >
-                  {loading ? "Đang lưu..." : "Cập nhật sản phẩm"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </form>
-      </div>
+        {/* Submit */}
+        <div className="col-span-2 text-right">
+          <button className="bg-blue-600 text-white px-6 py-2 rounded">
+            Cập nhật
+          </button>
+        </div>
+
+      </form>
     </div>
   );
 };

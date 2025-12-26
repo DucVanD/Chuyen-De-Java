@@ -1,0 +1,77 @@
+package com.example.backend.service.impl;
+
+import com.example.backend.dto.StockMovementDto;
+import com.example.backend.entity.Order;
+import com.example.backend.entity.Product;
+import com.example.backend.entity.StockMovement;
+import com.example.backend.entity.Supplier;
+import com.example.backend.mapper.StockMovementMapper;
+import com.example.backend.repository.OrderRepository;
+import com.example.backend.repository.ProductRepository;
+import com.example.backend.repository.StockMovementRepository;
+import com.example.backend.repository.SupplierRepository;
+import com.example.backend.service.StockMovementService;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class StockMovementServiceImpl implements StockMovementService {
+
+    private final StockMovementRepository stockMovementRepository;
+    private final ProductRepository productRepository;
+    private final SupplierRepository supplierRepository;
+    private final OrderRepository orderRepository;
+
+    public StockMovementServiceImpl(
+            StockMovementRepository stockMovementRepository,
+            ProductRepository productRepository,
+            SupplierRepository supplierRepository,
+            OrderRepository orderRepository
+    ) {
+        this.stockMovementRepository = stockMovementRepository;
+        this.productRepository = productRepository;
+        this.supplierRepository = supplierRepository;
+        this.orderRepository = orderRepository;
+    }
+
+    @Override
+    public List<StockMovementDto> getAll() {
+        return stockMovementRepository.findAll()
+                .stream()
+                .map(StockMovementMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public StockMovementDto getById(Integer id) {
+        StockMovement movement = stockMovementRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("StockMovement not found"));
+        return StockMovementMapper.toDto(movement);
+    }
+
+    @Override
+    public StockMovementDto create(StockMovementDto dto) {
+
+        Product product = productRepository.findById(dto.getProductId())
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        Supplier supplier = null;
+        if (dto.getSupplierId() != null) {
+            supplier = supplierRepository.findById(dto.getSupplierId())
+                    .orElseThrow(() -> new RuntimeException("Supplier not found"));
+        }
+
+        Order order = null;
+        if (dto.getOrderId() != null) {
+            order = orderRepository.findById(dto.getOrderId())
+                    .orElseThrow(() -> new RuntimeException("Order not found"));
+        }
+
+        StockMovement movement = StockMovementMapper.toEntity(dto, product, supplier, order);
+
+        StockMovement saved = stockMovementRepository.save(movement);
+        return StockMovementMapper.toDto(saved);
+    }
+}

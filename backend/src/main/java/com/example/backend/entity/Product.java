@@ -64,7 +64,7 @@ public class Product {
     private Integer qty = 0;
 
     @Builder.Default
-    @Column(name = "locked_qty", nullable = false)
+    @Column(name = "locked_qty", nullable = true)
     private Integer lockedQty = 0; // Hàng đang giữ chờ thanh toán
 
     @Column(name = "cost_price", nullable = false)

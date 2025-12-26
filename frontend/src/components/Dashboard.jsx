@@ -11,9 +11,8 @@ const Dashboard = () => {
         <div className="flex">
           {/* Sidebar */}
           <aside
-            className={`fixed sm:static top-0 left-0 h-full sm:h-auto z-50 bg-gray-800 text-gray-200 px-4 py-6 space-y-6 transform ${
-              isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-            } sm:translate-x-0 transition-transform duration-300 ease-in-out w-64 sm:basis-2/12`}
+            className={`fixed sm:static top-0 left-0 h-full sm:h-auto z-50 bg-gray-800 text-gray-200 px-4 py-6 space-y-6 transform ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+              } sm:translate-x-0 transition-transform duration-300 ease-in-out w-64 sm:basis-2/12`}
           >
             {/* Close btn (mobile) */}
             <div className="flex justify-between items-center sm:hidden">
@@ -43,7 +42,16 @@ const Dashboard = () => {
                   Quản lý sản phẩm
                 </p>
                 <ul className="space-y-1">
-                   <li>
+                  <li>
+                    <Link
+                      to="suppliers"
+                      className="flex items-center text-[15px] px-4 py-2.5 rounded-md hover:bg-gray-700 font-medium"
+                    >
+                      <i className="fas fa-box mr-3 text-indigo-400"></i>
+                      Nhà cung cấp
+                    </Link>
+                  </li>
+                  <li>
                     <Link
                       to="inventory"
                       className="flex items-center text-[15px] px-4 py-2.5 rounded-md hover:bg-gray-700 font-medium"
@@ -110,7 +118,7 @@ const Dashboard = () => {
               </div>
 
               {/* Giao diện */}
-              <div className="mt-6">
+              {/* <div className="mt-6">
                 <p className="text-[14px] font-semibold px-4 text-gray-400 uppercase tracking-wider mb-2">
                   Giao diện
                 </p>
@@ -133,63 +141,63 @@ const Dashboard = () => {
                     </Link>
                   </li>
                 </ul>
-              </div>
+              </div> */}
 
               {/* Quản lý khác */}
-          <div className="mt-6 pb-12">
-            <p className="text-[14px] font-semibold px-4 text-gray-400 uppercase tracking-wider mb-2">
-              Quản lý khác
-            </p>
-            <ul className="space-y-1">
-              {/* Nhân viên */}
-              <li>
-                <Link
-                  to="/admin/employees"
-                  className="flex items-center text-[15px] px-4 py-2.5 rounded-md hover:bg-gray-700 font-medium"
-                >
-                  <i className="fas fa-id-badge mr-3 text-indigo-400"></i>
-                  Nhân viên
-                </Link>
-              </li>
+              <div className="mt-6 pb-12">
+                <p className="text-[14px] font-semibold px-4 text-gray-400 uppercase tracking-wider mb-2">
+                  Quản lý khác
+                </p>
+                <ul className="space-y-1">
+                  {/* Nhân viên */}
+                  <li>
+                    <Link
+                      to="/admin/employees"
+                      className="flex items-center text-[15px] px-4 py-2.5 rounded-md hover:bg-gray-700 font-medium"
+                    >
+                      <i className="fas fa-id-badge mr-3 text-indigo-400"></i>
+                      Nhân viên
+                    </Link>
+                  </li>
 
-              <li>
-                <Link
-                  to="/admin/contacts"
-                  className="flex items-center text-[15px] px-4 py-2.5 rounded-md hover:bg-gray-700 font-medium"
-                >
-                  <i className="fas fa-envelope mr-3 text-indigo-400"></i>
-                  Liên hệ
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/customers"
-                  className="flex items-center text-[15px] px-4 py-2.5 rounded-md hover:bg-gray-700 font-medium"
-                >
-                  <i className="fas fa-users mr-3 text-indigo-400"></i>
-                  Khách hàng
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/orders"
-                  className="flex items-center text-[15px] px-4 py-2.5 rounded-md hover:bg-gray-700 font-medium"
-                >
-                  <i className="fas fa-shopping-cart mr-3 text-indigo-400"></i>
-                  Đơn hàng
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/users"
-                  className="flex items-center text-[15px] px-4 py-2.5 rounded-md hover:bg-gray-700 font-medium"
-                >
-                  <i className="fas fa-user-shield mr-3 text-indigo-400"></i>
-                  Thành viên
-                </Link>
-              </li>
-            </ul>
-            </div>
+                  <li>
+                    <Link
+                      to="/admin/contacts"
+                      className="flex items-center text-[15px] px-4 py-2.5 rounded-md hover:bg-gray-700 font-medium"
+                    >
+                      <i className="fas fa-envelope mr-3 text-indigo-400"></i>
+                      Liên hệ
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/admin/customers"
+                      className="flex items-center text-[15px] px-4 py-2.5 rounded-md hover:bg-gray-700 font-medium"
+                    >
+                      <i className="fas fa-users mr-3 text-indigo-400"></i>
+                      Khách hàng
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/admin/orders"
+                      className="flex items-center text-[15px] px-4 py-2.5 rounded-md hover:bg-gray-700 font-medium"
+                    >
+                      <i className="fas fa-shopping-cart mr-3 text-indigo-400"></i>
+                      Đơn hàng
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/admin/users"
+                      className="flex items-center text-[15px] px-4 py-2.5 rounded-md hover:bg-gray-700 font-medium"
+                    >
+                      <i className="fas fa-user-shield mr-3 text-indigo-400"></i>
+                      Thành viên
+                    </Link>
+                  </li>
+                </ul>
+              </div>
             </nav>
           </aside>
 
