@@ -8,106 +8,106 @@ const EditCat = () => {
   const { id } = useParams();
 
   const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // 1. Thêm trường slug vào state khởi tạo
   const [category, setCategory] = useState({
     name: "",
+    slug: "", 
     description: "",
     status: 1,
-    parent_id: 0,
-    sort_order: 0,
-    image: "",
+    parentId: null,
+    image: ""
   });
 
   const [preview, setPreview] = useState(null);
-  const [imageFile, setImageFile] = useState(null);
-  const [loading, setLoading] = useState(true);
 
-  // 🔹 Lấy thông tin danh mục hiện tại
+  /* ===============================
+      FETCH CATEGORY
+  =============================== */
   useEffect(() => {
     const fetchCategory = async () => {
       try {
-        const res = await apiCategory.getCategoryById(id);
-        if (res.data.status) {
-          setCategory(res.data.data);
-          setPreview(
-            res.data.data.image
-              ? `${imageURL}/category/${res.data.data.image}?v=${Date.now()}`
-              : null
-          );
-        } else {
-          alert("⚠️ Không tìm thấy danh mục này!");
-        }
-      } catch (error) {
-        console.error("Lỗi khi lấy dữ liệu danh mục:", error);
-        alert("❌ Không thể tải dữ liệu danh mục.");
+        const data = await apiCategory.getCategoryById(id);
+
+        // 2. Cập nhật slug từ dữ liệu server trả về
+        setCategory({
+          name: data.name,
+          slug: data.slug, 
+          description: data.description || "",
+          status: data.status,
+          parentId: data.parentId,
+          image: data.image
+        });
+
+        setPreview(
+          data.image
+            ? `${imageURL}/category/${data.image}?v=${Date.now()}`
+            : null
+        );
+      } catch (err) {
+        alert("❌ Không thể tải danh mục");
       } finally {
         setLoading(false);
       }
     };
+
     fetchCategory();
   }, [id]);
 
-  // 🔹 Lấy danh sách danh mục cha
+  /* ===============================
+      FETCH ALL CATEGORIES
+  =============================== */
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await apiCategory.getAll();
-        if (res.data.status) {
-          setCategories(res.data.data);
-        }
-      } catch (error) {
-        alert("❌ Không thể tải danh mục cha!");
+        const data = await apiCategory.getAll();
+        setCategories(data);
+      } catch {
+        alert("❌ Không thể tải danh mục cha");
       }
     };
     fetchCategories();
   }, []);
 
-  // 🔹 Xử lý input thay đổi
+  /* ===============================
+      HANDLE CHANGE
+  =============================== */
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setCategory({ ...category, [name]: value });
+    setCategory(prev => ({
+      ...prev,
+      [name]: value === "" ? null : value
+    }));
   };
 
-  // 🔹 Upload file ảnh mới
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImageFile(file);
-      setPreview(URL.createObjectURL(file));
-    }
-  };
-
-  // 🔹 Gửi form cập nhật
+  /* ===============================
+      SUBMIT UPDATE (JSON)
+  =============================== */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const formData = new FormData();
-      Object.entries(category).forEach(([key, value]) =>
-        formData.append(key, value ?? "")
-      );
-      if (imageFile) formData.append("image", imageFile);
+      // 3. Gửi kèm slug trong payload để Backend không set thành null
+      const payload = {
+        name: category.name,
+        slug: category.slug, 
+        description: category.description,
+        status: Number(category.status),
+        parentId: category.parentId ? Number(category.parentId) : null,
+        image: category.image
+      };
 
-      const res = await apiCategory.editCategory(id, formData);
+      await apiCategory.update(id, payload);
 
-      if (res.data?.status) {
-        alert("✅ Cập nhật danh mục thành công!");
-        const page = localStorage.getItem("currentCategoryPage") || 1;
-        navigate(`/admin/categories/${page}`);
-      } else {
-        alert("❌ Cập nhật thất bại. Vui lòng thử lại!");
-      }
-    } catch (error) {
-      console.error("Lỗi khi cập nhật danh mục:", error);
-
-      if (error.response?.data?.errors) {
-        const firstError = Object.values(error.response.data.errors)[0]?.[0];
-        alert(firstError || "⚠️ Dữ liệu không hợp lệ!");
-      } else {
-        alert(
-          error.response?.data?.message || "❌ Lỗi server. Không thể cập nhật!"
-        );
-      }
+      alert("✅ Cập nhật danh mục thành công");
+      // const page = localStorage.getItem("currentCategoryPage") || 1;
+      // navigate(`/admin/categories/${page}`);
+        navigate(`/admin/categories`);
+    } catch (err) {
+      console.error(err);
+      alert("❌ Cập nhật thất bại");
     } finally {
       setLoading(false);
     }
@@ -118,150 +118,99 @@ const EditCat = () => {
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
       {/* Header */}
-      <div className="p-6 flex flex-col sm:flex-row justify-between items-center border-b border-gray-200">
-        <h3 className="text-2xl font-semibold text-gray-800 mb-3 sm:mb-0">
-          Chỉnh sửa danh mục
-        </h3>
+      <div className="p-6 flex justify-between items-center border-b">
+        <h3 className="text-2xl font-semibold">Chỉnh sửa danh mục</h3>
         <button
-          onClick={() => navigate("/admin/categories/1")}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded inline-flex items-center transition duration-200"
+          onClick={() => navigate("/admin/categories")}
+          className="bg-indigo-600 text-white px-4 py-2 rounded"
         >
-          <i className="fas fa-arrow-left mr-2"></i> Về danh sách
+          ← Về danh sách
         </button>
       </div>
 
       {/* Form */}
       <div className="p-6">
         <form onSubmit={handleSubmit}>
-          <div className="flex flex-col lg:flex-row gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
             {/* Thông tin cơ bản */}
-            <div className="lg:w-1/2">
-              <div className="bg-gray-50 p-6 rounded-lg shadow-sm mb-6">
-                <h4 className="text-lg font-semibold text-gray-700 mb-4 pb-2 border-b border-gray-200">
-                  Thông tin cơ bản
-                </h4>
+            <div className="bg-gray-50 p-6 rounded">
+              <label className="block mb-2">Tên danh mục</label>
+              <input
+                name="name"
+                value={category.name}
+                onChange={handleChange}
+                className="w-full border p-2 mb-4"
+              />
 
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tên danh mục
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={category.name}
-                    onChange={handleChange}
-                    className="w-full p-2.5 border border-gray-300 rounded-md"
-                    placeholder="Nhập tên danh mục"
-                  />
-                </div>
+              {/* Tùy chọn: Input Slug (có thể ẩn hoặc để readonly nếu không muốn sửa) */}
+              <label className="block mb-2">Slug (Đường dẫn tĩnh)</label>
+              <input
+                name="slug"
+                value={category.slug}
+                onChange={handleChange}
+                className="w-full border p-2 mb-4 bg-gray-100"
+                readOnly // Để readOnly nếu bạn không muốn người dùng sửa slug thủ công
+              />
 
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Mô tả
-                  </label>
-                  <textarea
-                    name="description"
-                    value={category.description}
-                    onChange={handleChange}
-                    rows="3"
-                    className="w-full p-2.5 border border-gray-300 rounded-md"
-                    placeholder="Nhập mô tả danh mục"
-                  ></textarea>
-                </div>
+              <label className="block mb-2">Mô tả</label>
+              <textarea
+                name="description"
+                value={category.description}
+                onChange={handleChange}
+                className="w-full border p-2 mb-4"
+              />
 
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Trạng thái
-                  </label>
-                  <select
-                    name="status"
-                    value={category.status}
-                    onChange={handleChange}
-                    className="w-full p-2.5 border border-gray-300 rounded-md"
-                  >
-                    <option value="1">Xuất bản</option>
-                    <option value="0">Không xuất bản</option>
-                  </select>
-                </div>
-              </div>
+              <label className="block mb-2">Trạng thái</label>
+              <select
+                name="status"
+                value={category.status}
+                onChange={handleChange}
+                className="w-full border p-2"
+              >
+                <option value={1}>Xuất bản</option>
+                <option value={0}>Không xuất bản</option>
+              </select>
             </div>
 
             {/* Phân loại & hình ảnh */}
-            <div className="lg:w-1/2">
-              <div className="bg-indigo-50 p-6 rounded-lg shadow-sm mb-6">
-                <h4 className="text-lg font-semibold text-indigo-700 mb-4 pb-2 border-b border-indigo-200">
-                  Phân loại & Thứ tự
-                </h4>
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Danh mục cha
-                  </label>
-                  <select
-                    name="parent_id"
-                    value={category.parent_id || 0}
-                    onChange={handleChange}
-                    className="w-full p-2.5 border border-gray-300 rounded-md"
-                  >
-                    <option value="0">Chọn danh mục cha</option>
-                    {categories
-                      .filter((cat) => cat.id !== category.id)
-                      .map((cat) => (
-                        <option key={cat.id} value={cat.id}>
-                          {cat.name}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Thứ tự sắp xếp
-                  </label>
-                  <input
-                    type="number"
-                    name="sort_order"
-                    value={category.sort_order}
-                    onChange={handleChange}
-                    className="w-full p-2.5 border border-gray-300 rounded-md"
-                    placeholder="Nhập thứ tự sắp xếp"
-                  />
-                </div>
+            <div>
+              <div className="bg-indigo-50 p-6 rounded mb-6">
+                <label className="block mb-2">Danh mục cha</label>
+                <select
+                  name="parentId"
+                  value={category.parentId ?? ""}
+                  onChange={handleChange}
+                  className="w-full border p-2"
+                >
+                  <option value="">Danh mục cha</option>
+                  {categories
+                    .filter(cat => cat.id !== Number(id))
+                    .map(cat => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                </select>
               </div>
 
-              {/* Hình ảnh */}
-              <div className="bg-gray-50 p-6 rounded-lg shadow-sm mb-6">
-                <h4 className="text-lg font-semibold text-gray-700 mb-4 pb-2 border-b border-gray-200">
-                  Hình ảnh
-                </h4>
-
-                <div className="flex flex-col items-center mb-4">
-                  <div className="w-40 h-32 mb-4 relative">
-                    <img
-                      src={preview || "https://via.placeholder.com/150"}
-                      alt="Preview"
-                      className="w-full h-full object-cover rounded-md border"
-                    />
-                  </div>
-
-                  <input
-                    type="file"
-                    name="image"
-                    onChange={handleFileChange}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                  />
-                </div>
+              <div className="bg-gray-50 p-6 rounded">
+                <img
+                  src={preview || "https://via.placeholder.com/150"}
+                  className="w-40 h-32 object-cover mx-auto mb-4"
+                  alt=""
+                />
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-indigo-600 text-white py-2.5 px-4 rounded-md hover:bg-indigo-700 transition duration-200 flex items-center justify-center"
+                  className="w-full bg-indigo-600 text-white py-2 rounded"
                 >
-                  <i className="fas fa-save mr-2"></i>
                   {loading ? "Đang lưu..." : "Lưu thay đổi"}
                 </button>
               </div>
             </div>
+
           </div>
         </form>
       </div>
