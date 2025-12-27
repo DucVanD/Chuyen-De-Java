@@ -1,311 +1,120 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  FaSearch,
-  FaUndo,
-  FaArrowLeft,
-  FaArrowRight,
-  FaPlusCircle,
-  FaMinusCircle,
-  FaCog,
-} from "react-icons/fa";
 import apiStock from "../../../api/apiStock";
+import { FaPlus, FaMinus, FaExchangeAlt, FaUndo } from "react-icons/fa";
 
 const ListInventory = () => {
-  const [movements, setMovements] = useState([]);
-  const [filters, setFilters] = useState({ type: "", product_name: "", date: "" });
-  const [currentPage, setCurrentPage] = useState(1);
-  const [lastPage, setLastPage] = useState(1);
+  const [list, setList] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  // === Load dữ liệu tồn kho ===
-  const fetchMovements = async (page = 1) => {
-    try {
-      const res = await apiStock.getAll({ page, ...filters });
-      const list = res.data?.data;
-      setMovements(list.data || []);
-      setCurrentPage(list.current_page);
-      setLastPage(list.last_page);
-    } catch (error) {
-      console.error("Lỗi khi tải dữ liệu tồn kho:", error);
+  useEffect(() => {
+    setLoading(true);
+    apiStock.getAll()
+      .then(setList)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const getBadgeStyle = (type) => {
+    switch (type) {
+      case "IN": return "bg-green-100 text-green-700 border-green-200";
+      case "OUT": return "bg-red-100 text-red-700 border-red-200";
+      case "ADJUSTMENT": return "bg-orange-100 text-orange-700 border-orange-200";
+      case "RETURN": return "bg-blue-100 text-blue-700 border-blue-200";
+      default: return "bg-gray-100 text-gray-700";
     }
   };
 
-  useEffect(() => {
-    fetchMovements();
-  }, []);
-
-  // === Format loại thao tác ===
-  const formatType = (type) => {
-    const types = {
-      import: { text: "Nhập kho", emoji: "➕", color: "text-green-600" },
-      export: { text: "Xuất kho", emoji: "➖", color: "text-red-600" },
-      adjustment: { text: "Điều chỉnh", emoji: "⚙️", color: "text-yellow-600" },
-      return: { text: "Trả hàng", emoji: "↩️", color: "text-blue-600" },
-    };
-    return types[type] || { text: "Khác", emoji: "❔", color: "text-gray-600" };
-  };
-
-  const handleFilter = (e) => {
-    e.preventDefault();
-    fetchMovements(1);
-  };
-
-  const resetFilter = () => {
-    setFilters({ type: "", product_name: "", date: "" });
-    fetchMovements(1);
-  };
-
-  const goToPage = (page) => {
-    if (page < 1 || page > lastPage) return;
-    fetchMovements(page);
+  const getTypeName = (type) => {
+    switch (type) {
+      case "IN": return "Nhập kho";
+      case "OUT": return "Xuất kho";
+      case "ADJUSTMENT": return "Điều chỉnh";
+      case "RETURN": return "Trả hàng";
+      default: return type;
+    }
   };
 
   return (
-    <div className="p-6 bg-gradient-to-b from-white to-gray-50 shadow rounded-2xl">
-      {/* === Tiêu đề + nút thao tác === */}
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-indigo-700">📦 Lịch sử tồn kho</h2>
-        <div className="flex gap-2">
-          <Link
-            to="/admin/inventory/import"
-            className="flex items-center gap-2 bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 text-sm shadow"
-          >
-            <FaPlusCircle /> Nhập kho
+    <div className="bg-white rounded-lg shadow-md overflow-hidden min-h-[600px]">
+      {/* HEADER */}
+      <div className="p-6 flex flex-col md:flex-row justify-between items-center border-b gap-4">
+        <h2 className="text-2xl font-bold text-gray-800">Lịch sử Kho hàng</h2>
+
+        {/* ACTION BUTTONS */}
+        <div className="flex flex-wrap gap-3">
+          <Link to="/admin/inventory/import" className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center shadow-sm transition-all text-sm font-medium">
+            <FaPlus className="mr-2" /> Nhập kho
           </Link>
-          <Link
-            to="/admin/inventory/export"
-            className="flex items-center gap-2 bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 text-sm shadow"
-          >
-            <FaMinusCircle /> Xuất kho
+
+          <Link to="/admin/inventory/export" className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center shadow-sm transition-all text-sm font-medium">
+            <FaMinus className="mr-2" /> Xuất kho
           </Link>
-          <Link
-            to="/admin/inventory/adjust"
-            className="flex items-center gap-2 bg-yellow-500 text-white px-3 py-2 rounded-lg hover:bg-yellow-600 text-sm shadow"
-          >
-            <FaCog /> Điều chỉnh
+
+          <Link to="/admin/inventory/adjust" className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg flex items-center shadow-sm transition-all text-sm font-medium">
+            <FaExchangeAlt className="mr-2" /> Điều chỉnh
           </Link>
-          {/* <Link to="/admin/inventory/return" className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 text-sm shadow">
-            ↩️ Trả hàng
-          </Link> */}
+
+          <Link to="/admin/inventory/return" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center shadow-sm transition-all text-sm font-medium">
+            <FaUndo className="mr-2" /> Trả hàng
+          </Link>
         </div>
       </div>
 
-      {/* --- Bộ lọc --- */}
-      <form
-        onSubmit={handleFilter}
-        className="flex flex-wrap gap-4 mb-6 bg-white p-4 rounded-xl shadow-sm border border-gray-100"
-      >
-        <div>
-          <label className="text-sm font-medium text-gray-700 block mb-1">Loại thao tác</label>
-          <select
-            value={filters.type}
-            onChange={(e) => setFilters({ ...filters, type: e.target.value })}
-            className="border rounded-lg p-2 text-sm w-44 focus:ring-2 focus:ring-indigo-400"
-          >
-            <option value="">Tất cả</option>
-            <option value="import">Nhập kho</option>
-            <option value="export">Xuất kho</option>
-            <option value="adjustment">Điều chỉnh</option>
-            <option value="return">Trả hàng</option>
-          </select>
-        </div>
+      {/* TABLE */}
+      <div className="p-6">
+        {loading ? (
+          <p className="text-center py-10 text-gray-500 italic">Đang tải dữ liệu...</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border-collapse text-center">
+              <thead>
+                <tr className="bg-gray-50 border-b text-gray-700 uppercase text-xs tracking-wider">
+                  <th className="py-3 px-4">ID</th>
+                  <th className="py-3 px-4 text-left">Sản phẩm</th>
+                  <th className="py-3 px-4">Loại giao dịch</th>
+                  <th className="py-3 px-4">Số lượng</th>
+                  <th className="py-3 px-4">Tồn sau GD</th>
+                  <th className="py-3 px-4">Thời gian</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {list.length > 0 ? (
+                  list.map((m) => (
+                    <tr key={m.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="py-3 px-4 text-gray-500">#{m.id}</td>
 
-        <div>
-          <label className="text-sm font-medium text-gray-700 block mb-1">Tên sản phẩm</label>
-          <input
-            type="text"
-            value={filters.product_name}
-            onChange={(e) => setFilters({ ...filters, product_name: e.target.value })}
-            placeholder="Nhập tên sản phẩm..."
-            className="border rounded-lg p-2 text-sm w-56 focus:ring-2 focus:ring-indigo-400"
-          />
-        </div>
+                      <td className="py-3 px-4 text-left">
+                        <div className="font-medium text-gray-900">{m.productName}</div>
+                        <div className="text-xs text-gray-500">Mã SP: {m.productId}</div>
+                      </td>
 
-        <div>
-          <label className="text-sm font-medium text-gray-700 block mb-1">Ngày</label>
-          <input
-            type="date"
-            value={filters.date}
-            onChange={(e) => setFilters({ ...filters, date: e.target.value })}
-            className="border rounded-lg p-2 text-sm w-44 focus:ring-2 focus:ring-indigo-400"
-          />
-        </div>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-1 text-xs font-semibold rounded border ${getBadgeStyle(m.movementType)}`}>
+                          {getTypeName(m.movementType)}
+                        </span>
+                      </td>
 
-        <div className="flex gap-2 items-end">
-          <button
-            type="submit"
-            className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-sm shadow"
-          >
-            <FaSearch /> Lọc
-          </button>
-          <button
-            type="button"
-            onClick={resetFilter}
-            className="flex items-center gap-2 bg-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 text-sm"
-          >
-            <FaUndo /> Đặt lại
-          </button>
-        </div>
-      </form>
-
-      {/* --- Bảng dữ liệu --- */}
-      <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
-        <table className="w-full text-sm">
-          <thead className="bg-indigo-50 text-indigo-800">
-            <tr>
-              <th className="p-3 text-left">STT</th>
-              <th className="p-3 text-left">Loại</th>
-              <th className="p-3 text-left">Mã SP</th>
-              <th className="p-3 text-left">Tên sản phẩm</th>
-              <th className="p-3 text-center">Thay đổi</th>
-              <th className="p-3 text-center">Tồn sau</th>
-              <th className="p-3 text-left">Ghi chú</th>
-              <th className="p-3 text-left">Thời gian</th>
-            </tr>
-          </thead>
-          <tbody>
-            {movements.length > 0 ? (
-              movements.map((item, i) => {
-                const typeData = formatType(item.type);
-                return (
-                  <tr
-                    key={item.id}
-                    className="hover:bg-gray-50 border-t border-gray-100 transition"
-                  >
-                    <td className="p-3">{item.id}</td>
-                    <td className={`p-3 font-medium ${typeData.color}`}>
-                      {typeData.emoji} {typeData.text}
-                    </td>
-                    <td className="p-3">{item.product_id}</td>
-                    <td className="p-3">{item.product_name}</td>
-                    <td
-                      className={`p-3 font-semibold text-center ${item.quantity_change > 0 ? "text-green-600" : "text-red-600"
-                        }`}
-                    >
-                      {item.quantity_change > 0
-                        ? `↑ ${item.quantity_change}`
-                        : `↓ ${Math.abs(item.quantity_change)}`}
-                    </td>
-                    <td className="p-3 text-center">{item.qty_after}</td>
-                    <td className="p-3 text-gray-700">{item.note || "—"}</td>
-                    <td className="p-3 text-gray-600">
-                      {new Date(item.created_at).toLocaleString("vi-VN")}
-                    </td>
+                      <td className="py-3 px-4 font-medium">
+                        {m.quantity > 0 ? `+${m.quantity}` : m.quantity}
+                      </td>
+                      
+                      <td className="py-3 px-4 text-gray-700 font-semibold">{m.currentStock}</td>
+                      
+                      <td className="py-3 px-4 text-gray-600 text-xs">
+                        {new Date(m.createdAt).toLocaleString("vi-VN")}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="py-10 text-center text-gray-400">Chưa có dữ liệu lịch sử kho</td>
                   </tr>
-                );
-              })
-            ) : (
-              <tr>
-                <td colSpan="8" className="text-center text-gray-500 py-5">
-                  Không có dữ liệu tồn kho.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
-
-      {/* --- Phân trang --- */}
-      {lastPage > 1 && (
-        <div className="flex justify-center mt-6 space-x-2">
-          {/* Nút Trước */}
-          <button
-            onClick={() => goToPage(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded-full hover:bg-gray-300 disabled:opacity-50"
-          >
-            <FaArrowLeft /> Trước
-          </button>
-
-          {/* Hiển thị trang có dấu ... */}
-          {(() => {
-            const pages = [];
-            const maxPagesToShow = 5;
-            let start = Math.max(1, currentPage - 2);
-            let end = Math.min(lastPage, start + maxPagesToShow - 1);
-
-            if (end - start < maxPagesToShow - 1) {
-              start = Math.max(1, end - maxPagesToShow + 1);
-            }
-
-            // Trang đầu
-            if (start > 1) {
-              pages.push(
-                <button
-                  key={1}
-                  onClick={() => goToPage(1)}
-                  className={`px-3 py-1 rounded-full transition ${currentPage === 1
-                      ? "bg-indigo-600 text-white shadow"
-                      : "bg-gray-200 hover:bg-gray-300"
-                    }`}
-                >
-                  1
-                </button>
-              );
-
-              if (start > 2) {
-                pages.push(
-                  <span key="dots-start" className="px-2 text-gray-500">
-                    ...
-                  </span>
-                );
-              }
-            }
-
-            // Các trang ở giữa
-            for (let i = start; i <= end; i++) {
-              pages.push(
-                <button
-                  key={i}
-                  onClick={() => goToPage(i)}
-                  className={`px-3 py-1 rounded-full transition ${currentPage === i
-                      ? "bg-indigo-600 text-white shadow"
-                      : "bg-gray-200 hover:bg-gray-300"
-                    }`}
-                >
-                  {i}
-                </button>
-              );
-            }
-
-            // Trang cuối
-            if (end < lastPage) {
-              if (end < lastPage - 1) {
-                pages.push(
-                  <span key="dots-end" className="px-2 text-gray-500">
-                    ...
-                  </span>
-                );
-              }
-
-              pages.push(
-                <button
-                  key={lastPage}
-                  onClick={() => goToPage(lastPage)}
-                  className={`px-3 py-1 rounded-full transition ${currentPage === lastPage
-                      ? "bg-indigo-600 text-white shadow"
-                      : "bg-gray-200 hover:bg-gray-300"
-                    }`}
-                >
-                  {lastPage}
-                </button>
-              );
-            }
-
-            return pages;
-          })()}
-
-          {/* Nút Sau */}
-          <button
-            onClick={() => goToPage(currentPage + 1)}
-            disabled={currentPage === lastPage}
-            className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded-full hover:bg-gray-300 disabled:opacity-50"
-          >
-            Sau <FaArrowRight />
-          </button>
-        </div>
-      )}
-
     </div>
   );
 };

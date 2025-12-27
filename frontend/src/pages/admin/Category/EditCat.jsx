@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "react-toastify";
 import apiCategory from "../../../api/apiCategory";
-import { imageURL } from "../../../api/config";
+import apiUpload from "../../../api/apiUpload";
 
 const EditCat = () => {
   const navigate = useNavigate();
@@ -113,7 +114,7 @@ const EditCat = () => {
     }
   };
 
-  if (loading) return <p className="p-4">Đang tải dữ liệu...</p>;
+  if (loading) return <p className="p-6">Đang tải dữ liệu...</p>;
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -128,7 +129,7 @@ const EditCat = () => {
         </button>
       </div>
 
-      {/* Form */}
+      {/* FORM */}
       <div className="p-6">
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

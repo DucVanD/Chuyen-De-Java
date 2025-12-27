@@ -27,15 +27,20 @@ import AddTopic from "../pages/admin/Topic/Addtopic";
 
 // brand
 import ListBrand from "../pages/admin/Brand/listBrand";
+import AddBrand from "../pages/admin/Brand/AddBrand";
+import EditBrand from "../pages/admin/Brand/EditBrand";
 
 // order
 import listOrder from "../pages/admin/Order/listOrder";
 import EditOrder from "../pages/admin/Order/EditOrder";
 import OrderDetail from "../pages/admin/Order/detailOrder";
 
+
 // user
 import ListUser from "../pages/admin/UserAdmin/ListUser";
 import UserDetail from "../pages/admin/UserAdmin/UserDetail";
+import AddUser from "../pages/admin/UserAdmin/AddUser";
+import EditUser from "../pages/admin/UserAdmin/EditUser";
 
 // inventory
 import Inventory from "../pages/admin/Inventory/ListInventory";
@@ -44,7 +49,13 @@ import FormXuatKho from "../pages/admin/Inventory/FormXuatKho";
 import FormDieuChinh from "../pages/admin/Inventory/FormDieuChinh";
 
 // employee 
-import EmployeeManagement from "../pages/admin/EmployeeManagement/EmployeeManagement";
+import EmployeeManagement from "../pages/admin/EmployeeManagement/ListEmployee";
+
+// Supplier
+import ListSupplier from "../pages/admin/Supplier/ListSupplier";
+import AddSupplier from "../pages/admin/Supplier/AddSupplier";
+import EditSupplier from "../pages/admin/Supplier/EditSupplier";
+
 
 // định nghĩa các route cho trang admin
 const AdminRoute = [
@@ -53,7 +64,7 @@ const AdminRoute = [
 
   // category
   // { path: "categories/:page?", component: ListCat },
-    { path: "categories", component: ListCat },
+  { path: "categories", component: ListCat },
 
   { path: "addCat", component: AddCat },
   { path: "delCat", component: DelCat },
@@ -78,7 +89,8 @@ const AdminRoute = [
 
   // brand
   { path: "brands/:page?", component: ListBrand },
-
+  { path: "brand/create", component: AddBrand },
+  { path: "brand/Edit/:id", component: EditBrand },
   // order
   { path: "orders/:page?", component: listOrder },
   { path: "editOrder/:id", component: EditOrder },
@@ -87,10 +99,15 @@ const AdminRoute = [
   // user
   { path: "users/:page?", component: ListUser },
   { path: "userDetail/:id", component: UserDetail },
+  { path: "user/createUser", component: AddUser },
+  { path: "user/EditUser/:id", component: EditUser },
 
   // employee 
   { path: "employees", component: EmployeeManagement },
-
+//supplier
+  { path: "suppliers/:page?", component: ListSupplier },
+  { path: "supplier/create", component: AddSupplier },
+  { path: "supplier/Edit/:id", component: EditSupplier },
   // inventory
   { path: "inventory", component: Inventory },
   { path: "inventory/import", component: FormNhapKho },

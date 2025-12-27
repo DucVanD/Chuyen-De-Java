@@ -1,269 +1,172 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
-import {
-  FaEye,
-  FaEdit,
-  FaTrash,
-  FaToggleOn,
-  FaToggleOff,
-  FaPlus,
-} from "react-icons/fa";
-import { imageURL } from "../../../api/config";
+import { FaEdit, FaTrash, FaToggleOn, FaToggleOff, FaPlus } from "react-icons/fa";
 import apiUser from "../../../api/apiUser";
 
+const roleColor = {
+  CUSTOMER: "bg-green-100 text-green-700",
+};
+
 const ListUser = () => {
-  const { page } = useParams();
-  const navigate = useNavigate();
-
   const [users, setUsers] = useState([]);
-  const [currentPage, setCurrentPage] = useState(Number(page) || 1);
-  const [lastPage, setLastPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const location = useLocation(); // Lấy đường dẫn hiện tại để back về
 
-  // ✅ Lấy danh sách người dùng theo trang
-  const fetchUsers = async (page = 1) => {
+  /* ======================
+      FETCH USERS
+  ====================== */
+  const fetchUsers = async () => {
+    setLoading(true);
     try {
-      const res = await apiUser.getAllPage(page);
-      if (res.status) {
-        setUsers(res.data.data);
-        setCurrentPage(res.data.current_page);
-        setLastPage(res.data.last_page);
-      } else {
-        toast.error("Không thể tải danh sách người dùng!");
-      }
+      const data = await apiUser.getAll();
+      // Lọc lấy CUSTOMER
+      const customers = data.filter((u) => u.role === "CUSTOMER");
+      setUsers(customers);
     } catch (err) {
-      console.error("Lỗi khi tải danh sách user:", err);
-      toast.error("Không thể tải danh sách người dùng!");
+      toast.error("Không thể tải danh sách khách hàng");
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchUsers(Number(page) || 1);
-  }, [page]);
+    fetchUsers();
+  }, []);
 
-  // ✅ Chuyển trang
-  const goToPage = (pageNumber) => {
-    if (pageNumber >= 1 && pageNumber <= lastPage) {
-      navigate(`/admin/users/${pageNumber}`);
-    }
-  };
-
-  // ✅ Toggle trạng thái
-  const handleToggleStatus = async (id) => {
+  /* ======================
+      TOGGLE STATUS
+  ====================== */
+  const handleToggleStatus = async (user) => {
     try {
-      const res = await apiUser.toggleStatus(id);
-      if (res.status) {
-        toast.success(res.message);
-        fetchUsers(currentPage);
+      if (user.status === 1) {
+        await apiUser.lock(user.id);
+        toast.success("Đã khóa khách hàng");
       } else {
-        toast.error(res.message);
+        await apiUser.unlock(user.id);
+        toast.success("Đã mở khóa khách hàng");
       }
-    } catch (err) {
-      console.error(err);
-      toast.error("Không thể cập nhật trạng thái người dùng!");
-    }
-  };
-
-  // ✅ Xóa người dùng
-  const handleDelete = async (id) => {
-    if (!window.confirm("Bạn có chắc muốn xóa người dùng này không?")) return;
-    try {
-      const res = await apiUser.delete(id);
-      if (res.status) {
-        toast.success(res.message);
-        fetchUsers(currentPage);
-      } else {
-        toast.error(res.message);
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error(err.response?.data?.message || "Xóa người dùng thất bại!");
+      fetchUsers();
+    } catch {
+      toast.error("Lỗi cập nhật trạng thái");
     }
   };
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      {/* Header */}
-      <div className="p-6 flex flex-col sm:flex-row justify-between items-center border-b border-gray-200">
-        <h3 className="text-2xl font-semibold text-gray-800 mb-3 sm:mb-0">
-          Danh sách thành viên
-        </h3>
-        <div className="flex space-x-3">
-          <Link
-            to="/admin/user/create"
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded flex items-center transition duration-200"
-          >
-            <FaPlus className="mr-2" /> Thêm mới
-          </Link>
-          <Link
-            to="/admin/user/trash"
-            className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded flex items-center transition duration-200"
-          >
-            <FaTrash className="mr-2" /> Thùng rác
-          </Link>
-        </div>
+      {/* HEADER */}
+      <div className="p-6 flex justify-between items-center border-b">
+        <h3 className="text-2xl font-semibold text-gray-800">Danh sách khách hàng</h3>
+        <Link 
+          to="/admin/user/createUser" 
+          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded flex items-center shadow-sm transition-all"
+        >
+          <FaPlus className="mr-2" /> Thêm khách hàng
+        </Link>
       </div>
 
-      {/* Table */}
+      {/* CONTENT */}
       <div className="p-6">
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-center">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ID
-                </th>
-                <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Ảnh đại diện
-                </th>
-                <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Họ tên / Liên hệ
-                </th>
-                <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Tài khoản / Địa chỉ
-                </th>
-                <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Trạng thái
-                </th>
-                <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Chức năng
-                </th>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-gray-200 text-center">
-              {users.length > 0 ? (
-                users.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm text-gray-900">
-                      {user.id}
-                    </td>
-
-                    {/* Ảnh đại diện */}
-                    <td className="px-4 py-3 flex justify-center">
-                      <img
-                        className="h-14 w-14 object-cover rounded-full border border-gray-200"
-                        src={`${imageURL}/avatar/${user.avatar}?v=${
-                          user.updated_at || Date.now()
-                        }`}
-                        alt={user.name}
-                      />
-                    </td>
-
-                    {/* Họ tên + Liên hệ */}
-                    <td className="px-4 py-3 text-sm text-gray-800">
-                      <div className="font-medium text-gray-900">
-                        {user.name}
-                      </div>
-                      <div className="text-gray-500 text-sm">{user.email}</div>
-                      <div className="text-gray-500 text-sm">{user.phone}</div>
-                    </td>
-
-                    {/* Tài khoản + địa chỉ */}
-                    <td className="px-4 py-3 text-sm text-gray-800">
-                      <div className="text-gray-900">{user.username}</div>
-                      <div className="text-gray-500 text-sm truncate max-w-xs">
-                        {user.address}
-                      </div>
-                    </td>
-
-                    {/* Trạng thái */}
-                    <td className="px-4 py-3">
-                      {user.status ? (
-                        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                          Hoạt động
+        {loading ? (
+          <p className="text-center text-gray-500 py-10">Đang tải dữ liệu...</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border-collapse text-center">
+              <thead>
+                <tr className="bg-gray-50 border-b text-gray-700 uppercase text-xs tracking-wider">
+                  <th className="py-3 px-4">ID</th>
+                  <th className="py-3 px-4">Avatar</th>
+                  <th className="py-3 px-4 text-left">Họ tên</th>
+                  <th className="py-3 px-4">Email</th>
+                  <th className="py-3 px-4">SĐT</th>
+                  <th className="py-3 px-4">Vai trò</th>
+                  <th className="py-3 px-4">Trạng thái</th>
+                  <th className="py-3 px-4">Hành động</th>
+                </tr>
+              </thead>
+              
+              <tbody className="divide-y divide-gray-200">
+                {users.length > 0 ? (
+                  users.map((user) => (
+                    <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="py-3 px-4 text-gray-500">{user.id}</td>
+                      
+                      {/* AVATAR */}
+                      <td className="py-3 px-4">
+                        <img 
+                          src={user.avatar || "https://placehold.co/40"} 
+                          alt={user.name} 
+                          className="w-10 h-10 rounded-full mx-auto object-cover border border-gray-200" 
+                        />
+                      </td>
+                      
+                      <td className="py-3 px-4 text-left font-medium text-gray-900">{user.name}</td>
+                      <td className="py-3 px-4 text-gray-600">{user.email}</td>
+                      <td className="py-3 px-4 text-gray-600">{user.phone}</td>
+                      
+                      {/* ROLE */}
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-1 text-xs font-semibold rounded ${roleColor[user.role]}`}>
+                          {user.role}
                         </span>
-                      ) : (
-                        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-200 text-gray-700">
-                          Ẩn
-                        </span>
-                      )}
-                    </td>
+                      </td>
 
-                    {/* Hành động */}
-                    <td>
-                      <div className="flex items-center justify-center space-x-3">
-                        <Link
-                          to="#"
-                          onClick={() => handleToggleStatus(user.id)}
-                          className="text-green-500 hover:text-green-700"
-                        >
-                          {user.status ? (
-                            <FaToggleOn className="text-xl" />
-                          ) : (
-                            <FaToggleOff className="text-xl" />
-                          )}
-                        </Link>
+                      {/* STATUS */}
+                      <td className="py-3 px-4">
+                        {user.status === 1 ? (
+                          <span className="px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-700">
+                            Hoạt động
+                          </span>
+                        ) : (
+                          <span className="px-2 py-1 text-xs font-semibold rounded bg-gray-200 text-gray-700">
+                            Khóa
+                          </span>
+                        )}
+                      </td>
 
-                        <Link
-                          to={`/admin/userDetail/${user.id}`}
-                          className="text-indigo-500 hover:text-indigo-700"
-                        >
-                          <FaEye className="text-lg" />
-                        </Link>
+                      {/* ACTIONS */}
+                      <td className="py-3 px-4">
+                        <div className="flex justify-center items-center space-x-3">
+                          <button 
+                            onClick={() => handleToggleStatus(user)} 
+                            className="text-green-600 hover:text-green-800 transition-colors"
+                            title={user.status === 1 ? "Khóa" : "Mở khóa"}
+                          >
+                            {user.status === 1 ? <FaToggleOn size={20} /> : <FaToggleOff size={20} />}
+                          </button>
+                          
+                          {/* EDIT with STATE */}
+                          <Link 
+                            to={`/admin/user/editUser/${user.id}`} 
+                            state={{ from: location.pathname }}
+                            className="text-blue-600 hover:text-blue-800 transition-colors"
+                            title="Chỉnh sửa"
+                          >
+                            <FaEdit size={18} />
+                          </Link>
 
-                        <Link
-                          onClick={() =>
-                            localStorage.setItem("currentUserPage", currentPage)
-                          }
-                          to={`/admin/user/edit/${user.id}`}
-                          className="text-blue-500 hover:text-blue-700"
-                        >
-                          <FaEdit className="text-lg" />
-                        </Link>
-
-                        <Link
-                          to="#"
-                          onClick={() => handleDelete(user.id)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <FaTrash className="text-lg" />
-                        </Link>
-                      </div>
+                          <button 
+                            onClick={() => toast.info("Chưa hỗ trợ xóa")} 
+                            className="text-red-600 hover:text-red-800 transition-colors"
+                            title="Xóa"
+                          >
+                            <FaTrash size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="8" className="py-10 text-center text-gray-400 italic">
+                      Chưa có khách hàng nào
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="6" className="text-center py-6 text-gray-500">
-                    Không có người dùng nào.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-
-          {/* Pagination */}
-          <div className="flex justify-center mt-4 space-x-2">
-            <button
-              onClick={() => goToPage(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
-            >
-              Trước
-            </button>
-            {Array.from({ length: lastPage }, (_, i) => (
-              <button
-                key={i}
-                onClick={() => goToPage(i + 1)}
-                className={`px-3 py-1 rounded ${
-                  currentPage === i + 1
-                    ? "bg-indigo-600 text-white"
-                    : "bg-gray-200 hover:bg-gray-300"
-                }`}
-              >
-                {i + 1}
-              </button>
-            ))}
-            <button
-              onClick={() => goToPage(currentPage + 1)}
-              disabled={currentPage === lastPage}
-              className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
-            >
-              Sau
-            </button>
+                )}
+              </tbody>
+            </table>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

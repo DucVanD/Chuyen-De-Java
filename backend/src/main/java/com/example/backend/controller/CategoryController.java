@@ -2,6 +2,9 @@ package com.example.backend.controller;
 
 import com.example.backend.dto.CategoryDto;
 import com.example.backend.service.CategoryService;
+
+import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,8 +41,7 @@ public class CategoryController {
     @PutMapping("/{id}")
     public CategoryDto update(
             @PathVariable Integer id,
-            @RequestBody CategoryDto dto
-    ) {
+            @RequestBody CategoryDto dto) {
         return categoryService.update(id, dto);
     }
 
@@ -50,9 +52,16 @@ public class CategoryController {
     }
 
     // ✅ BULK CREATE
-@PostMapping("/bulk")
-public List<CategoryDto> bulkCreate(@RequestBody List<CategoryDto> dtos) {
-    return categoryService.bulkCreate(dtos);
-}
+    @PostMapping("/bulk")
+    public List<CategoryDto> bulkCreate(@RequestBody List<CategoryDto> dtos) {
+        return categoryService.bulkCreate(dtos);
+    }
+
+    @GetMapping("/page")
+    public ResponseEntity<Page<CategoryDto>> getPage(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "8") int size) {
+        return ResponseEntity.ok(categoryService.getPage(page, size));
+    }
 
 }

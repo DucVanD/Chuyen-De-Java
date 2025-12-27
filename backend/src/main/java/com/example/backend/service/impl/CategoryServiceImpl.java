@@ -5,6 +5,14 @@ import com.example.backend.entity.Category;
 import com.example.backend.mapper.CategoryMapper;
 import com.example.backend.repository.CategoryRepository;
 import com.example.backend.service.CategoryService;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+
+
+
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -122,6 +130,17 @@ public CategoryDto create(CategoryDto dto) {
                 .stream()
                 .map(CategoryMapper::todto)
                 .toList();
+    }
+
+    @Override
+    public Page<CategoryDto> getPage(int page, int size) {
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by("id").descending());
+
+        return categoryRepository.findAll(pageable)
+                .map(CategoryMapper::todto);
     }
 
 }

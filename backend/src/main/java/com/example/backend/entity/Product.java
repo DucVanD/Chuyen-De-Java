@@ -25,6 +25,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import org.springframework.data.annotation.LastModifiedBy;
+
 @Entity
 @Table(name = "products")
 @Data
@@ -53,7 +54,7 @@ public class Product {
     private String slug;
 
     private String image;
-
+    private String imagePublicId;
     @Column(length = 500, nullable = false)
     private String description;
 
@@ -64,7 +65,7 @@ public class Product {
     private Integer qty = 0;
 
     @Builder.Default
-    @Column(name = "locked_qty", nullable = false)
+    @Column(name = "locked_qty", nullable = true)
     private Integer lockedQty = 0; // Hàng đang giữ chờ thanh toán
 
     @Column(name = "cost_price", nullable = false)

@@ -33,6 +33,9 @@ public class Brand {
     @Column(length = 100)
     private String country;
 
+    @Builder.Default
+    private Integer status = 1; // 1: Active, 0: Hidden
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

@@ -72,7 +72,7 @@ const HistoryBought = () => {
       );
       const params = new URLSearchParams({ page: pageNum, ...activeFilters }).toString();
 
-      const res = await apiUser.getUserIdWithParams(userId, params);
+      const res = await apiUser.all(userId, params);
       setUserData(res.status ? res.data : null);
     } catch (err) {
       console.error("❌ Lỗi khi lấy lịch sử:", err);
