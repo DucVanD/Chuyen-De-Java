@@ -45,25 +45,26 @@ public class CategoryServiceImpl implements CategoryService {
         return CategoryMapper.todto(category);
     }
 
-    @Override
-    public CategoryDto create(CategoryDto dto) {
-        Objects.requireNonNull(dto, "CategoryDto must not be null");
+   @Override
+public CategoryDto create(CategoryDto dto) {
+    Objects.requireNonNull(dto, "CategoryDto must not be null");
 
-        Category category = CategoryMapper.toEntity(dto);
+    Category category = CategoryMapper.toEntity(dto);
 
-        // ✅ XỬ LÝ PARENT ID (QUAN TRỌNG)
-        if (dto.getParentId() != null) {
+    // ✅ XỬ LÝ PARENT ID (QUAN TRỌNG)
+    if (dto.getParentId() != null) {
 
-            Category parent = categoryRepository
-                    .findById(dto.getParentId())
-                    .orElseThrow(() -> new RuntimeException("Parent category not found"));
+        Category parent = categoryRepository
+                .findById(dto.getParentId())
+                .orElseThrow(() -> new RuntimeException("Parent category not found"));
 
-            category.setParent(parent);
-        }
-
-        Category saved = categoryRepository.save(category);
-        return CategoryMapper.todto(saved);
+        category.setParent(parent);
     }
+
+    Category saved = categoryRepository.save(category);
+    return CategoryMapper.todto(saved);
+}
+
 
     @Override
     public CategoryDto update(Integer id, CategoryDto dto) {

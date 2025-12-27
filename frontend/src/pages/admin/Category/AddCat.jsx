@@ -10,16 +10,14 @@ const AddCat = () => {
 
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
 
-  // ✅ STATE CHUẨN DTO SPRING + IMAGE
+  // ✅ STATE CHUẨN DTO SPRING
   const [formData, setFormData] = useState({
     name: "",
     slug: "",
     description: "",
     parentId: null,
-    status: 1,
-    image: ""
+    status: 1
   });
 
   /* ===============================
@@ -53,7 +51,7 @@ const AddCat = () => {
       .replace(/-+$/, "");
 
   /* ===============================
-      HANDLE CHANGE
+      HANDLE CHANGE (FIX QUAN TRỌNG)
   =============================== */
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -63,7 +61,7 @@ const AddCat = () => {
         ...prev,
         [name]:
           name === "parentId"
-            ? value === "" ? null : Number(value)
+            ? value === "" ? null : Number(value) // ✅ ÉP KIỂU TẠI ĐÂY
             : value
       };
 
@@ -76,30 +74,7 @@ const AddCat = () => {
   };
 
   /* ===============================
-      UPLOAD IMAGE (CLOUDINARY)
-  =============================== */
-  const handleUploadImage = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    setUploading(true);
-    try {
-      const imageUrl = await apiUpload.uploadCategoryImage(file);
-      setFormData((prev) => ({
-        ...prev,
-        image: imageUrl
-      }));
-      toast.success("✅ Upload ảnh thành công");
-    } catch (err) {
-      console.error(err);
-      toast.error("❌ Upload ảnh thất bại");
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  /* ===============================
-      SUBMIT
+      SUBMIT (JSON)
   =============================== */
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -111,8 +86,7 @@ const AddCat = () => {
         slug: formData.slug,
         description: formData.description,
         status: Number(formData.status),
-        parentId: formData.parentId,
-        image: formData.image // ✅ GỬI URL CLOUDINARY
+        parentId: formData.parentId // ✅ ĐÃ LÀ number | null
       };
 
       console.log("PAYLOAD GỬI LÊN:", payload);
@@ -175,27 +149,7 @@ const AddCat = () => {
                   className="w-full border p-2 mb-4"
                 />
 
-                <label className="block mb-2">Ảnh danh mục</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleUploadImage}
-                  className="w-full border p-2 mb-4"
-                />
-
-                {uploading && (
-                  <p className="text-sm text-blue-600">⏳ Đang upload ảnh...</p>
-                )}
-
-                {formData.image && (
-                  <img
-                    src={formData.image}
-                    alt="preview"
-                    className="w-32 mt-2 rounded border"
-                  />
-                )}
-
-                <label className="block mt-4 mb-2">Trạng thái</label>
+                <label className="block mb-2">Trạng thái</label>
                 <select
                   name="status"
                   value={formData.status}
@@ -226,7 +180,7 @@ const AddCat = () => {
 
                 <button
                   type="submit"
-                  disabled={loading || uploading}
+                  disabled={loading}
                   className="w-full mt-6 bg-indigo-600 text-white py-2 rounded"
                 >
                   {loading ? "Đang thêm..." : "Thêm danh mục"}
