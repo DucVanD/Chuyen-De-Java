@@ -25,6 +25,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import org.springframework.data.annotation.LastModifiedBy;
+
 @Entity
 @Table(name = "products")
 @Data
@@ -53,7 +54,7 @@ public class Product {
     private String slug;
 
     private String image;
-
+    private String imagePublicId;
     @Column(length = 500, nullable = false)
     private String description;
 

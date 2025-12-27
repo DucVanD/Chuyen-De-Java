@@ -49,7 +49,7 @@ import FormXuatKho from "../pages/admin/Inventory/FormXuatKho";
 import FormDieuChinh from "../pages/admin/Inventory/FormDieuChinh";
 
 // employee 
-import EmployeeManagement from "../pages/admin/EmployeeManagement/EmployeeManagement";
+import EmployeeManagement from "../pages/admin/EmployeeManagement/ListEmployee";
 
 // Supplier
 import ListSupplier from "../pages/admin/Supplier/ListSupplier";

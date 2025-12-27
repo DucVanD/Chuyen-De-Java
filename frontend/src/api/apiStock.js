@@ -1,20 +1,20 @@
-import axios from "axios";
-import { apiURL } from "./config";
+import axiosInstance from "./axios";
 
 const apiStock = {
-  // ✅ thêm { params } để truyền query string lên Laravel
-  getAll: (params = {}) => axios.get(`${apiURL}/stock`, { params }),
+  // Danh sách biến động kho
+  getAll: () =>
+    axiosInstance.get("/stock-movements").then(res => res.data),
 
-  // Nhập kho
-  import: (data) => axios.post(`${apiURL}/inventory/import`, data),
+  // Tạo biến động kho (IN / OUT / RETURN / ADJUSTMENT)
+  create: (data) =>
+    axiosInstance.post("/stock-movements", data).then(res => res.data),
 
-  // Xuất kho
-  export: (data) => axios.post(`${apiURL}/inventory/export`, data),
+  getLastImportPrice: (productId) =>
+    axiosInstance
+      .get(`/stock-movements/last-import-price/${productId}`)
+      .then(res => res.data),
 
-  // Điều chỉnh kho
-  adjust: (data) => axios.post(`${apiURL}/inventory/adjust`, data),
-  // tra hang
-  return: (data) => axios.post(`${apiURL}/inventory/return`, data),
 };
+
 
 export default apiStock;

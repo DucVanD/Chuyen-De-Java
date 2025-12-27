@@ -49,23 +49,23 @@ const Home = () => {
   const [saleProducts, setProductSale] = useState([]);
   const navigate = useNavigate();
   const handleAddToCart = useAddToCart();
-  useEffect(() => {
-    apiProduct
-      .getNewest()
-      .then((res) => setProductNew(res.data || []))
-      .catch((err) => console.error("Lỗi khi lấy sản phẩm mới:", err));
-  }, []);
+  // useEffect(() => {
+  //   apiProduct
+  //     .getNewest()
+  //     .then((res) => setProductNew(res.data || []))
+  //     .catch((err) => console.error("Lỗi khi lấy sản phẩm mới:", err));
+  // }, []);
 
-  useEffect(() => {
-    apiCategory
-      .getAll()
-      .then((res) => setcategorys(res.data.data || []))
-      .catch((err) => console.error("Lỗi khi lấy danh muc:", err));
-  }, []);
+  // useEffect(() => {
+  //   apiCategory
+  //     .getAll()
+  //     .then((res) => setcategorys(res.data.data || []))
+  //     .catch((err) => console.error("Lỗi khi lấy danh muc:", err));
+  // }, []);
 
-  useEffect(() => {
-    apiProduct.getSaleDiscount().then((res) => setProductSale(res.data || []));
-  }, []);
+  // useEffect(() => {
+  //   apiProduct.getSaleDiscount().then((res) => setProductSale(res.data || []));
+  // }, []);
 
   const [countdown, setCountdown] = useState({
     days: 5,
@@ -106,32 +106,32 @@ const Home = () => {
 
   const [producsCat, setProductsCat] = useState([]);
 
-  useEffect(() => {
-    const fetchProductsByCategory = async () => {
-      try {
-        const res = await apiProduct.categoryhome();
-        console.log("Data từ API:", res.data);
-        setProductsCat(res.data || []);
-      } catch (err) {
-        console.error("Lỗi khi lấy sản phẩm theo danh mục:", err);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchProductsByCategory = async () => {
+  //     try {
+  //       const res = await apiProduct.categoryhome();
+  //       console.log("Data từ API:", res.data);
+  //       setProductsCat(res.data || []);
+  //     } catch (err) {
+  //       console.error("Lỗi khi lấy sản phẩm theo danh mục:", err);
+  //     }
+  //   };
 
-    fetchProductsByCategory();
-  }, []); // ⚠️ RẤT QUAN TRỌNG: [] để chỉ chạy 1 lần
+  //   fetchProductsByCategory();
+  // }, []); // ⚠️ RẤT QUAN TRỌNG: [] để chỉ chạy 1 lần
 
   const [Brands, setBrands] = useState([]);
-  useEffect(() => {
-    const fetchBrands = async () => {
-      try {
-        const res = await apiBrand.getAll();
-        setBrands(res.data.data || []);
-      } catch (err) {
-        console.error("Lỗi khi lấy thương hiệu:", err);
-      }
-    };
-    fetchBrands();
-  }, []);
+  // useEffect(() => {
+  //   const fetchBrands = async () => {
+  //     try {
+  //       const res = await apiBrand.getAll();
+  //       setBrands(res.data.data || []);
+  //     } catch (err) {
+  //       console.error("Lỗi khi lấy thương hiệu:", err);
+  //     }
+  //   };
+  //   fetchBrands();
+  // }, []);
 
 
 

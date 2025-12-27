@@ -20,7 +20,7 @@ public class BrandDto {
     private String image;
     private String description;
     private String country;
-
+    private Integer status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;

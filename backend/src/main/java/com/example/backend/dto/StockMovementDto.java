@@ -21,7 +21,7 @@ public class StockMovementDto {
     private Integer productId;
     private Integer supplierId;
     private Integer orderId;
-
+    private String productName;
     private StockMovementType movementType;
 
     private Integer quantity;

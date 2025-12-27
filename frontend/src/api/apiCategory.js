@@ -1,6 +1,13 @@
 import axiosInstance from "./axios";
 
 const apiCategory = {
+  getPage: (page = 0, size = 8) =>
+    axiosInstance
+      .get("/categories/page", {
+        params: { page, size }
+      })
+      .then(res => res.data),
+
   getAll: async () => {
     const res = await axiosInstance.get("/categories");
     return res.data;

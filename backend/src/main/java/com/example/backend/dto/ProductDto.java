@@ -22,6 +22,7 @@ public class ProductDto {
     private String name;
     private String slug;
     private String image;
+    private String imagePublicId;
     private String description;
     private String detail;
 

@@ -3,6 +3,9 @@ package com.example.backend.service;
 import com.example.backend.dto.CategoryDto;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+
+
 public interface CategoryService {
 
     List<CategoryDto> getAll();
@@ -14,6 +17,9 @@ public interface CategoryService {
     CategoryDto update(Integer id, CategoryDto dto);
 
     void delete(Integer id);
+
     List<CategoryDto> bulkCreate(List<CategoryDto> dtos);
+
+    Page<CategoryDto> getPage(int page, int size);
 
 }

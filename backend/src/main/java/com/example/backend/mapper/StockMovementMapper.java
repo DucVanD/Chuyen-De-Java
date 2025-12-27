@@ -10,11 +10,13 @@ public class StockMovementMapper {
 
     // Entity → DTO
     public static StockMovementDto toDto(StockMovement entity) {
-        if (entity == null) return null;
+        if (entity == null)
+            return null;
 
         return StockMovementDto.builder()
                 .id(entity.getId())
                 .productId(entity.getProduct() != null ? entity.getProduct().getId() : null)
+                .productName(entity.getProduct().getName())
                 .supplierId(entity.getSupplier() != null ? entity.getSupplier().getId() : null)
                 .orderId(entity.getOrder() != null ? entity.getOrder().getId() : null)
                 .movementType(entity.getMovementType())
@@ -32,9 +34,9 @@ public class StockMovementMapper {
             StockMovementDto dto,
             Product product,
             Supplier supplier,
-            Order order
-    ) {
-        if (dto == null) return null;
+            Order order) {
+        if (dto == null)
+            return null;
 
         return StockMovement.builder()
                 .product(product)
@@ -43,7 +45,6 @@ public class StockMovementMapper {
                 .movementType(dto.getMovementType())
                 .quantity(dto.getQuantity())
                 .unitPrice(dto.getUnitPrice())
-                .currentStock(dto.getCurrentStock())
                 .note(dto.getNote())
                 .build();
     }

@@ -1,4 +1,5 @@
 import apiCategory from "../../../api/apiCategory";
+import apiUpload from "../../../api/apiUpload";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
@@ -9,14 +10,16 @@ const AddCat = () => {
 
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
-  // ✅ STATE CHUẨN DTO SPRING
+  // ✅ STATE CHUẨN DTO SPRING + IMAGE
   const [formData, setFormData] = useState({
     name: "",
     slug: "",
     description: "",
     parentId: null,
-    status: 1
+    status: 1,
+    image: ""
   });
 
   /* ===============================
@@ -50,7 +53,7 @@ const AddCat = () => {
       .replace(/-+$/, "");
 
   /* ===============================
-      HANDLE CHANGE (FIX QUAN TRỌNG)
+      HANDLE CHANGE
   =============================== */
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -60,7 +63,7 @@ const AddCat = () => {
         ...prev,
         [name]:
           name === "parentId"
-            ? value === "" ? null : Number(value) // ✅ ÉP KIỂU TẠI ĐÂY
+            ? value === "" ? null : Number(value)
             : value
       };
 
@@ -73,7 +76,30 @@ const AddCat = () => {
   };
 
   /* ===============================
-      SUBMIT (JSON)
+      UPLOAD IMAGE (CLOUDINARY)
+  =============================== */
+  const handleUploadImage = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const imageUrl = await apiUpload.uploadCategoryImage(file);
+      setFormData((prev) => ({
+        ...prev,
+        image: imageUrl
+      }));
+      toast.success("✅ Upload ảnh thành công");
+    } catch (err) {
+      console.error(err);
+      toast.error("❌ Upload ảnh thất bại");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  /* ===============================
+      SUBMIT
   =============================== */
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -85,7 +111,8 @@ const AddCat = () => {
         slug: formData.slug,
         description: formData.description,
         status: Number(formData.status),
-        parentId: formData.parentId // ✅ ĐÃ LÀ number | null
+        parentId: formData.parentId,
+        image: formData.image // ✅ GỬI URL CLOUDINARY
       };
 
       console.log("PAYLOAD GỬI LÊN:", payload);
@@ -109,7 +136,7 @@ const AddCat = () => {
         <div className="p-6 flex justify-between items-center border-b">
           <h3 className="text-2xl font-semibold">Thêm danh mục</h3>
           <Link
-            to="/admin/categories/1"
+            to="/admin/categories"
             className="bg-indigo-600 text-white px-4 py-2 rounded"
           >
             ← Về danh sách
@@ -148,7 +175,27 @@ const AddCat = () => {
                   className="w-full border p-2 mb-4"
                 />
 
-                <label className="block mb-2">Trạng thái</label>
+                <label className="block mb-2">Ảnh danh mục</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleUploadImage}
+                  className="w-full border p-2 mb-4"
+                />
+
+                {uploading && (
+                  <p className="text-sm text-blue-600">⏳ Đang upload ảnh...</p>
+                )}
+
+                {formData.image && (
+                  <img
+                    src={formData.image}
+                    alt="preview"
+                    className="w-32 mt-2 rounded border"
+                  />
+                )}
+
+                <label className="block mt-4 mb-2">Trạng thái</label>
                 <select
                   name="status"
                   value={formData.status}
@@ -179,7 +226,7 @@ const AddCat = () => {
 
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || uploading}
                   className="w-full mt-6 bg-indigo-600 text-white py-2 rounded"
                 >
                   {loading ? "Đang thêm..." : "Thêm danh mục"}

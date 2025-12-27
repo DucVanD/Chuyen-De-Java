@@ -16,6 +16,7 @@ public class BrandMapper {
                 .image(brand.getImage())
                 .description(brand.getDescription())
                 .country(brand.getCountry())
+                .status(brand.getStatus())
                 .createdAt(brand.getCreatedAt())
                 .updatedAt(brand.getUpdatedAt())
                 .deletedAt(brand.getDeletedAt())
@@ -30,6 +31,7 @@ public class BrandMapper {
                 .name(dto.getName())
                 .slug(dto.getSlug())
                 .image(dto.getImage())
+                .status(dto.getStatus())
                 .description(dto.getDescription())
                 .country(dto.getCountry())
                 .build();

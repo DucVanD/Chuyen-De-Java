@@ -15,4 +15,8 @@ public interface ProductService {
     ProductDto update(Integer id, ProductDto dto);
 
     void delete(Integer id);
+
+    List<ProductDto> search(String keyword);
+List<ProductDto> filter(Integer categoryId, Integer status);
+
 }

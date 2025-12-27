@@ -5,6 +5,7 @@ import com.example.backend.service.StockMovementService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -31,4 +32,12 @@ public class StockMovementController {
     public ResponseEntity<StockMovementDto> create(@RequestBody StockMovementDto dto) {
         return ResponseEntity.ok(stockMovementService.create(dto));
     }
+
+    @GetMapping("/last-import-price/{productId}")
+    public ResponseEntity<BigDecimal> getLastImportPrice(
+            @PathVariable Integer productId) {
+        return ResponseEntity.ok(
+                stockMovementService.getLastImportPrice(productId));
+    }
+
 }

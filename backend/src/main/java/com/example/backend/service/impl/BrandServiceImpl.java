@@ -52,6 +52,7 @@ public class BrandServiceImpl implements BrandService {
         brand.setImage(dto.getImage());
         brand.setDescription(dto.getDescription());
         brand.setCountry(dto.getCountry());
+        brand.setStatus(dto.getStatus());
 
         Brand updated = brandRepository.save(brand);
         return BrandMapper.toDto(updated);
