@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import apiUser from "../../../api/apiUser";
+import apiUser from "../../../api/user/apiUser";
 import {
   FaEdit,
   FaTrash,

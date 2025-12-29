@@ -1,5 +1,5 @@
 import { useState } from "react";
-import apiStock from "../../../api/apiStock";
+import apiStock from "../../../api/user/apiStock";
 import { toast } from "react-toastify";
 
 const FormXuatKho = () => {

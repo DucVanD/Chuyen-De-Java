@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import apiSupplier from "../../../api/apiSupplier";
+import apiSupplier from "../../../api/user/apiSupplier";
 
 const EditSupplier = () => {
   const { id } = useParams();

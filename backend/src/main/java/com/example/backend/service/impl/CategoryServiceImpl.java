@@ -11,8 +11,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
-
-
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -45,26 +43,25 @@ public class CategoryServiceImpl implements CategoryService {
         return CategoryMapper.todto(category);
     }
 
-   @Override
-public CategoryDto create(CategoryDto dto) {
-    Objects.requireNonNull(dto, "CategoryDto must not be null");
+    @Override
+    public CategoryDto create(CategoryDto dto) {
+        Objects.requireNonNull(dto, "CategoryDto must not be null");
 
-    Category category = CategoryMapper.toEntity(dto);
+        Category category = CategoryMapper.toEntity(dto);
 
-    // ✅ XỬ LÝ PARENT ID (QUAN TRỌNG)
-    if (dto.getParentId() != null) {
+        // ✅ XỬ LÝ PARENT ID (QUAN TRỌNG)
+        if (dto.getParentId() != null) {
 
-        Category parent = categoryRepository
-                .findById(dto.getParentId())
-                .orElseThrow(() -> new RuntimeException("Parent category not found"));
+            Category parent = categoryRepository
+                    .findById(dto.getParentId())
+                    .orElseThrow(() -> new RuntimeException("Parent category not found"));
 
-        category.setParent(parent);
+            category.setParent(parent);
+        }
+
+        Category saved = categoryRepository.save(category);
+        return CategoryMapper.todto(saved);
     }
-
-    Category saved = categoryRepository.save(category);
-    return CategoryMapper.todto(saved);
-}
-
 
     @Override
     public CategoryDto update(Integer id, CategoryDto dto) {
@@ -141,6 +138,15 @@ public CategoryDto create(CategoryDto dto) {
 
         return categoryRepository.findAll(pageable)
                 .map(CategoryMapper::todto);
+    }
+
+    @Override
+    public void toggleStatus(Integer id) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Category not found"));
+
+        category.setStatus(category.getStatus() == 1 ? 0 : 1);
+        categoryRepository.save(category);
     }
 
 }

@@ -3,8 +3,8 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { FaArrowLeft, FaSave } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { Editor } from "@tinymce/tinymce-react";
-import apiPost from "../../../api/apiPost";
-import apiTopic from "../../../api/apiTopic";
+import apiPost from "../../../api/user/apiPost";
+import apiTopic from "../../../api/user/apiTopic";
 import { imageURL } from "../../../api/config";
 
 const EditPost = () => {

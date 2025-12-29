@@ -1,4 +1,4 @@
-import axiosInstance from "./axios";
+import axiosInstance from "../axios";
 
 const apiTopic = {
   // ✅ Lấy tất cả chủ đề (phân trang)

@@ -1,6 +1,6 @@
 // import { Edit } from "lucide-react";
-import axiosInstance from "./axios";
-import { apiURL } from "./config"; // nếu cần dùng URL đầy đủ
+import axiosInstance from "../axios";
+import { apiURL } from "../config"; // nếu cần dùng URL đầy đủ
 
 const apiOrder = {
   getAllPage: async (page = 1) => {

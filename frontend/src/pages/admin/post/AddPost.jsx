@@ -2,8 +2,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { FaArrowLeft, FaImage, FaPlus } from "react-icons/fa";
 import { Editor } from "@tinymce/tinymce-react";
-import apiPost from "../../../api/apiPost";
-import apiTopic from "../../../api/apiTopic";
+import apiPost from "../../../api/user/apiPost";
+import apiTopic from "../../../api/user/apiTopic";
 import { imageURL } from "../../../api/config";
 
 const AddPost = () => {

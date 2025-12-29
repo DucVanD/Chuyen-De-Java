@@ -4,8 +4,8 @@ import { toast } from "react-toastify";
 import AsyncSelect from "react-select/async";
 import { FaArrowLeft, FaSave, FaExchangeAlt } from "react-icons/fa";
 
-import apiStock from "../../../api/apiStock";
-import apiProduct from "../../../api/apiProduct";
+import apiStock from "../../../api/user/apiStock";
+import apiProduct from "../../../api/user/apiProduct";
 
 const FormDieuChinh = () => {
   const navigate = useNavigate(); // ✅ Hook điều hướng

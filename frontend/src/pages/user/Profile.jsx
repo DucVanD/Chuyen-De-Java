@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import apiUser from "../../api/apiUser";
+import apiUser from "../../api/user/apiUser";
 import "react-toastify/dist/ReactToastify.css";
 import { imageURL } from "../../api/config";
 import { useDispatch } from "react-redux";

@@ -1,9 +1,9 @@
 import { FaSortAmountDownAlt } from "react-icons/fa";
 import { useState, useEffect } from "react";
 import { useSearchParams, useLocation } from "react-router-dom";
-import apiProduct from "../../api/apiProduct";
-import apiCategory from "../../api/apiCategory";
-import apiBrand from "../../api/apiBrand";
+import apiProduct from "../../api/user/apiProduct";
+import apiCategory from "../../api/user/apiCategory";
+import apiBrand from "../../api/user/apiBrand";
 import ProductItem from "./ProductItem";
 
 const Products = () => {

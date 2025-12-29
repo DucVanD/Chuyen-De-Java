@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaPlus, FaEdit, FaTrash, FaToggleOn, FaToggleOff } from "react-icons/fa";
-import apiBrand from "../../../api/apiBrand";
+import apiBrand from "../../../api/user/apiBrand";
 
 const ListBrand = () => {
   const [brands, setBrands] = useState([]);

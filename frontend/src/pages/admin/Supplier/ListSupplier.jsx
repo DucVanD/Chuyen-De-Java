@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaPlus, FaEdit, FaTrash, FaToggleOn, FaToggleOff } from "react-icons/fa";
-import apiSupplier from "../../../api/apiSupplier";
+import apiSupplier from "../../../api/user/apiSupplier";
 
 const ListSupplier = () => {
   const [suppliers, setSuppliers] = useState([]);

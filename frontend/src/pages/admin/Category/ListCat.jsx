@@ -1,30 +1,41 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
-import apiCategory from "../../../api/apiCategory";
+import apiCategoryAdmin from "../../../api/admin/apiCategoryAdmin";
 import { FaPlus, FaTrash, FaEdit, FaToggleOn, FaToggleOff } from "react-icons/fa";
 
 const ListCat = () => {
-  const navigate = useNavigate();
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState([]); // Dữ liệu phân trang
+  const [allCategories, setAllCategories] = useState([]); // Dữ liệu tất cả (để lấy tên cha)
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  /* LOAD PAGE */
+  // Load danh sách phân trang
   const loadPage = async (p = 0) => {
     setLoading(true);
     try {
-      const res = await apiCategory.getPage(p, 5);
+      const res = await apiCategoryAdmin.getPage(p, 5);
       setCategories(res.content);
       setPage(res.number);
       setTotalPages(res.totalPages);
     } catch (err) {
-      toast.error("Không thể tải danh mục!");
+      toast.error("Lỗi tải dữ liệu!");
     } finally {
       setLoading(false);
     }
   };
+
+  // Load tất cả danh mục 1 lần để mapping tên cha
+  useEffect(() => {
+    const loadAll = async () => {
+      try {
+        const res = await apiCategoryAdmin.getAll();
+        setAllCategories(res);
+      } catch (e) { console.error("Không thể tải danh sách map cha"); }
+    };
+    loadAll();
+  }, []);
 
   useEffect(() => { loadPage(page); }, [page]);
 
@@ -32,9 +43,12 @@ const ListCat = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("Bạn có chắc muốn xóa danh mục này không?")) return;
     try {
-      await apiCategory.delete(id);
+      await apiCategoryAdmin.delete(id);
       toast.success("Xóa thành công!");
       loadPage(page);
+      // Update lại list allCategories nếu cần thiết để đồng bộ mapping
+      const resAll = await apiCategoryAdmin.getAll(); 
+      setAllCategories(resAll);
     } catch {
       toast.error("Xóa thất bại (có thể danh mục đang chứa sản phẩm)!");
     }
@@ -43,20 +57,23 @@ const ListCat = () => {
   /* TOGGLE STATUS */
   const handleToggleStatus = async (cat) => {
     try {
-      // Giả sử API có hàm switchStatus hoặc update status
-      // Nếu chưa có, bạn dùng apiCategory.update(cat.id, { ...cat, status: cat.status === 1 ? 0 : 1 })
-      const newStatus = cat.status === 1 ? 0 : 1;
-      // Gọi API update (Demo logic)
-      await apiCategory.update(cat.id, { ...cat, status: newStatus }); 
+      // Sử dụng đúng hàm toggleStatus đã định nghĩa trong API
+      await apiCategoryAdmin.toggleStatus(cat.id);
       
+      const newStatus = cat.status === 1 ? 0 : 1;
       toast.success(newStatus === 1 ? "Đã hiện danh mục" : "Đã ẩn danh mục");
+      
+      // Reload lại trang hiện tại để cập nhật UI
       loadPage(page);
     } catch {
       toast.error("Lỗi cập nhật trạng thái");
     }
   };
 
-  const categoryMap = Object.fromEntries(categories.map(cat => [cat.id, cat.name]));
+  // Tạo map id -> name từ allCategories để hiển thị tên cha chính xác
+  const categoryMap = useMemo(() => {
+    return Object.fromEntries(allCategories.map(cat => [cat.id, cat.name]));
+  }, [allCategories]);
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden min-h-[500px]">
@@ -98,10 +115,10 @@ const ListCat = () => {
                         </td>
                         <td className="py-3 px-4 text-left font-medium text-gray-900">{cat.name}</td>
                         <td className="py-3 px-4 text-left text-gray-600">
-                          {cat.parentId ? categoryMap[cat.parentId] || "---" : <span className="text-gray-400 italic">Gốc</span>}
+                          {/* Mapping chính xác từ allCategories */}
+                          {cat.parentId ? categoryMap[cat.parentId] || `ID: ${cat.parentId}` : <span className="text-gray-400 italic">Gốc</span>}
                         </td>
                         
-                        {/* STATUS BADGE */}
                         <td className="py-3 px-4">
                           {cat.status === 1 ? (
                             <span className="px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-700">Hiển thị</span>
@@ -112,7 +129,6 @@ const ListCat = () => {
 
                         <td className="py-3 px-4">
                           <div className="flex justify-center items-center gap-3">
-                            {/* TOGGLE BUTTON */}
                             <button onClick={() => handleToggleStatus(cat)} className="text-green-600 hover:text-green-800 transition-colors" title="Bật/Tắt">
                               {cat.status === 1 ? <FaToggleOn size={20} /> : <FaToggleOff size={20} />}
                             </button>

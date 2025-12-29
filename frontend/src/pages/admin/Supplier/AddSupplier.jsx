@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import apiSupplier from "../../../api/apiSupplier";
+import apiSupplier from "../../../api/user/apiSupplier";
 
 const AddSupplier = () => {
   const navigate = useNavigate();

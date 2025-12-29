@@ -1,4 +1,4 @@
-package com.example.backend.controller;
+package com.example.backend.controller.admin;
 
 import com.example.backend.dto.StockMovementDto;
 import com.example.backend.service.StockMovementService;
@@ -10,11 +10,11 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/stock-movements")
-public class StockMovementController {
+public class AdminStockMovementController {
 
     private final StockMovementService stockMovementService;
 
-    public StockMovementController(StockMovementService stockMovementService) {
+    public AdminStockMovementController(StockMovementService stockMovementService) {
         this.stockMovementService = stockMovementService;
     }
 

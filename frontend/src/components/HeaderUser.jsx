@@ -7,7 +7,7 @@ import { BiAlignLeft } from "react-icons/bi";
 import { FaUser, FaSortDown } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import apiCategory from "../api/apiCategory";
+import apiCategory from "../api/user/apiCategory";
 import { imageURL } from "../api/config";
 import { logout } from "../Redux/authSlice";
 import { toast } from "react-toastify";

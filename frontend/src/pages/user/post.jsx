@@ -8,7 +8,7 @@ import {
   FaMoneyBillWave,
   FaHeadset,
 } from "react-icons/fa";
-import apiPost from "../../api/apiPost";
+import apiPost from "../../api/user/apiPost";
 import { imageURL } from "../../api/config";
 
 const Post = () => {

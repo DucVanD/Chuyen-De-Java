@@ -1,32 +1,18 @@
 import { Navigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import apiAdmin from "../api/apiAdmin";
 
 export default function AdminPrivateRoute({ children }) {
-  const [isAuth, setIsAuth] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const token = localStorage.getItem("adminToken");
+  const user = JSON.parse(localStorage.getItem("adminUser"));
 
-  useEffect(() => {
-    const token = localStorage.getItem("adminToken");
-    if (!token) {
-      setLoading(false);
-      return;
-    }
+  if (!token || !user) {
+    return <Navigate to="/admin/login" replace />;
+  }
 
-    apiAdmin
-      .getMe()
-      .then((res) => {
-        if (res.data.status && res.data.user.roles === "admin") {
-          setIsAuth(true);
-        } else {
-          localStorage.removeItem("adminToken");
-        }
-      })
-      .catch(() => localStorage.removeItem("adminToken"))
-      .finally(() => setLoading(false));
-  }, []);
+  if (!["ADMIN", "STAFF"].includes(user.role)) {
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("adminUser");
+    return <Navigate to="/admin/login" replace />;
+  }
 
-  if (loading) return <div className="text-center p-6">Đang kiểm tra đăng nhập...</div>;
-
-  return isAuth ? children : <Navigate to="/admin/login" replace />;
+  return children;
 }

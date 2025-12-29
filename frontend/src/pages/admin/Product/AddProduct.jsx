@@ -3,9 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaArrowLeft, FaSave, FaBoxOpen, FaCamera, FaPercentage, FaTag, FaLayerGroup } from "react-icons/fa";
 
-import apiProduct from "../../../api/apiProduct";
-import apiCategory from "../../../api/apiCategory";
-import apiBrand from "../../../api/apiBrand";
+import apiProduct from "../../../api/user/apiProduct";
+import apiCategory from "../../../api/user/apiCategory";
+import apiBrand from "../../../api/user/apiBrand";
 import apiUpload from "../../../api/apiUpload";
 
 const AddProduct = () => {

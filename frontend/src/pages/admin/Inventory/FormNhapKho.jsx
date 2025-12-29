@@ -4,9 +4,9 @@ import { toast } from "react-toastify";
 import AsyncSelect from "react-select/async";
 import { FaArrowLeft, FaSave, FaBoxOpen } from "react-icons/fa";
 
-import apiStock from "../../../api/apiStock";
-import apiProduct from "../../../api/apiProduct";
-import apiSupplier from "../../../api/apiSupplier";
+import apiStock from "../../../api/user/apiStock";
+import apiProduct from "../../../api/user/apiProduct";
+import apiSupplier from "../../../api/user/apiSupplier";
 
 const FormNhapKho = () => {
   const navigate = useNavigate(); // ✅ Hook điều hướng

@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 
-
 public interface CategoryService {
 
     List<CategoryDto> getAll();
@@ -22,4 +21,5 @@ public interface CategoryService {
 
     Page<CategoryDto> getPage(int page, int size);
 
+    void toggleStatus(Integer id);
 }

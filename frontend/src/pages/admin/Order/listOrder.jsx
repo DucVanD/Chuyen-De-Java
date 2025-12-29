@@ -1,6 +1,6 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
-import apiOrder from "../../../api/apiOrder";
+import apiOrder from "../../../api/user/apiOrder";
 import {
   FaTrash,
   FaEye,

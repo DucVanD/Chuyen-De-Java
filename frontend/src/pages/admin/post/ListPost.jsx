@@ -9,7 +9,7 @@ import {
   FaEye,
   FaEdit,
 } from "react-icons/fa";
-import apiPost from "../../../api/apiPost"; // 👈 Đảm bảo đường dẫn đúng tới file api của bạn
+import apiPost from "../../../api/user/apiPost"; // 👈 Đảm bảo đường dẫn đúng tới file api của bạn
 import { imageURL } from "../../../api/config"; // nếu có cấu hình imageURL
 
 const ListPost = () => {

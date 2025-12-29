@@ -1,4 +1,4 @@
-import apiCategory from "../../../api/apiCategory";
+import apiCategory from "../../../api/user/apiCategory";
 import apiUpload from "../../../api/apiUpload";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";

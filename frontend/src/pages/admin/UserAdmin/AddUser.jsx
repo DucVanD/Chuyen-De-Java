@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaCamera, FaArrowLeft, FaSave } from "react-icons/fa";
-import apiUser from "../../../api/apiUser";
+import apiUser from "../../../api/user/apiUser";
 import apiUpload from "../../../api/apiUpload";
 
 const AddUser = () => {

@@ -1,7 +1,7 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import apiTopic from "../../../api/apiTopic";
+import apiTopic from "../../../api/user/apiTopic";
 import { imageURL } from "../../../api/config";
 import {
   FaPlus,

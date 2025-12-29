@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import apiOrder from "../../api/apiOrder";
+import apiOrder from "../../api/user/apiOrder";
 import { clearCart } from "../../Redux/cartSlice";
 import { imageURL } from "../../api/config";
 import { ToastContainer, toast } from "react-toastify";

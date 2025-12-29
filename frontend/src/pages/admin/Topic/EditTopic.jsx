@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import apiTopic from "../../../api/apiTopic";
+import apiTopic from "../../../api/user/apiTopic";
 
 const EditTopic = () => {
   const navigate = useNavigate();

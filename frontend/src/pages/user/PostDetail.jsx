@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { FaCalendarAlt, FaUser, FaTag } from "react-icons/fa";
-import apiPost from "../../api/apiPost";
+import apiPost from "../../api/user/apiPost";
 import { imageURL } from "../../api/config";
 import { FaSearch, FaEye } from "react-icons/fa";
 

@@ -1,17 +1,18 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import apiCategory from "../../../api/apiCategory";
-import apiUpload from "../../../api/apiUpload";
+import apiCategoryAdmin from "../../../api/admin/apiCategoryAdmin"; // Đã sửa import
+// import apiUpload from "../../../api/apiUpload"; // Nếu chưa dùng thì comment lại
 
 const EditCat = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  // Giả sử imageURL được define ở file config hoặc global, nếu chưa có thì thay bằng string rỗng
+  const imageURL = "http://localhost:8080/images"; 
 
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 1. Thêm trường slug vào state khởi tạo
   const [category, setCategory] = useState({
     name: "",
     slug: "", 
@@ -29,9 +30,9 @@ const EditCat = () => {
   useEffect(() => {
     const fetchCategory = async () => {
       try {
-        const data = await apiCategory.getCategoryById(id);
+        // Gọi hàm getById mới thêm trong apiCategoryAdmin
+        const data = await apiCategoryAdmin.getById(id);
 
-        // 2. Cập nhật slug từ dữ liệu server trả về
         setCategory({
           name: data.name,
           slug: data.slug, 
@@ -47,7 +48,7 @@ const EditCat = () => {
             : null
         );
       } catch (err) {
-        alert("❌ Không thể tải danh mục");
+        toast.error("❌ Không thể tải danh mục"); // Sửa alert thành toast cho đẹp
       } finally {
         setLoading(false);
       }
@@ -62,10 +63,10 @@ const EditCat = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const data = await apiCategory.getAll();
+        const data = await apiCategoryAdmin.getAll(); // Sửa API call
         setCategories(data);
       } catch {
-        alert("❌ Không thể tải danh mục cha");
+        toast.error("❌ Không thể tải danh mục cha");
       }
     };
     fetchCategories();
@@ -90,7 +91,6 @@ const EditCat = () => {
     setLoading(true);
 
     try {
-      // 3. Gửi kèm slug trong payload để Backend không set thành null
       const payload = {
         name: category.name,
         slug: category.slug, 
@@ -100,15 +100,13 @@ const EditCat = () => {
         image: category.image
       };
 
-      await apiCategory.update(id, payload);
+      await apiCategoryAdmin.update(id, payload); // Sửa API call
 
-      alert("✅ Cập nhật danh mục thành công");
-      // const page = localStorage.getItem("currentCategoryPage") || 1;
-      // navigate(`/admin/categories/${page}`);
-        navigate(`/admin/categories`); // Quay về trang 1 sau khi cập nhật
+      toast.success("✅ Cập nhật danh mục thành công");
+      navigate(`/admin/categories`); 
     } catch (err) {
       console.error(err);
-      alert("❌ Cập nhật thất bại");
+      toast.error("❌ Cập nhật thất bại");
     } finally {
       setLoading(false);
     }
@@ -144,14 +142,13 @@ const EditCat = () => {
                 className="w-full border p-2 mb-4"
               />
 
-              {/* Tùy chọn: Input Slug (có thể ẩn hoặc để readonly nếu không muốn sửa) */}
               <label className="block mb-2">Slug (Đường dẫn tĩnh)</label>
               <input
                 name="slug"
                 value={category.slug}
                 onChange={handleChange}
                 className="w-full border p-2 mb-4 bg-gray-100"
-                readOnly // Để readOnly nếu bạn không muốn người dùng sửa slug thủ công
+                readOnly 
               />
 
               <label className="block mb-2">Mô tả</label>

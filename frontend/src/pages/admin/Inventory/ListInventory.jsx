@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import apiStock from "../../../api/apiStock";
+import apiStock from "../../../api/user/apiStock";
 import { FaPlus, FaMinus, FaExchangeAlt, FaUndo } from "react-icons/fa";
 
 const ListInventory = () => {

@@ -12,7 +12,7 @@ import {
 } from "react-icons/fa";
 import { useState, useEffect } from "react";
 // Assuming apiProduct is defined elsewhere
-import apiProduct from "../../api/apiProduct"; // Keep if you need the real API
+import apiProduct from "../../api/user/apiProduct"; // Keep if you need the real API
 import useAddToCart from "../../hooks/useAddToCart";
 import "react-toastify/dist/ReactToastify.css";
 import ProductItem from "./ProductItem";

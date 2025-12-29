@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import apiOrder from "../../../api/apiOrder"; // ✅ import API thật
+import apiOrder from "../../../api/user/apiOrder"; // ✅ import API thật
 import { imageURL } from "../../../api/config";
 
 const DetailOrder = () => {

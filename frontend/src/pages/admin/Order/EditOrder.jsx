@@ -1,7 +1,7 @@
 // src/pages/admin/orders/EditOrder.jsx
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import apiOrder from "../../../api/apiOrder";
+import apiOrder from "../../../api/user/apiOrder";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 

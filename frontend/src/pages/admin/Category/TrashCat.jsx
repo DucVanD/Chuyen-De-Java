@@ -1,6 +1,6 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import apiCategory from "../../../api/apiCategory";
+import apiCategory from "../../../api/user/apiCategory";
 import { imageURL } from "../../../api/config";
 import { toast } from "react-toastify";
 import {

@@ -1,4 +1,5 @@
 package com.example.backend.service.impl;
+
 import com.example.backend.entity.enums.OrderStatus;
 import com.example.backend.dto.OrderDto;
 import com.example.backend.entity.*;
@@ -21,8 +22,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderServiceImpl(
             OrderRepository orderRepository,
             UserRepository userRepository,
-            VoucherRepository voucherRepository
-    ) {
+            VoucherRepository voucherRepository) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.voucherRepository = voucherRepository;
@@ -85,4 +85,13 @@ public class OrderServiceImpl implements OrderService {
 
         orderRepository.save(order);
     }
+
+    @Override
+    public void delete(Integer id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+
+        orderRepository.delete(order);
+    }
+
 }

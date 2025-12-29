@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaEdit, FaTrash, FaToggleOn, FaToggleOff, FaPlus } from "react-icons/fa";
-import apiUser from "../../../api/apiUser";
+import apiUser from "../../../api/user/apiUser";
 
 const roleColor = {
   CUSTOMER: "bg-green-100 text-green-700",

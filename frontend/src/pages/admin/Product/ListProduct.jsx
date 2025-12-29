@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
-import apiProduct from "../../../api/apiProduct";
+import apiProduct from "../../../api/user/apiProduct";
 import { FaPlus, FaTrash, FaEdit, FaToggleOn, FaToggleOff, FaSearch, FaFilter, FaRedo } from "react-icons/fa";
 
 const ListProduct = () => {

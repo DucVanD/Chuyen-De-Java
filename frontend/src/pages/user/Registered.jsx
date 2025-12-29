@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom"; // ✅ thêm useLocation
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   FaFacebookF,
   FaGoogle,
@@ -7,80 +7,111 @@ import {
   FaEye,
   FaEyeSlash,
 } from "react-icons/fa";
-import apiUser from "../../api/apiUser";
 import { useDispatch } from "react-redux";
-import { loginSuccess } from "../../Redux/authSlice";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+// Import API và Redux Action
+import apiAuth from "../../api/apiAuth"; // Sử dụng apiAuth từ code logic
+import { loginSuccess } from "../../Redux/authSlice";
+
 const Registered = () => {
   const navigate = useNavigate();
-  const location = useLocation(); // ✅ để lấy state.from
+  const location = useLocation();
   const dispatch = useDispatch();
-  const [activeTab, setActiveTab] = useState("login");
+
+  // State quản lý UI và Dữ liệu
+  const [activeTab, setActiveTab] = useState("login"); // 'login' hoặc 'register'
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
   const [formData, setFormData] = useState({
+    name: "", // Đổi fullName thành name để khớp với API Logic
     email: "",
+    phone: "",
     password: "",
     confirmPassword: "",
-    fullName: "",
-    phone: "",
   });
 
+  // Xử lý thay đổi input
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Xóa nhanh nội dung input
   const clearField = (field) => {
     setFormData((prev) => ({ ...prev, [field]: "" }));
   };
 
+  // Xử lý Submit Form (Logic chính)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
     try {
+      // ================= LOGIN LOGIC =================
       if (activeTab === "login") {
-        const res = await apiUser.loginUser({
+        const res = await apiAuth.login({
           email: formData.email,
           password: formData.password,
         });
-        if (res.status) {
-          dispatch(loginSuccess({ user: res.user, token: res.access_token }));
-          toast.success("Đăng nhập thành công!");
 
-          // ✅ Nếu có trang trước (ví dụ: /checkout), quay lại đúng trang đó
-          navigate(location.state?.from || "/");
+        // Kiểm tra quyền (Logic từ code 2)
+        if (res.user.role !== "CUSTOMER") {
+          toast.error("Tài khoản không dành cho trang người dùng");
+          setLoading(false);
+          return;
         }
-      } else {
+
+        dispatch(loginSuccess({ user: res.user, token: res.token }));
+        toast.success("Đăng nhập thành công!");
+        
+        // Quay lại trang trước đó hoặc về trang chủ
+        navigate(location.state?.from || "/");
+      } 
+      
+      // ================= REGISTER LOGIC =================
+      else {
         if (formData.password !== formData.confirmPassword) {
           toast.error("Mật khẩu và xác nhận không khớp!");
           setLoading(false);
           return;
         }
-        const res = await apiUser.registerUser({
-          fullName: formData.fullName,
+
+        // Gọi API Đăng ký
+        await apiAuth.register({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          password: formData.password,
+          confirmPassword: formData.confirmPassword,
+        });
+
+        toast.success("Đăng ký thành công!");
+
+        // 👉 Auto Login sau khi đăng ký (Logic từ code 2)
+        const loginRes = await apiAuth.login({
           email: formData.email,
           password: formData.password,
-          password_confirmation: formData.confirmPassword,
-          phone: formData.phone,
         });
-        if (res.status) {
-          dispatch(loginSuccess({ user: res.user, token: res.access_token }));
-          toast.success("Đăng ký thành công!");
-          // ✅ Sau khi đăng ký xong cũng quay về trang trước
-          navigate(location.state?.from || "/");
-        }
+
+        dispatch(
+          loginSuccess({
+            user: loginRes.user,
+            token: loginRes.token,
+          })
+        );
+
+        navigate("/");
       }
     } catch (err) {
       const message =
         err.response?.data?.message ||
         (err.response?.data?.errors &&
           Object.values(err.response.data.errors).flat().join("\n")) ||
-        "Có lỗi xảy ra!";
+        "Có lỗi xảy ra, vui lòng thử lại!";
       toast.error(message);
     } finally {
       setLoading(false);
@@ -102,7 +133,7 @@ const Registered = () => {
 
       <div className="flex items-center justify-center">
         <div className="w-full max-w-md">
-          {/* Tabs */}
+          {/* Tabs Switcher */}
           <div className="flex justify-center space-x-8 border-b border-gray-200 mb-6">
             {["login", "register"].map((tab) => (
               <button
@@ -119,7 +150,7 @@ const Registered = () => {
             ))}
           </div>
 
-          {/* Form */}
+          {/* Form Container */}
           <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6 sm:p-8">
             <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">
               {activeTab === "login"
@@ -128,6 +159,7 @@ const Registered = () => {
             </h3>
 
             <form onSubmit={handleSubmit} noValidate className="space-y-4 relative">
+              {/* Các trường chỉ hiện khi Đăng ký */}
               {activeTab === "register" && (
                 <>
                   {/* Họ tên */}
@@ -136,15 +168,15 @@ const Registered = () => {
                       Họ và tên
                     </label>
                     <input
-                      name="fullName"
-                      value={formData.fullName}
+                      name="name" // Map với formData.name
+                      value={formData.name}
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border rounded-md text-sm border-gray-300 focus:ring-2 focus:ring-green-400 focus:outline-none pr-8"
                       placeholder="Nhập họ và tên"
                     />
-                    {formData.fullName && (
+                    {formData.name && (
                       <FaTimesCircle
-                        onClick={() => clearField("fullName")}
+                        onClick={() => clearField("name")}
                         className="absolute right-3 top-9 text-gray-400 hover:text-red-500 cursor-pointer transition"
                       />
                     )}
@@ -172,7 +204,7 @@ const Registered = () => {
                 </>
               )}
 
-              {/* Email */}
+              {/* Email (Dùng chung) */}
               <div className="relative">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Email
@@ -193,7 +225,7 @@ const Registered = () => {
                 )}
               </div>
 
-              {/* Mật khẩu */}
+              {/* Mật khẩu (Dùng chung) */}
               <div className="relative">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Mật khẩu
@@ -227,7 +259,7 @@ const Registered = () => {
                 )}
               </div>
 
-              {/* Xác nhận mật khẩu */}
+              {/* Xác nhận mật khẩu (Chỉ hiện khi Đăng ký) */}
               {activeTab === "register" && (
                 <div className="relative">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -263,13 +295,13 @@ const Registered = () => {
                 </div>
               )}
 
-              {/* Submit */}
+              {/* Submit Button */}
               <button
                 type="submit"
                 disabled={loading}
                 className={`w-full py-2 mt-4 rounded-md font-semibold text-white transition-all ${
                   loading
-                    ? "bg-gray-400"
+                    ? "bg-gray-400 cursor-not-allowed"
                     : "bg-green-500 hover:bg-green-600 focus:ring-2 focus:ring-green-400"
                 }`}
               >
@@ -282,6 +314,7 @@ const Registered = () => {
                   : "Đăng ký"}
               </button>
 
+              {/* Forgot Password Link */}
               {activeTab === "login" && (
                 <div className="text-center mt-3">
                   <Link
@@ -293,7 +326,7 @@ const Registered = () => {
                 </div>
               )}
 
-              {/* Social Login */}
+              {/* Social Login Section */}
               <div className="flex items-center gap-3 my-4">
                 <div className="flex-grow border-t border-gray-300"></div>
                 <span className="text-sm text-gray-500">
@@ -303,15 +336,16 @@ const Registered = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <button className="flex items-center justify-center py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition">
+                <button type="button" className="flex items-center justify-center py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition">
                   <FaFacebookF className="mr-2" /> Facebook
                 </button>
-                <button className="flex items-center justify-center py-2 rounded-md bg-red-600 text-white hover:bg-red-700 transition">
+                <button type="button" className="flex items-center justify-center py-2 rounded-md bg-red-600 text-white hover:bg-red-700 transition">
                   <FaGoogle className="mr-2" /> Google
                 </button>
               </div>
             </form>
 
+            {/* Footer Terms */}
             <p className="text-xs sm:text-sm text-center text-gray-500 mt-6">
               Bằng cách {activeTab === "login" ? "đăng nhập" : "đăng ký"}, bạn đồng ý với{" "}
               <Link to="/terms" className="text-green-600 hover:text-green-700">

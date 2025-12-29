@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import apiUser from "../../../api/apiUser";
+import apiUser from "../../../api/user/apiUser";
 import { FaEdit, FaTrash, FaArrowLeft } from "react-icons/fa";
 import { imageURL } from "../../../api/config";
 

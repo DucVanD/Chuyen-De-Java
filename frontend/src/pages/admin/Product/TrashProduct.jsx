@@ -2,7 +2,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { FaTrashRestore, FaTrash } from "react-icons/fa";
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import apiProduct from "../../../api/apiProduct";
+import apiProduct from "../../../api/user/apiProduct";
 import { imageURL } from "../../../api/config";
 
 const TrashProduct = () => {

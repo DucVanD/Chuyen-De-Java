@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaCamera, FaArrowLeft, FaSave } from "react-icons/fa";
-import apiBrand from "../../../api/apiBrand";
+import apiBrand from "../../../api/user/apiBrand";
 import apiUpload from "../../../api/apiUpload";
 
 // Slug generator helper

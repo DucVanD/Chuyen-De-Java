@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import apiProduct from "../../api/apiProduct";
+import apiProduct from "../../api/user/apiProduct";
 import { imageURL } from "../../api/config";
 
 const ProductByCat = () => {

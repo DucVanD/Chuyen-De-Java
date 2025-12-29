@@ -15,4 +15,6 @@ public interface OrderService {
     OrderDto updateStatus(Integer id, OrderDto dto);
 
     void cancel(Integer id, String reason);
+
+    void delete(Integer id);
 }

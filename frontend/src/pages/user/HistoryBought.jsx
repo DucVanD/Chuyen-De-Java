@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import apiUser from "../../api/apiUser";
-import apiOrder from "../../api/apiOrder";
+import apiUser from "../../api/user/apiUser";
+import apiOrder from "../../api/user/apiOrder";
 import { toast } from "react-toastify";
 import { FaBoxOpen, FaCalendarAlt, FaTimes } from "react-icons/fa";
 import { HiOutlineClipboardDocumentCheck } from "react-icons/hi2";
