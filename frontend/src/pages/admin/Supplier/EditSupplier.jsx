@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import apiSupplier from "../../../api/user/apiSupplier";
+import apiSupplierAdmin from "../../../api/admin/apiSupplierAdmin";
 
 const EditSupplier = () => {
   const { id } = useParams();
@@ -16,7 +16,7 @@ const EditSupplier = () => {
   });
 
   useEffect(() => {
-    apiSupplier.getById(id).then(setForm).catch(() => {
+    apiSupplierAdmin.getById(id).then(setForm).catch(() => {
       toast.error("Không tìm thấy nhà cung cấp");
     });
   }, [id]);
@@ -28,7 +28,7 @@ const EditSupplier = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await apiSupplier.update(id, form);
+      await apiSupplierAdmin.update(id, form);
       toast.success("Cập nhật thành công");
       navigate("/admin/suppliers");
     } catch {

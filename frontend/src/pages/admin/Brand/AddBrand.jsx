@@ -2,20 +2,11 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaCamera, FaArrowLeft, FaSave } from "react-icons/fa";
-import apiBrand from "../../../api/user/apiBrand";
+import apiBrandAdmin from "../../../api/admin/apiBrandAdmin";
 import apiUpload from "../../../api/apiUpload";
 
 // Slug generator helper
-const generateSlug = (text) =>
-  text
-    .toLowerCase()
-    .trim()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/đ/g, "d")
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
+
 
 const AddBrand = () => {
   const navigate = useNavigate();
@@ -24,29 +15,38 @@ const AddBrand = () => {
   const [form, setForm] = useState({
     name: "",
     slug: "",
-    image: "", 
+    image: "",
+    imagePublicId: "", // ✅ Added for Cloudinary
     description: "",
     country: "",
     status: 1, // ✅ Mặc định là Hoạt động
   });
 
+  /* ================= HANDLERS ================= */
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => {
-      const updated = { ...prev, [name]: value };
-      if (name === "name") updated.slug = generateSlug(value);
-      return updated;
-    });
+    setForm((prev) => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleUploadImage = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
+    // ✅ Instant Preview
+    const previewUrl = URL.createObjectURL(file);
+    setForm((prev) => ({ ...prev, image: previewUrl }));
+
     setUploading(true);
     try {
-      const imageUrl = await apiUpload.uploadBrandImage(file);
-      setForm((prev) => ({ ...prev, image: imageUrl }));
+      const res = await apiUpload.uploadBrandImage(file);
+      setForm((prev) => ({
+        ...prev,
+        image: res.url,
+        imagePublicId: res.publicId
+      }));
       toast.success("✅ Upload ảnh thành công");
     } catch {
       toast.error("❌ Upload ảnh thất bại");
@@ -60,7 +60,7 @@ const AddBrand = () => {
     if (!form.image) return toast.error("Vui lòng upload ảnh thương hiệu");
 
     try {
-      await apiBrand.create(form);
+      await apiBrandAdmin.create(form);
       toast.success("Thêm thương hiệu thành công");
       navigate("/admin/brands");
     } catch (err) {
@@ -82,31 +82,42 @@ const AddBrand = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        
-        {/* Image Upload Section */}
+
+        {/* Image Upload Section - New Clean UI */}
         <div className="flex flex-col items-center justify-center mb-6">
-          <div className="relative group w-48 h-32">
-            <img
-              src={form.image || "https://placehold.co/200x120?text=Logo+Preview"}
-              className="w-full h-full object-contain rounded-lg border-2 border-dashed border-gray-300 shadow-sm"
-              alt="Preview"
-            />
-            <label className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all cursor-pointer rounded-lg">
-              <FaCamera className="text-white opacity-0 group-hover:opacity-100 text-3xl drop-shadow-md" />
+          <div className="relative w-48 h-48 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden">
+            {form.image ? (
+              <img
+                src={form.image}
+                className="w-full h-full object-contain p-2"
+                alt="Preview"
+              />
+            ) : (
+              <div className="text-center text-gray-400">
+                <FaCamera size={32} className="mx-auto mb-2 opacity-50" />
+                <span className="text-xs">Chưa có logo</span>
+              </div>
+            )}
+
+            <label className="absolute inset-0 cursor-pointer hover:bg-black/10 flex items-center justify-center transition-all">
               <input
                 type="file"
                 accept="image/*"
                 onChange={handleUploadImage}
                 className="hidden"
               />
+              <span className="bg-white text-indigo-700 px-3 py-1.5 rounded shadow-sm text-xs font-bold">
+                {form.image ? "Thay đổi" : "Chọn ảnh"}
+              </span>
             </label>
+
             {uploading && (
-              <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center">
+              <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
                 <div className="animate-spin h-6 w-6 border-2 border-indigo-600 rounded-full border-t-transparent"></div>
               </div>
             )}
           </div>
-          <p className="text-sm text-gray-400 mt-2">Nhấn vào ảnh để tải logo lên</p>
+          <p className="text-sm text-gray-400 mt-2">Định dạng: PNG, JPG, WEBP (Tối đa 2MB)</p>
         </div>
 
         {/* Inputs Grid */}
@@ -123,14 +134,9 @@ const AddBrand = () => {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Slug (Tự động)</label>
-            <input
-              name="slug"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
-              value={form.slug}
-              readOnly
-            />
+          {/* Unused Slug Input - Backend generates it */}
+          <div className="hidden">
+            <input name="slug" value={form.slug} readOnly />
           </div>
 
           <div>
@@ -149,11 +155,10 @@ const AddBrand = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
             <select
               name="status"
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 outline-none font-medium ${
-                Number(form.status) === 1 
-                  ? "bg-green-50 text-green-700 border-green-200 focus:ring-green-500" 
-                  : "bg-gray-50 text-gray-700 border-gray-200 focus:ring-gray-500"
-              }`}
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 outline-none font-medium ${Number(form.status) === 1
+                ? "bg-green-50 text-green-700 border-green-200 focus:ring-green-500"
+                : "bg-gray-50 text-gray-700 border-gray-200 focus:ring-gray-500"
+                }`}
               value={form.status}
               onChange={handleChange}
             >

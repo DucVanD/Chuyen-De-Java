@@ -53,6 +53,14 @@ public class StockMovementServiceImpl implements StockMovementService {
     }
 
     @Override
+    public org.springframework.data.domain.Page<StockMovementDto> getPage(int page, int size) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size,
+                org.springframework.data.domain.Sort.by("createdAt").descending());
+        return stockMovementRepository.findAll(pageable)
+                .map(StockMovementMapper::toDto);
+    }
+
+    @Override
     public StockMovementDto create(StockMovementDto dto) {
 
         Product product = productRepository.findById(dto.getProductId())
@@ -77,6 +85,10 @@ public class StockMovementServiceImpl implements StockMovementService {
         switch (dto.getMovementType()) {
             case IN:
                 newQty = currentQty + dto.getQuantity();
+                // ✅ CẬP NHẬT GIÁ NHẬP MỚI NHẤT VÀO BẢNG PRODUCT
+                if (dto.getUnitPrice() != null) {
+                    product.setCostPrice(dto.getUnitPrice());
+                }
                 break;
 
             case OUT:
@@ -118,4 +130,12 @@ public class StockMovementServiceImpl implements StockMovementService {
                 .orElse(BigDecimal.ZERO);
     }
 
+    @Override
+    public Integer getLastSupplierId(Integer productId) {
+        return stockMovementRepository
+                .findTopByProductIdAndMovementTypeOrderByCreatedAtDesc(
+                        productId, StockMovementType.IN)
+                .map(m -> m.getSupplier() != null ? m.getSupplier().getId() : null)
+                .orElse(null);
+    }
 }

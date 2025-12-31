@@ -6,5 +6,5 @@ import com.example.backend.entity.Brand;
 
 public interface BrandRepository extends JpaRepository<Brand, Integer> {
 
-    
+    boolean existsBySlug(String slug);
 }

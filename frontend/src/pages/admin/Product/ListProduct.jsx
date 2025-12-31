@@ -1,23 +1,107 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
-import apiProduct from "../../../api/user/apiProduct";
+import apiProductAdmin from "../../../api/admin/apiProductAdmin";
+import apiCategoryAdmin from "../../../api/admin/apiCategoryAdmin";
+import apiBrandAdmin from "../../../api/admin/apiBrandAdmin";
 import { FaPlus, FaTrash, FaEdit, FaToggleOn, FaToggleOff, FaSearch, FaFilter, FaRedo } from "react-icons/fa";
 
 const ListProduct = () => {
   const [products, setProducts] = useState([]);
-  const [keyword, setKeyword] = useState("");
-  const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
 
-  /* ======================
-      LOAD DATA
-  ====================== */
-  const loadData = async () => {
+  // Data cho dropdown filters
+  const [categories, setCategories] = useState([]);
+  const [brands, setBrands] = useState([]);
+
+  // Filter States
+  const [keyword, setKeyword] = useState("");
+  const [filterCategory, setFilterCategory] = useState("");
+  const [filterBrand, setFilterBrand] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [hasPromo, setHasPromo] = useState(false);
+
+  // User Role
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [size, setSize] = useState(8); // Số lượng item mỗi trang
+
+  useEffect(() => {
+    // 1. Get User Role
+    const userStr = localStorage.getItem("adminUser");
+    if (userStr) {
+      setCurrentUser(JSON.parse(userStr));
+    }
+
+    // 2. Load Initial Data
+    loadInitialData();
+  }, []);
+
+  // Load products whenever filters or page changes
+  useEffect(() => {
+    loadProducts();
+  }, [currentPage, size]);
+
+  const loadInitialData = async () => {
+    try {
+      const [cats, brs] = await Promise.all([
+        apiCategoryAdmin.getAll(),
+        apiBrandAdmin.getAll()
+      ]);
+
+      // --- THÊM DÒNG NÀY ---
+      // Lọc: Chỉ giữ lại danh mục nào có parent là null (hoặc parentId tuỳ vào API của bạn)
+      const rootCategories = cats.filter(c =>  c.parentId != null);
+      
+      setCategories(rootCategories);
+      // ---------------------
+
+      setBrands(brs);
+    } catch (err) {
+      console.error("Lỗi tải danh mục/thương hiệu", err);
+    }
+  };
+
+  const loadProducts = async () => {
     setLoading(true);
     try {
-      const data = await apiProduct.getAll();
-      setProducts(data);
+      let data;
+      // 1. SEARCH
+      if (keyword.trim()) {
+        data = await apiProductAdmin.search(keyword, currentPage, size);
+      }
+      // 2. FILTER
+      else if (filterCategory || filterBrand || filterStatus || minPrice || maxPrice || hasPromo) {
+        data = await apiProductAdmin.filter(
+          filterCategory || null,
+          filterBrand || null,
+          filterStatus || null,
+          minPrice || null,
+          maxPrice || null,
+          hasPromo || null,
+          currentPage,
+          size
+        );
+      }
+      // 3. DEFAULT (getPage)
+      else {
+        data = await apiProductAdmin.getPage(currentPage, size);
+      }
+
+      // Backend returns Page<ProductDto> which contains { content, totalPages, number... }
+      if (data && data.content) {
+        setProducts(data.content);
+        setTotalPages(data.totalPages);
+      } else {
+        // Fallback for safety
+        setProducts(Array.isArray(data) ? data : []);
+        setTotalPages(0);
+      }
     } catch (error) {
       toast.error("Không thể tải danh sách sản phẩm");
     } finally {
@@ -25,67 +109,58 @@ const ListProduct = () => {
     }
   };
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
   /* ======================
       ACTIONS
   ====================== */
-  const handleSearch = async () => {
-    if (!keyword.trim()) {
-      loadData();
-      return;
-    }
-    setLoading(true);
-    try {
-      const data = await apiProduct.search(keyword);
-      setProducts(data);
-    } catch {
-      toast.error("Lỗi tìm kiếm sản phẩm");
-    } finally {
-      setLoading(false);
-    }
+  const handleSearch = () => {
+    setCurrentPage(0); // Reset về trang 1
+    loadProducts();
   };
 
-  const handleFilter = async () => {
-    setLoading(true);
-    try {
-      const data = await apiProduct.filter(null, status);
-      setProducts(data);
-    } catch {
-      toast.error("Lỗi lọc sản phẩm");
-    } finally {
-      setLoading(false);
-    }
+  const handleFilter = () => {
+    setKeyword(""); // Reset search text khi filter
+    setCurrentPage(0); // Reset về trang 1
+    loadProducts();
   };
 
   const handleReset = () => {
     setKeyword("");
-    setStatus("");
-    loadData();
+    setFilterCategory("");
+    setFilterBrand("");
+    setFilterStatus("");
+    setMinPrice("");
+    setMaxPrice("");
+    setHasPromo(false);
+    setCurrentPage(0);
+    // setTimeout is useful when multiple states change and we want to trigger load once
+    setTimeout(() => {
+      loadProducts();
+    }, 100);
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 0 && newPage < totalPages) {
+      setCurrentPage(newPage);
+    }
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm("Bạn có chắc muốn xóa sản phẩm này?")) return;
     try {
-      await apiProduct.delete(id);
+      await apiProductAdmin.delete(id);
       toast.success("Đã xóa sản phẩm");
-      loadData(); // Reload lại danh sách
-    } catch {
-      toast.error("Xóa thất bại (Sản phẩm có thể đang trong đơn hàng)");
+      loadProducts();
+    } catch (error) { // Catch error object
+      toast.error(error.response?.data?.message || "Xóa thất bại (Sản phẩm có thể đang trong đơn hàng)");
     }
   };
 
-  // 🔥 TÍNH NĂNG MỚI: BẬT/TẮT TRẠNG THÁI
   const handleToggleStatus = async (product) => {
     try {
       const newStatus = product.status === 1 ? 0 : 1;
-      // Gọi API update (giữ nguyên các trường khác, chỉ đổi status)
-      await apiProduct.update(product.id, { ...product, status: newStatus });
-      
+      await apiProductAdmin.update(product.id, { ...product, status: newStatus });
       toast.success(newStatus === 1 ? "Đã hiển thị sản phẩm" : "Đã ẩn sản phẩm");
-      loadData(); // Reload để cập nhật giao diện
+      loadProducts();
     } catch {
       toast.error("Lỗi cập nhật trạng thái");
     }
@@ -94,55 +169,118 @@ const ListProduct = () => {
   const formatPrice = (price) =>
     new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
 
+  // Check Permissions
+  const isAdmin = currentUser?.role === "ADMIN";
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden min-h-[600px]">
       {/* HEADER */}
       <div className="p-6 flex justify-between items-center border-b">
         <h2 className="text-2xl font-bold text-gray-800">Quản lý Sản phẩm</h2>
-        <Link
-          to="/admin/addProduct"
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center shadow-sm transition-all"
-        >
-          <FaPlus className="mr-2" /> Thêm sản phẩm
-        </Link>
+
+        {/* Chỉ ADMIN mới được thêm */}
+        {isAdmin && (
+          <Link
+            to="/admin/addProduct"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center shadow-sm transition-all"
+          >
+            <FaPlus className="mr-2" /> Thêm sản phẩm
+          </Link>
+        )}
       </div>
 
-      {/* TOOLBAR (SEARCH & FILTER) */}
-      <div className="p-6 bg-gray-50 border-b flex flex-wrap gap-3 items-center">
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Tìm theo tên..."
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            className="border border-gray-300 px-4 py-2 pl-10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none w-64"
-          />
-          <FaSearch className="absolute left-3 top-3 text-gray-400" />
+      {/* TOOLBAR */}
+      <div className="p-6 bg-gray-50 border-b space-y-4">
+
+        {/* Row 1: Search & Common Filters */}
+        <div className="flex flex-wrap gap-3 items-center">
+          {/* Search */}
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Tìm theo tên..."
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              className="border border-gray-300 px-4 py-2 pl-10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none w-64"
+            />
+            <FaSearch className="absolute left-3 top-3 text-gray-400" />
+          </div>
+
+          {/* Category Filter */}
+          <select
+            value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}
+            className="border border-gray-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+          >
+            <option value="">-- Danh mục --</option>
+            {categories.map(c => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+
+          {/* Brand Filter */}
+          <select
+            value={filterBrand}
+            onChange={(e) => setFilterBrand(e.target.value)}
+            className="border border-gray-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+          >
+            <option value="">-- Thương hiệu --</option>
+            {brands.map(b => (
+              <option key={b.id} value={b.id}>{b.name}</option>
+            ))}
+          </select>
+
+          {/* Status Filter */}
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="border border-gray-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+          >
+            <option value="">-- Trạng thái --</option>
+            <option value="1">Đang hoạt động</option>
+            <option value="0">Đang ẩn</option>
+          </select>
+
         </div>
 
-        <button onClick={handleSearch} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors">
-          Tìm kiếm
-        </button>
+        {/* Row 2: Advanced Filters (Price & Promo) */}
+        <div className="flex flex-wrap gap-3 items-center">
+          <input
+            type="number"
+            placeholder="Giá từ..."
+            value={minPrice}
+            onChange={(e) => setMinPrice(e.target.value)}
+            className="border border-gray-300 px-3 py-2 rounded-lg w-32 focus:ring-2 focus:ring-indigo-500 outline-none"
+          />
+          <span className="text-gray-400">-</span>
+          <input
+            type="number"
+            placeholder="Giá đến..."
+            value={maxPrice}
+            onChange={(e) => setMaxPrice(e.target.value)}
+            className="border border-gray-300 px-3 py-2 rounded-lg w-32 focus:ring-2 focus:ring-indigo-500 outline-none"
+          />
 
-        <div className="h-8 w-px bg-gray-300 mx-2 hidden sm:block"></div>
+          <label className="flex items-center gap-2 cursor-pointer select-none bg-white border border-gray-300 px-3 py-2 rounded-lg hover:bg-gray-100">
+            <input
+              type="checkbox"
+              checked={hasPromo}
+              onChange={(e) => setHasPromo(e.target.checked)}
+              className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+            />
+            <span className="text-gray-700 text-sm font-medium">Đang khuyến mãi</span>
+          </label>
 
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          className="border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
-        >
-          <option value="">-- Tất cả trạng thái --</option>
-          <option value="1">Đang hoạt động</option>
-          <option value="0">Đang ẩn</option>
-        </select>
+          <div className="flex-1"></div>
 
-        <button onClick={handleFilter} className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
-          <FaFilter size={14} /> Lọc
-        </button>
+          <button onClick={handleFilter} className="bg-gray-800 hover:bg-gray-900 text-white px-5 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm">
+            <FaFilter size={14} /> Lọc
+          </button>
 
-        <button onClick={handleReset} className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ml-auto">
-          <FaRedo size={14} /> Reset
-        </button>
+          <button onClick={handleReset} className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 px-5 py-2 rounded-lg flex items-center gap-2 transition-colors ml-2">
+            <FaRedo size={14} /> Reset
+          </button>
+        </div>
       </div>
 
       {/* TABLE DATA */}
@@ -154,9 +292,8 @@ const ListProduct = () => {
             <table className="w-full text-sm border-collapse text-center">
               <thead>
                 <tr className="bg-gray-50 border-b text-gray-700 uppercase text-xs tracking-wider">
-                  <th className="py-3 px-4">ID</th>
-                  <th className="py-3 px-4">Ảnh</th>
-                  <th className="py-3 px-4 text-left">Tên sản phẩm</th>
+                  <th className="py-3 px-4 text-left">Sản phẩm</th>
+                  <th className="py-3 px-4 text-left">Danh mục & Brand</th>
                   <th className="py-3 px-4 text-right">Giá bán</th>
                   <th className="py-3 px-4">Kho</th>
                   <th className="py-3 px-4">Trạng thái</th>
@@ -168,73 +305,97 @@ const ListProduct = () => {
                 {products.length > 0 ? (
                   products.map((p) => (
                     <tr key={p.id} className="hover:bg-gray-50 transition-colors group">
-                      <td className="py-3 px-4 text-gray-500">{p.id}</td>
-
-                      <td className="py-3 px-4">
-                        <div className="w-16 h-16 mx-auto rounded-lg border border-gray-200 overflow-hidden bg-white">
-                           <img
-                            src={p.image || "https://placehold.co/100"}
-                            alt={p.name}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                          />
+                      {/* Cột 1: Ảnh + Tên */}
+                      <td className="py-3 px-4 text-left">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-lg border border-gray-200 overflow-hidden bg-white shrink-0">
+                            <img
+                              src={p.image || "https://placehold.co/100"}
+                              alt={p.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900 line-clamp-2" title={p.name}>{p.name}</p>
+                            <p className="text-xs text-gray-400">{p.slug}</p>
+                          </div>
                         </div>
                       </td>
 
+                      {/* Cột 2: Category & Brand */}
                       <td className="py-3 px-4 text-left">
-                        <p className="font-medium text-gray-900 line-clamp-2">{p.name}</p>
-                        <p className="text-xs text-gray-500 mt-1">{p.slug}</p>
+                        <p className="text-gray-800 font-medium">{p.categoryName || "—"}</p>
+                        <p className="text-xs text-gray-500 uppercase tracking-wide mt-1">{p.brandName || "—"}</p>
                       </td>
 
-                      <td className="py-3 px-4 text-right font-semibold text-indigo-600">
-                        {formatPrice(p.salePrice)}
-                      </td>
-
-                      <td className="py-3 px-4">
-                        {p.qty > 0 ? (
-                            <span className="font-medium text-gray-700">{p.qty}</span>
+                      {/* Cột 3: Giá */}
+                      <td className="py-3 px-4 text-right">
+                        {p.discountPrice && p.discountPrice > 0 && p.discountPrice < p.salePrice ? (
+                          <>
+                            <p className="text-red-600 font-bold">{formatPrice(p.discountPrice)}</p>
+                            <p className="text-gray-400 text-xs line-through">{formatPrice(p.salePrice)}</p>
+                          </>
                         ) : (
-                            <span className="text-red-500 text-xs font-bold">Hết hàng</span>
+                          <span className="font-semibold text-gray-900">{formatPrice(p.salePrice)}</span>
                         )}
                       </td>
 
+                      {/* Cột 4: Kho */}
+                      <td className="py-3 px-4">
+                        {p.qty > 0 ? (
+                          <span className="font-medium text-gray-700">{p.qty}</span>
+                        ) : (
+                          <span className="text-red-500 text-xs font-bold bg-red-50 px-2 py-1 rounded">Hết hàng</span>
+                        )}
+                      </td>
+
+                      {/* Cột 5: Status */}
                       <td className="py-3 px-4">
                         {p.status === 1 ? (
                           <span className="px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-700 border border-green-200">
-                            Hoạt động
+                            Active
                           </span>
                         ) : (
                           <span className="px-2 py-1 text-xs font-semibold rounded bg-gray-100 text-gray-600 border border-gray-200">
-                            Đang ẩn
+                            Hidden
                           </span>
                         )}
                       </td>
 
+                      {/* Cột 6: Actions */}
                       <td className="py-3 px-4">
                         <div className="flex justify-center items-center space-x-3">
-                          {/* Toggle Status Button */}
-                          <button 
-                            onClick={() => handleToggleStatus(p)}
-                            className="text-green-600 hover:text-green-800 transition-colors"
-                            title={p.status === 1 ? "Ấn để ẩn" : "Ấn để hiện"}
-                          >
-                             {p.status === 1 ? <FaToggleOn size={22} /> : <FaToggleOff size={22} className="text-gray-400" />}
-                          </button>
 
-                          <Link
-                            to={`/admin/editProduct/${p.id}`}
-                            className="text-blue-600 hover:text-blue-800 transition-colors"
-                            title="Chỉnh sửa"
-                          >
-                            <FaEdit size={18} />
-                          </Link>
+                          {/* ADMIN ONLY ACTIONS */}
+                          {isAdmin ? (
+                            <>
+                              <button
+                                onClick={() => handleToggleStatus(p)}
+                                className="text-green-600 hover:text-green-800 transition-colors"
+                                title={p.status === 1 ? "Ấn để ẩn" : "Ấn để hiện"}
+                              >
+                                {p.status === 1 ? <FaToggleOn size={22} /> : <FaToggleOff size={22} className="text-gray-400" />}
+                              </button>
 
-                          <button
-                            onClick={() => handleDelete(p.id)}
-                            className="text-red-600 hover:text-red-800 transition-colors"
-                            title="Xóa"
-                          >
-                            <FaTrash size={16} />
-                          </button>
+                              <Link
+                                to={`/admin/editProduct/${p.id}`}
+                                className="text-blue-600 hover:text-blue-800 transition-colors"
+                                title="Chỉnh sửa"
+                              >
+                                <FaEdit size={18} />
+                              </Link>
+
+                              <button
+                                onClick={() => handleDelete(p.id)}
+                                className="text-red-600 hover:text-red-800 transition-colors"
+                                title="Xóa"
+                              >
+                                <FaTrash size={16} />
+                              </button>
+                            </>
+                          ) : (
+                            <span className="text-xs text-gray-400 italic">No permission</span>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -242,7 +403,7 @@ const ListProduct = () => {
                 ) : (
                   <tr>
                     <td colSpan="7" className="py-10 text-center text-gray-400 italic">
-                      Không tìm thấy sản phẩm nào
+                      Không tìm thấy sản phẩm nào phù hợp
                     </td>
                   </tr>
                 )}
@@ -251,6 +412,29 @@ const ListProduct = () => {
           </div>
         )}
       </div>
+
+      {/* PAGINATION */}
+      {totalPages > 1 && (
+        <div className="flex justify-center gap-4 mt-6 p-4 border-t bg-gray-50">
+          <button
+            disabled={currentPage === 0}
+            onClick={() => handlePageChange(currentPage - 1)}
+            className="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50 transition-colors bg-white text-gray-700 font-medium shadow-sm"
+          >
+            ← Trước
+          </button>
+          <span className="flex items-center text-gray-600 font-medium">
+            Trang {currentPage + 1} / {totalPages}
+          </span>
+          <button
+            disabled={currentPage >= totalPages - 1}
+            onClick={() => handlePageChange(currentPage + 1)}
+            className="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50 transition-colors bg-white text-gray-700 font-medium shadow-sm"
+          >
+            Sau →
+          </button>
+        </div>
+      )}
     </div>
   );
 };

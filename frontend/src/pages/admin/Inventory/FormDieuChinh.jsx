@@ -4,8 +4,8 @@ import { toast } from "react-toastify";
 import AsyncSelect from "react-select/async";
 import { FaArrowLeft, FaSave, FaExchangeAlt } from "react-icons/fa";
 
-import apiStock from "../../../api/user/apiStock";
-import apiProduct from "../../../api/user/apiProduct";
+import apiStockAdmin from "../../../api/admin/apiStockAdmin";
+import apiProductAdmin from "../../../api/admin/apiProductAdmin";
 
 const FormDieuChinh = () => {
   const navigate = useNavigate(); // ✅ Hook điều hướng
@@ -20,7 +20,8 @@ const FormDieuChinh = () => {
   /* SEARCH PRODUCT */
   const loadProductOptions = async (inputValue) => {
     if (!inputValue || inputValue.length < 2) return [];
-    const products = await apiProduct.search(inputValue);
+    const response = await apiProductAdmin.search(inputValue);
+    const products = response.content || [];
     return products.map((p) => ({
       value: p.id,
       label: `${p.name} (Tồn: ${p.qty})`, // Hiển thị tồn kho để dễ điều chỉnh
@@ -44,7 +45,7 @@ const FormDieuChinh = () => {
 
     setSubmitting(true);
     try {
-      await apiStock.create({
+      await apiStockAdmin.create({
         ...form,
         movementType: "ADJUSTMENT",
       });

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaCamera, FaArrowLeft, FaSave } from "react-icons/fa";
-import apiBrand from "../../../api/user/apiBrand";
+import apiBrandAdmin from "../../../api/admin/apiBrandAdmin";
 import apiUpload from "../../../api/apiUpload";
 
 const EditBrand = () => {
@@ -14,23 +14,25 @@ const EditBrand = () => {
     name: "",
     slug: "",
     image: "",
+    imagePublicId: "", // ✅ Added for update logic
     description: "",
     country: "",
-    status: 1, 
+    status: 1,
   });
 
+  /* ================= FETCH DATA ================= */
   useEffect(() => {
     const fetchBrand = async () => {
       try {
-        const data = await apiBrand.getById(id);
+        const data = await apiBrandAdmin.getById(id);
         setForm({
           name: data.name,
           slug: data.slug,
           image: data.image,
+          imagePublicId: data.imagePublicId || "", // ✅ Load publicId
           description: data.description || "",
           country: data.country || "",
-          // 🔥 FIX LỖI Ở ĐÂY: Dùng toán tử ?? để nếu null thì lấy 1
-          status: data.status ?? 1, 
+          status: data.status ?? 1,
         });
       } catch {
         toast.error("Không tìm thấy thương hiệu");
@@ -40,18 +42,44 @@ const EditBrand = () => {
     fetchBrand();
   }, [id, navigate]);
 
+  /* ================= SLUG GENERATOR ================= */
+  const generateSlug = (text) =>
+    text
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/đ/g, "d")
+      .replace(/\s+/g, "-")
+      .replace(/[^\w-]+/g, "")
+      .replace(/--+/g, "-")
+      .replace(/^-+/, "")
+      .replace(/-+$/, "");
+
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm((prev) => {
+      const updated = { ...prev, [name]: value };
+      if (name === "name") updated.slug = generateSlug(value);
+      return updated;
+    });
   };
 
   const handleUploadImage = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
+    // ✅ Instant Preview
+    const previewUrl = URL.createObjectURL(file);
+    setForm((prev) => ({ ...prev, image: previewUrl }));
+
     setUploading(true);
     try {
-      const imageUrl = await apiUpload.uploadBrandImage(file);
-      setForm((prev) => ({ ...prev, image: imageUrl }));
+      const res = await apiUpload.uploadBrandImage(file);
+      setForm((prev) => ({
+        ...prev,
+        image: res.url,
+        imagePublicId: res.publicId
+      }));
       toast.success("✅ Upload ảnh mới thành công");
     } catch {
       toast.error("❌ Upload ảnh thất bại");
@@ -63,7 +91,7 @@ const EditBrand = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await apiBrand.update(id, form);
+      await apiBrandAdmin.update(id, form);
       toast.success("Cập nhật thành công");
       navigate("/admin/brands");
     } catch {
@@ -85,26 +113,37 @@ const EditBrand = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        
-        {/* Image Upload Section */}
+
+        {/* Image Upload Section - New Clean UI */}
         <div className="flex flex-col items-center justify-center mb-6">
-          <div className="relative group w-48 h-32">
-            <img
-              src={form.image || "https://placehold.co/200x120?text=No+Image"}
-              className="w-full h-full object-contain rounded-lg border-2 border-dashed border-gray-300 shadow-sm bg-gray-50"
-              alt="Brand Logo"
-            />
-            <label className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all cursor-pointer rounded-lg">
-              <FaCamera className="text-white opacity-0 group-hover:opacity-100 text-3xl drop-shadow-md" />
+          <div className="relative w-48 h-48 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden">
+            {form.image ? (
+              <img
+                src={form.image}
+                className="w-full h-full object-contain p-2"
+                alt="Brand Logo"
+              />
+            ) : (
+              <div className="text-center text-gray-400">
+                <FaCamera size={32} className="mx-auto mb-2 opacity-50" />
+                <span className="text-xs">Chưa có logo</span>
+              </div>
+            )}
+
+            <label className="absolute inset-0 cursor-pointer hover:bg-black/10 flex items-center justify-center transition-all">
               <input
                 type="file"
                 accept="image/*"
                 onChange={handleUploadImage}
                 className="hidden"
               />
+              <span className="bg-white text-indigo-700 px-3 py-1.5 rounded shadow-sm text-xs font-bold">
+                {form.image ? "Thay đổi" : "Chọn ảnh"}
+              </span>
             </label>
+
             {uploading && (
-              <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center">
+              <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
                 <div className="animate-spin h-6 w-6 border-2 border-indigo-600 rounded-full border-t-transparent"></div>
               </div>
             )}
@@ -124,14 +163,8 @@ const EditBrand = () => {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Slug (Read-only)</label>
-            <input
-              name="slug"
-              value={form.slug || ""}
-              readOnly
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
-            />
+          <div className="hidden">
+            <input name="slug" value={form.slug || ""} readOnly />
           </div>
 
           <div>
@@ -149,11 +182,10 @@ const EditBrand = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
             <select
               name="status"
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 outline-none font-medium ${
-                Number(form.status) === 1 
-                  ? "bg-green-50 text-green-700 border-green-200 focus:ring-green-500" 
-                  : "bg-gray-50 text-gray-700 border-gray-200 focus:ring-gray-500"
-              }`}
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 outline-none font-medium ${Number(form.status) === 1
+                ? "bg-green-50 text-green-700 border-green-200 focus:ring-green-500"
+                : "bg-gray-50 text-gray-700 border-gray-200 focus:ring-gray-500"
+                }`}
               value={form.status} // Giờ đây giá trị này sẽ là 1 thay vì null
               onChange={handleChange}
             >

@@ -1,25 +1,24 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import apiCategoryAdmin from "../../../api/admin/apiCategoryAdmin"; // Đã sửa import
-// import apiUpload from "../../../api/apiUpload"; // Nếu chưa dùng thì comment lại
+import apiCategoryAdmin from "../../../api/admin/apiCategoryAdmin";
+import apiUpload from "../../../api/apiUpload";
 
 const EditCat = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  // Giả sử imageURL được define ở file config hoặc global, nếu chưa có thì thay bằng string rỗng
-  const imageURL = "http://localhost:8080/images"; 
 
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
 
   const [category, setCategory] = useState({
     name: "",
-    slug: "", 
     description: "",
     status: 1,
     parentId: null,
-    image: ""
+    image: "",
+    imagePublicId: ""
   });
 
   const [preview, setPreview] = useState(null);
@@ -35,18 +34,14 @@ const EditCat = () => {
 
         setCategory({
           name: data.name,
-          slug: data.slug, 
           description: data.description || "",
           status: data.status,
           parentId: data.parentId,
-          image: data.image
+          image: data.image,
+          imagePublicId: data.imagePublicId
         });
 
-        setPreview(
-          data.image
-            ? `${imageURL}/category/${data.image}?v=${Date.now()}`
-            : null
-        );
+        setPreview(data.image || null);
       } catch (err) {
         toast.error("❌ Không thể tải danh mục"); // Sửa alert thành toast cho đẹp
       } finally {
@@ -63,14 +58,41 @@ const EditCat = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const data = await apiCategoryAdmin.getAll(); // Sửa API call
+        const data = await apiCategoryAdmin.getAll();
         setCategories(data);
       } catch {
         toast.error("❌ Không thể tải danh mục cha");
       }
     };
     fetchCategories();
-  }, []);
+  }, [id]);
+
+  /* ===============================
+      HELPER: FIND ALL DESCENDANTS
+  =============================== */
+  const getDescendants = (allCats, parentId) => {
+    let descendants = [];
+    const children = allCats.filter((c) => c.parentId === parentId);
+
+    children.forEach((child) => {
+      descendants.push(child.id);
+      descendants = [...descendants, ...getDescendants(allCats, child.id)];
+    });
+
+    return descendants;
+  };
+
+  // Filter list cha: Bỏ chính nó & tất cả con cháu
+  const validParents = categories.filter((cat) => {
+    // 1. Bỏ chính nó
+    if (cat.id === Number(id)) return false;
+
+    // 2. Bỏ tất cả con cháu (đệ quy)
+    const descendants = getDescendants(categories, Number(id));
+    if (descendants.includes(cat.id)) return false;
+
+    return true;
+  });
 
   /* ===============================
       HANDLE CHANGE
@@ -84,6 +106,32 @@ const EditCat = () => {
   };
 
   /* ===============================
+      UPLOAD IMAGE
+  =============================== */
+  const handleUploadImage = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const res = await apiUpload.uploadCategoryImage(file);
+
+      setCategory(prev => ({
+        ...prev,
+        image: res.url,
+        imagePublicId: res.publicId
+      }));
+      setPreview(res.url);
+
+      toast.success("✅ Đã tải ảnh lên");
+    } catch {
+      toast.error("❌ Lỗi upload ảnh");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  /* ===============================
       SUBMIT UPDATE (JSON)
   =============================== */
   const handleSubmit = async (e) => {
@@ -93,17 +141,18 @@ const EditCat = () => {
     try {
       const payload = {
         name: category.name,
-        slug: category.slug, 
+        // slug tự động sinh ở backend
         description: category.description,
         status: Number(category.status),
         parentId: category.parentId ? Number(category.parentId) : null,
-        image: category.image
+        image: category.image,
+        imagePublicId: category.imagePublicId
       };
 
       await apiCategoryAdmin.update(id, payload); // Sửa API call
 
       toast.success("✅ Cập nhật danh mục thành công");
-      navigate(`/admin/categories`); 
+      navigate(`/admin/categories`);
     } catch (err) {
       console.error(err);
       toast.error("❌ Cập nhật thất bại");
@@ -142,14 +191,7 @@ const EditCat = () => {
                 className="w-full border p-2 mb-4"
               />
 
-              <label className="block mb-2">Slug (Đường dẫn tĩnh)</label>
-              <input
-                name="slug"
-                value={category.slug}
-                onChange={handleChange}
-                className="w-full border p-2 mb-4 bg-gray-100"
-                readOnly 
-              />
+              {/* Slug tự động sinh ở backend */}
 
               <label className="block mb-2">Mô tả</label>
               <textarea
@@ -181,10 +223,10 @@ const EditCat = () => {
                   onChange={handleChange}
                   className="w-full border p-2"
                 >
-                  <option value="">Danh mục cha</option>
-                  {categories
-                    .filter(cat => cat.id !== Number(id))
-                    .map(cat => (
+                  <option value="">-- Chọn danh mục cha --</option>
+                  {validParents
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .map((cat) => (
                       <option key={cat.id} value={cat.id}>
                         {cat.name}
                       </option>
@@ -193,16 +235,35 @@ const EditCat = () => {
               </div>
 
               <div className="bg-gray-50 p-6 rounded">
-                <img
-                  src={preview || "https://via.placeholder.com/150"}
-                  className="w-40 h-32 object-cover mx-auto mb-4"
-                  alt=""
-                />
+                <label className="block mb-2 font-medium">Hình ảnh</label>
+
+                <div className="relative w-full aspect-square bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 overflow-hidden">
+                  {preview ? (
+                    <img src={preview} className="w-full h-full object-contain p-2" alt="Category" />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-400">
+                      Chưa có ảnh
+                    </div>
+                  )}
+
+                  <label className="absolute inset-0 cursor-pointer hover:bg-black/10 flex items-center justify-center">
+                    <input type="file" accept="image/*" onChange={handleUploadImage} className="hidden" />
+                    <span className="bg-white px-4 py-2 rounded shadow text-sm font-medium">
+                      {preview ? "Thay đổi ảnh" : "Chọn ảnh"}
+                    </span>
+                  </label>
+
+                  {uploading && (
+                    <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+                      <div className="animate-spin h-8 w-8 border-4 border-indigo-600 rounded-full border-t-transparent"></div>
+                    </div>
+                  )}
+                </div>
 
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="w-full bg-indigo-600 text-white py-2 rounded"
+                  disabled={loading || uploading}
+                  className="w-full mt-6 bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700"
                 >
                   {loading ? "Đang lưu..." : "Lưu thay đổi"}
                 </button>

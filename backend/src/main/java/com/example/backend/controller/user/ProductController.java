@@ -12,6 +12,8 @@ import java.util.List;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
+import java.math.BigDecimal;
+
 @RestController
 @RequestMapping("/api/products")
 public class ProductController {
@@ -59,8 +61,12 @@ public class ProductController {
     @GetMapping("/filter")
     public ResponseEntity<List<ProductDto>> filter(
             @RequestParam(required = false) Integer categoryId,
-            @RequestParam(required = false) Integer status) {
-        return ResponseEntity.ok(productService.filter(categoryId, status));
+            @RequestParam(required = false) Integer brandId,
+            @RequestParam(required = false) Integer status,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) Boolean hasPromotion) {
+        return ResponseEntity.ok(productService.filter(categoryId, brandId, status, minPrice, maxPrice, hasPromotion));
     }
 
     // ✅ HATEOAS
@@ -73,7 +79,6 @@ public class ProductController {
                 linkTo(methodOn(ProductController.class).getById(id)).withSelfRel(),
                 linkTo(methodOn(ProductController.class).update(id, null)).withRel("update"),
                 linkTo(methodOn(ProductController.class).delete(id)).withRel("delete"),
-                linkTo(methodOn(ProductController.class).getAll()).withRel("all")
-        );
+                linkTo(methodOn(ProductController.class).getAll()).withRel("all"));
     }
 }

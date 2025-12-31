@@ -9,12 +9,16 @@ const apiProduct = {
       .get("/products/search", { params: { keyword } })
       .then(res => res.data),
 
-  filter: (categoryId, status) =>
+  filter: (categoryId, brandId, status, minPrice, maxPrice, hasPromotion) =>
     axiosInstance
       .get("/products/filter", {
         params: {
           categoryId: categoryId || undefined,
+          brandId: brandId || undefined,
           status: status ?? undefined,
+          minPrice: minPrice || undefined,
+          maxPrice: maxPrice || undefined,
+          hasPromotion: hasPromotion ?? undefined,
         },
       })
       .then(res => res.data),

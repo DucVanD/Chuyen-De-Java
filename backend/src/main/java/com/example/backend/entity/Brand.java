@@ -27,6 +27,9 @@ public class Brand {
 
     private String image;
 
+    @Column(name = "image_public_id")
+    private String imagePublicId;
+
     @Column(columnDefinition = "TEXT")
     private String description;
 

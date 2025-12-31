@@ -1,4 +1,5 @@
 package com.example.backend.mapper;
+
 import com.example.backend.dto.CategoryDto;
 import com.example.backend.entity.Category;
 
@@ -11,12 +12,14 @@ public class CategoryMapper {
                 .name(category.getName())
                 .slug(category.getSlug())
                 .image(category.getImage())
+                .imagePublicId(category.getImagePublicId())
                 .description(category.getDescription())
                 .status(category.getStatus())
                 .createdAt(category.getCreatedAt())
                 .updatedAt(category.getUpdatedAt())
                 .deletedAt(category.getDeletedAt())
                 .parentId(category.getParent() != null ? category.getParent().getId() : null)
+                .productCount(category.getProductCount() != null ? category.getProductCount() : 0L)
                 .build();
     }
 
@@ -28,6 +31,7 @@ public class CategoryMapper {
                 .name(categoryDto.getName())
                 .slug(categoryDto.getSlug())
                 .image(categoryDto.getImage())
+                .imagePublicId(categoryDto.getImagePublicId())
                 .description(categoryDto.getDescription())
                 .status(categoryDto.getStatus())
                 .createdAt(categoryDto.getCreatedAt())

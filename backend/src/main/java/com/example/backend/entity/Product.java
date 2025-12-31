@@ -68,7 +68,7 @@ public class Product {
     @Column(name = "locked_qty", nullable = true)
     private Integer lockedQty = 0; // Hàng đang giữ chờ thanh toán
 
-    @Column(name = "cost_price", nullable = false)
+    @Column(name = "cost_price", nullable = true)
     private BigDecimal costPrice;
 
     @Column(name = "sale_price", nullable = false)
@@ -78,7 +78,7 @@ public class Product {
     private BigDecimal discountPrice;
 
     @Builder.Default
-    private Integer status = 0;
+    private Integer status = 1; // 1: Active, 0: Hidden
 
     @LastModifiedBy
     @Column(name = "updated_by", nullable = false)

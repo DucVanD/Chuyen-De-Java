@@ -1,4 +1,5 @@
 package com.example.backend.repository;
+
 import com.example.backend.entity.enums.StockMovementType;
 import java.util.Optional;
 
@@ -11,4 +12,6 @@ public interface StockMovementRepository extends JpaRepository<StockMovement, In
     Optional<StockMovement> findTopByProductIdAndMovementTypeOrderByCreatedAtDesc(
             Integer productId,
             StockMovementType movementType);
+
+    long countBySupplierId(Integer supplierId);
 }

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaPlus, FaEdit, FaTrash, FaToggleOn, FaToggleOff } from "react-icons/fa";
-import apiBrand from "../../../api/user/apiBrand";
+import apiBrandAdmin from "../../../api/admin/apiBrandAdmin";
 
 const ListBrand = () => {
   const [brands, setBrands] = useState([]);
@@ -11,9 +11,9 @@ const ListBrand = () => {
   const fetchBrands = async () => {
     setLoading(true);
     try {
-      const data = await apiBrand.getAll();
+      const data = await apiBrandAdmin.getAll();
       setBrands(data);
-    } catch { toast.error("Lỗi tải thương hiệu"); } 
+    } catch { toast.error("Lỗi tải thương hiệu"); }
     finally { setLoading(false); }
   };
 
@@ -22,17 +22,19 @@ const ListBrand = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("Xóa thương hiệu này?")) return;
     try {
-      await apiBrand.delete(id);
+      await apiBrandAdmin.delete(id);
       toast.success("Đã xóa thương hiệu");
       fetchBrands();
-    } catch { toast.error("Xóa thất bại"); }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Xóa thất bại");
+    }
   };
 
   const handleToggleStatus = async (brand) => {
     try {
       const newStatus = brand.status === 1 ? 0 : 1;
       // Gọi API update (giả định)
-      await apiBrand.update(brand.id, { ...brand, status: newStatus });
+      await apiBrandAdmin.update(brand.id, { ...brand, status: newStatus });
       toast.success("Cập nhật trạng thái thành công");
       fetchBrands();
     } catch { toast.error("Lỗi cập nhật trạng thái"); }
@@ -71,7 +73,7 @@ const ListBrand = () => {
                       </td>
                       <td className="py-3 px-4 text-left font-medium text-gray-900">{b.name}</td>
                       <td className="py-3 px-4 text-gray-600">{b.country || "-"}</td>
-                      
+
                       <td className="py-3 px-4">
                         {b.status === 1 ? (
                           <span className="px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-700">Hoạt động</span>

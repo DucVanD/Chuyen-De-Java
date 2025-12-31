@@ -1,18 +1,31 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import apiStock from "../../../api/user/apiStock";
-import { FaPlus, FaMinus, FaExchangeAlt, FaUndo } from "react-icons/fa";
+import apiStockAdmin from "../../../api/admin/apiStockAdmin";
+import { FaPlus, FaMinus, FaExchangeAlt, FaUndo, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 const ListInventory = () => {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [size, setSize] = useState(7);
 
   useEffect(() => {
+    loadMovements();
+  }, [currentPage, size]);
+
+  const loadMovements = () => {
     setLoading(true);
-    apiStock.getAll()
-      .then(setList)
+    apiStockAdmin.getPage(currentPage, size)
+      .then((data) => {
+        setList(data.content);
+        setTotalPages(data.totalPages);
+      })
+      .catch((err) => {
+        console.error("Lỗi tải lịch sử kho", err);
+      })
       .finally(() => setLoading(false));
-  }, []);
+  };
 
   const getBadgeStyle = (type) => {
     switch (type) {
@@ -54,9 +67,6 @@ const ListInventory = () => {
             <FaExchangeAlt className="mr-2" /> Điều chỉnh
           </Link>
 
-          <Link to="/admin/inventory/return" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center shadow-sm transition-all text-sm font-medium">
-            <FaUndo className="mr-2" /> Trả hàng
-          </Link>
         </div>
       </div>
 
@@ -65,58 +75,116 @@ const ListInventory = () => {
         {loading ? (
           <p className="text-center py-10 text-gray-500 italic">Đang tải dữ liệu...</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm border-collapse text-center">
-              <thead>
-                <tr className="bg-gray-50 border-b text-gray-700 uppercase text-xs tracking-wider">
-                  <th className="py-3 px-4">ID</th>
-                  <th className="py-3 px-4 text-left">Sản phẩm</th>
-                  <th className="py-3 px-4">Loại giao dịch</th>
-                  <th className="py-3 px-4">Số lượng</th>
-                  <th className="py-3 px-4">Tồn sau GD</th>
-                  <th className="py-3 px-4">Thời gian</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {list.length > 0 ? (
-                  list.map((m) => (
-                    <tr key={m.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="py-3 px-4 text-gray-500">#{m.id}</td>
-
-                      <td className="py-3 px-4 text-left">
-                        <div className="font-medium text-gray-900">{m.productName}</div>
-                        <div className="text-xs text-gray-500">Mã SP: {m.productId}</div>
-                      </td>
-
-                      <td className="py-3 px-4">
-                        <span className={`px-2 py-1 text-xs font-semibold rounded border ${getBadgeStyle(m.movementType)}`}>
-                          {getTypeName(m.movementType)}
-                        </span>
-                      </td>
-
-                      <td className="py-3 px-4 font-medium">
-                        {m.quantity > 0 ? `+${m.quantity}` : m.quantity}
-                      </td>
-                      
-                      <td className="py-3 px-4 text-gray-700 font-semibold">{m.currentStock}</td>
-                      
-                      <td className="py-3 px-4 text-gray-600 text-xs">
-                        {new Date(m.createdAt).toLocaleString("vi-VN")}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="6" className="py-10 text-center text-gray-400">Chưa có dữ liệu lịch sử kho</td>
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border-collapse text-center">
+                <thead>
+                  <tr className="bg-gray-50 border-b text-gray-700 uppercase text-xs tracking-wider">
+                    <th className="py-3 px-4">ID</th>
+                    <th className="py-3 px-4 text-left">Sản phẩm</th>
+                    <th className="py-3 px-4">Loại giao dịch</th>
+                    <th className="py-3 px-4">Số lượng</th>
+                    <th className="py-3 px-4">Tồn sau GD</th>
+                    <th className="py-3 px-4 text-right">Giá trị đơn/c</th>
+                    <th className="py-3 px-4">Thời gian</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {list.length > 0 ? (
+                    list.map((m) => (
+                      <tr key={m.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="py-3 px-4 text-gray-500">#{m.id}</td>
+
+                        <td className="py-3 px-4 text-left">
+                          <div className="font-medium text-gray-900">{m.productName}</div>
+                          <div className="text-xs text-gray-500">Mã SP: {m.productId}</div>
+                        </td>
+
+                        <td className="py-3 px-4">
+                          <span className={`px-2 py-1 text-xs font-semibold rounded border ${getBadgeStyle(m.movementType)}`}>
+                            {getTypeName(m.movementType)}
+                          </span>
+                        </td>
+
+                        <td className="py-3 px-4 font-medium text-lg">
+                          {m.quantity > 0 ? (
+                            <span className="text-green-600">+{m.quantity}</span>
+                          ) : (
+                            <span className="text-red-600">{m.quantity}</span>
+                          )}
+                        </td>
+
+                        <td className="py-3 px-4 text-gray-700 font-semibold">{m.currentStock}</td>
+
+                        <td className="py-3 px-4 text-right">
+                          {m.unitPrice ? (
+                            <span className="text-gray-900 font-medium">
+                              {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(m.unitPrice)}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 italic text-xs">N/A</span>
+                          )}
+                        </td>
+
+                        <td className="py-3 px-4 text-gray-600 text-xs text-right">
+                          {new Date(m.createdAt).toLocaleString("vi-VN")}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="7" className="py-10 text-center text-gray-400">Chưa có dữ liệu lịch sử kho</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* PAGINATION */}
+            {totalPages > 1 && (
+              <div className="mt-6 flex justify-between items-center bg-gray-50 p-4 rounded-lg">
+                <div className="text-sm text-gray-600">
+                  Trang <span className="font-semibold text-gray-900">{currentPage + 1}</span> / {totalPages}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    disabled={currentPage === 0}
+                    onClick={() => setCurrentPage(prev => prev - 1)}
+                    className="p-2 rounded-md border bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  >
+                    <FaChevronLeft className="text-gray-600" />
+                  </button>
+                  {[...Array(totalPages)].map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentPage(i)}
+                      className={`w-10 h-10 rounded-md border text-sm font-medium transition-all ${currentPage === i
+                        ? "bg-indigo-600 text-white border-indigo-600 shadow-md"
+                        : "bg-white text-gray-600 hover:bg-gray-100 border-gray-300"
+                        }`}
+                    >
+                      {i + 1}
+                    </button>
+                  )).slice(
+                    Math.max(0, currentPage - 2),
+                    Math.min(totalPages, currentPage + 3)
+                  )}
+                  <button
+                    disabled={currentPage === totalPages - 1}
+                    onClick={() => setCurrentPage(prev => prev + 1)}
+                    className="p-2 rounded-md border bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  >
+                    <FaChevronRight className="text-gray-600" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
   );
 };
+
 
 export default ListInventory;

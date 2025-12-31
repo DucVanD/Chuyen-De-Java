@@ -38,6 +38,7 @@ public class Category {
     private String slug;
 
     private String image;
+    private String imagePublicId;
 
     @Column(columnDefinition = "TEXT") // Description thường dài
     private String description;
@@ -55,4 +56,8 @@ public class Category {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    // Virtual Column: Đếm số sản phẩm (yêu cầu Hibernate)
+    @org.hibernate.annotations.Formula("(SELECT count(*) FROM products p WHERE p.category_id = id)")
+    private Long productCount;
 }

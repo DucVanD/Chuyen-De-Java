@@ -3,9 +3,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaArrowLeft, FaSave, FaEdit, FaCamera, FaTag, FaLayerGroup, FaPercentage, FaBoxOpen } from "react-icons/fa";
 
-import apiProduct from "../../../api/user/apiProduct";
-import apiCategory from "../../../api/user/apiCategory";
-import apiBrand from "../../../api/user/apiBrand";
+import apiProductAdmin from "../../../api/admin/apiProductAdmin";
+import apiCategoryAdmin from "../../../api/admin/apiCategoryAdmin";
+import apiBrandAdmin from "../../../api/admin/apiBrandAdmin";
 import apiUpload from "../../../api/apiUpload";
 
 const EditProduct = () => {
@@ -17,7 +17,7 @@ const EditProduct = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
-  
+
   // State quản lý checkbox khuyến mại
   const [isDiscounted, setIsDiscounted] = useState(false);
 
@@ -26,7 +26,7 @@ const EditProduct = () => {
     slug: "",
     categoryId: "",
     brandId: "",
-    image: "", 
+    image: "",
     imagePublicId: "", // ✅ THÊM: Để lưu ID ảnh phục vụ việc xóa
     description: "",
     detail: "",
@@ -42,9 +42,9 @@ const EditProduct = () => {
     const fetchData = async () => {
       try {
         const [product, cats, brs] = await Promise.all([
-          apiProduct.getById(id), 
-          apiCategory.getAll(),   
-          apiBrand.getAll()       
+          apiProductAdmin.getById(id),
+          apiCategoryAdmin.getAll(),
+          apiBrandAdmin.getAll()
         ]);
 
         // Xử lý logic hiển thị checkbox khuyến mại
@@ -64,7 +64,8 @@ const EditProduct = () => {
           discountPrice: product.discountPrice || "",
           status: product.status ?? 1,
           qty: product.qty || 0,
-          lockedQty: product.lockedQty || 0
+          lockedQty: product.lockedQty || 0,
+          costPrice: product.costPrice || null
         });
 
         setCategories(cats || []);
@@ -81,13 +82,27 @@ const EditProduct = () => {
     fetchData();
   }, [id, navigate]);
 
+  /* ================= SLUG GENERATOR ================= */
+  const generateSlug = (text) =>
+    text
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/đ/g, "d")
+      .replace(/\s+/g, "-")
+      .replace(/[^\w-]+/g, "")
+      .replace(/--+/g, "-")
+      .replace(/^-+/, "")
+      .replace(/-+$/, "");
+
   /* ================= HANDLERS ================= */
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: value
-    }));
+    setForm((prev) => {
+      const updated = { ...prev, [name]: value };
+      if (name === "name") updated.slug = generateSlug(value);
+      return updated;
+    });
   };
 
   const handleToggleDiscount = (e) => {
@@ -102,13 +117,17 @@ const EditProduct = () => {
     const file = e.target.files[0];
     if (!file) return;
 
+    // ✅ HIỂN THỊ PREVIEW NGAY LẬP TỨC
+    const previewUrl = URL.createObjectURL(file);
+    setForm((prev) => ({ ...prev, image: previewUrl }));
+
     setUploading(true);
     try {
       // ✅ SỬA: Hứng object trả về (url và publicId) thay vì chỉ string
-      const res = await apiUpload.uploadProductImage(file); 
-      
-      setForm((prev) => ({ 
-        ...prev, 
+      const res = await apiUpload.uploadProductImage(file);
+
+      setForm((prev) => ({
+        ...prev,
         image: res.url,           // Hiển thị ảnh
         imagePublicId: res.publicId // Lưu ID để lưu vào DB
       }));
@@ -124,9 +143,10 @@ const EditProduct = () => {
   /* ================= SUBMIT ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validate
-    if (!form.name || !form.categoryId || !form.brandId) return toast.error("Vui lòng điền đủ thông tin bắt buộc");
+    if (!form.name || form.name.length < 3) return toast.error("Tên sản phẩm phải từ 3 ký tự trở lên");
+    if (!form.categoryId || !form.brandId) return toast.error("Vui lòng điền đủ thông tin bắt buộc");
     if (isDiscounted && Number(form.discountPrice) >= Number(form.salePrice)) {
       return toast.error("Giá khuyến mại phải nhỏ hơn giá niêm yết");
     }
@@ -144,10 +164,12 @@ const EditProduct = () => {
         detail: form.detail,
         salePrice: Number(form.salePrice),
         discountPrice: isDiscounted && form.discountPrice ? Number(form.discountPrice) : null,
-        status: Number(form.status)
+        status: Number(form.status),
+        costPrice: form.costPrice, // Giữ nguyên giá nhập hiện tại
+        qty: form.qty // Giữ nguyên số lượng hiện tại
       };
 
-      await apiProduct.update(id, payload); 
+      await apiProductAdmin.update(id, payload);
 
       toast.success("✅ Cập nhật sản phẩm thành công");
       setTimeout(() => navigate("/admin/products"), 500);
@@ -169,7 +191,7 @@ const EditProduct = () => {
   return (
     <div className="bg-gray-50 min-h-screen p-6">
       <form onSubmit={handleSubmit} className="max-w-7xl mx-auto">
-        
+
         {/* === HEADER === */}
         <div className="flex justify-between items-center mb-6">
           <div>
@@ -191,20 +213,20 @@ const EditProduct = () => {
               disabled={submitting || uploading}
               className="px-6 py-2.5 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all flex items-center gap-2"
             >
-              {submitting ? <div className="animate-spin h-5 w-5 border-2 border-white rounded-full border-t-transparent"/> : <><FaSave /> Lưu Thay Đổi</>}
+              {submitting ? <div className="animate-spin h-5 w-5 border-2 border-white rounded-full border-t-transparent" /> : <><FaSave /> Lưu Thay Đổi</>}
             </button>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
+
           {/* === CỘT TRÁI: THÔNG TIN CHÍNH === */}
           <div className="lg:col-span-2 space-y-6">
-            
+
             {/* Card 1: Thông tin cơ bản */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Thông tin cơ bản</h3>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Tên sản phẩm <span className="text-red-500">*</span></label>
@@ -214,16 +236,6 @@ const EditProduct = () => {
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                     required
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Slug (URL)</label>
-                  <input
-                    name="slug"
-                    value={form.slug}
-                    readOnly
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
                   />
                 </div>
 
@@ -275,45 +287,45 @@ const EditProduct = () => {
 
                 {/* Checkbox Toggle */}
                 <div className="flex flex-col justify-center p-4 bg-gray-50 rounded-lg border border-gray-200">
-                   <div className="flex items-center gap-3">
-                      <input 
-                        type="checkbox" 
-                        id="discountToggleEdit"
-                        checked={isDiscounted}
-                        onChange={handleToggleDiscount}
-                        className="w-5 h-5 text-indigo-600 rounded cursor-pointer focus:ring-indigo-500"
-                      />
-                      <label htmlFor="discountToggleEdit" className="font-medium text-gray-700 cursor-pointer select-none">
-                        Đang có khuyến mại?
-                      </label>
-                   </div>
-                   <p className="text-xs text-gray-500 mt-1 ml-8">Tích vào để nhập giá ưu đãi.</p>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      id="discountToggleEdit"
+                      checked={isDiscounted}
+                      onChange={handleToggleDiscount}
+                      className="w-5 h-5 text-indigo-600 rounded cursor-pointer focus:ring-indigo-500"
+                    />
+                    <label htmlFor="discountToggleEdit" className="font-medium text-gray-700 cursor-pointer select-none">
+                      Đang có khuyến mại?
+                    </label>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1 ml-8">Tích vào để nhập giá ưu đãi.</p>
                 </div>
 
                 {/* Giá Khuyến Mại (Ẩn/Hiện) */}
                 {isDiscounted && (
                   <div className="md:col-span-2 animate-fadeIn bg-red-50 p-4 rounded-lg border border-red-100 flex items-center gap-4">
-                      <div className="flex-1">
-                        <label className="block text-sm font-bold text-red-600 mb-1">Giá khuyến mại (VNĐ)</label>
-                        <input
-                          type="number"
-                          name="discountPrice"
-                          value={form.discountPrice}
-                          onChange={handleChange}
-                          className="w-full px-4 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-200 text-red-700 font-bold bg-white"
-                          placeholder="Nhập giá ưu đãi..."
-                        />
+                    <div className="flex-1">
+                      <label className="block text-sm font-bold text-red-600 mb-1">Giá khuyến mại (VNĐ)</label>
+                      <input
+                        type="number"
+                        name="discountPrice"
+                        value={form.discountPrice}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-200 text-red-700 font-bold bg-white"
+                        placeholder="Nhập giá ưu đãi..."
+                      />
+                    </div>
+
+                    {/* Badge % Giảm */}
+                    {Number(form.discountPrice) > 0 && Number(form.salePrice) > 0 && (
+                      <div className="flex flex-col items-center justify-center bg-white p-2 rounded-lg shadow-sm border border-red-200 h-full px-4">
+                        <FaPercentage className="text-red-500 mb-1" />
+                        <span className="text-xl font-black text-red-600">
+                          -{Math.round(100 - (form.discountPrice / form.salePrice) * 100)}%
+                        </span>
                       </div>
-                      
-                      {/* Badge % Giảm */}
-                      {Number(form.discountPrice) > 0 && Number(form.salePrice) > 0 && (
-                        <div className="flex flex-col items-center justify-center bg-white p-2 rounded-lg shadow-sm border border-red-200 h-full px-4">
-                           <FaPercentage className="text-red-500 mb-1" />
-                           <span className="text-xl font-black text-red-600">
-                             -{Math.round(100 - (form.discountPrice / form.salePrice) * 100)}%
-                           </span>
-                        </div>
-                      )}
+                    )}
                   </div>
                 )}
               </div>
@@ -322,13 +334,13 @@ const EditProduct = () => {
 
           {/* === CỘT PHẢI: CẤU HÌNH & ẢNH === */}
           <div className="space-y-6">
-            
+
             {/* Card 3: Phân loại & Trạng thái */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                 <FaLayerGroup className="text-indigo-500" /> Phân loại
+                <FaLayerGroup className="text-indigo-500" /> Phân loại
               </h3>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Danh mục <span className="text-red-500">*</span></label>
@@ -340,9 +352,11 @@ const EditProduct = () => {
                     required
                   >
                     <option value="">-- Chọn danh mục --</option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
+                    {categories
+                      .filter(c => c.parentId !== null) // ✅ CHỈ HIỆN DANH MỤC CON
+                      .map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
                   </select>
                 </div>
 
@@ -368,9 +382,8 @@ const EditProduct = () => {
                     name="status"
                     value={form.status}
                     onChange={handleChange}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 outline-none font-medium ${
-                      Number(form.status) === 1 ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-700 border-gray-200'
-                    }`}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 outline-none font-medium ${Number(form.status) === 1 ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-700 border-gray-200'
+                      }`}
                   >
                     <option value={1}>Hoạt động</option>
                     <option value={0}>Ẩn / Nháp</option>
@@ -381,30 +394,34 @@ const EditProduct = () => {
 
             {/* Card 4: Kho hàng (Read-only) */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-               <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                  <FaBoxOpen className="text-indigo-500" /> Tồn kho
-               </h3>
-               <div className="grid grid-cols-2 gap-4">
-                  <div className="p-3 bg-blue-50 rounded-lg border border-blue-100 text-center">
-                     <span className="block text-xs text-blue-600 font-bold uppercase">Tồn kho</span>
-                     <span className="text-2xl font-bold text-blue-800">{form.qty}</span>
-                  </div>
-                  <div className="p-3 bg-orange-50 rounded-lg border border-orange-100 text-center">
-                     <span className="block text-xs text-orange-600 font-bold uppercase">Đang giữ</span>
-                     <span className="text-2xl font-bold text-orange-800">{form.lockedQty}</span>
-                  </div>
-               </div>
-               <p className="text-xs text-gray-400 mt-2 text-center">Để thay đổi số lượng, vui lòng dùng chức năng Nhập/Xuất kho.</p>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <FaBoxOpen className="text-indigo-500" /> Tồn kho
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 bg-blue-50 rounded-lg border border-blue-100 text-center">
+                  <span className="block text-xs text-blue-600 font-bold uppercase">Tồn kho</span>
+                  <span className="text-2xl font-bold text-blue-800">{form.qty}</span>
+                </div>
+                <div className="p-3 bg-orange-50 rounded-lg border border-orange-100 text-center">
+                  <span className="block text-xs text-orange-600 font-bold uppercase">Giá nhập (VNĐ)</span>
+                  <span className={`block font-bold mt-1 ${form.costPrice ? 'text-2xl text-orange-800' : 'text-xs text-orange-500 italic'}`}>
+                    {form.costPrice
+                      ? new Intl.NumberFormat("vi-VN").format(form.costPrice)
+                      : "Sản phẩm chưa được nhập kho"}
+                  </span>
+                </div>
+              </div>
+              <p className="text-xs text-gray-400 mt-2 text-center">Giá nhập và tồn kho sẽ được cập nhật tự động khi thực hiện phiếu nhập hàng.</p>
             </div>
 
             {/* Card 5: Ảnh sản phẩm */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                 <FaCamera className="text-indigo-500" /> Ảnh sản phẩm
+                <FaCamera className="text-indigo-500" /> Ảnh sản phẩm
               </h3>
 
               <div className="flex flex-col items-center">
-                <div className="relative group w-full aspect-square bg-gray-50 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden hover:border-indigo-400 transition-colors">
+                <div className="relative w-full aspect-square bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden">
                   {form.image ? (
                     <img src={form.image} alt="Preview" className="w-full h-full object-contain p-2" />
                   ) : (
@@ -413,11 +430,11 @@ const EditProduct = () => {
                       <span className="text-sm">Tải ảnh lên</span>
                     </div>
                   )}
-                  
-                  <label className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 flex items-center justify-center transition-all cursor-pointer">
+
+                  <label className="absolute inset-0 cursor-pointer hover:bg-black/10 flex items-center justify-center transition-all">
                     <input type="file" accept="image/*" onChange={handleUploadImage} className="hidden" />
-                    <span className="opacity-0 group-hover:opacity-100 bg-white text-indigo-700 px-4 py-2 rounded-full text-sm font-bold shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-all">
-                      {form.image ? "Thay đổi ảnh" : "Chọn ảnh"}
+                    <span className="bg-white text-indigo-700 px-4 py-2 rounded shadow-lg text-sm font-bold">
+                      {form.image ? "Thay đổi" : "Chọn ảnh"}
                     </span>
                   </label>
 

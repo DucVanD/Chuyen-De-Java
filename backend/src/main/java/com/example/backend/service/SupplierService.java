@@ -11,6 +11,8 @@ public interface SupplierService {
 
     SupplierDto create(SupplierDto dto);
 
+    org.springframework.data.domain.Page<SupplierDto> getPage(int page, int size);
+
     SupplierDto update(Integer id, SupplierDto dto);
 
     void delete(Integer id);

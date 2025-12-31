@@ -15,7 +15,8 @@ const axiosInstance = axios.create({
 // ✅ Interceptor: tự động gắn Bearer Token từ localStorage
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
+    // ✅ Support both user token and admin token (admin stores under `adminToken`)
+    const token = localStorage.getItem("token") || localStorage.getItem("adminToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

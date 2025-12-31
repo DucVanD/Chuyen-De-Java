@@ -7,13 +7,15 @@ public class BrandMapper {
 
     // Entity → DTO
     public static BrandDto toDto(Brand brand) {
-        if (brand == null) return null;
+        if (brand == null)
+            return null;
 
         return BrandDto.builder()
                 .id(brand.getId())
                 .name(brand.getName())
                 .slug(brand.getSlug())
                 .image(brand.getImage())
+                .imagePublicId(brand.getImagePublicId())
                 .description(brand.getDescription())
                 .country(brand.getCountry())
                 .status(brand.getStatus())
@@ -25,12 +27,14 @@ public class BrandMapper {
 
     // DTO → Entity (CREATE)
     public static Brand toEntity(BrandDto dto) {
-        if (dto == null) return null;
+        if (dto == null)
+            return null;
 
         return Brand.builder()
                 .name(dto.getName())
                 .slug(dto.getSlug())
                 .image(dto.getImage())
+                .imagePublicId(dto.getImagePublicId())
                 .status(dto.getStatus())
                 .description(dto.getDescription())
                 .country(dto.getCountry())

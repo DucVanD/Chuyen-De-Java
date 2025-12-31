@@ -4,6 +4,7 @@ import com.example.backend.dto.SupplierDto;
 import com.example.backend.entity.Supplier;
 import com.example.backend.mapper.SupplierMapper;
 import com.example.backend.repository.SupplierRepository;
+import com.example.backend.repository.StockMovementRepository;
 import com.example.backend.service.SupplierService;
 import org.springframework.stereotype.Service;
 
@@ -14,9 +15,12 @@ import java.util.stream.Collectors;
 public class SupplierServiceImpl implements SupplierService {
 
     private final SupplierRepository supplierRepository;
+    private final StockMovementRepository stockMovementRepository;
 
-    public SupplierServiceImpl(SupplierRepository supplierRepository) {
+    public SupplierServiceImpl(SupplierRepository supplierRepository,
+            StockMovementRepository stockMovementRepository) {
         this.supplierRepository = supplierRepository;
+        this.stockMovementRepository = stockMovementRepository;
     }
 
     @Override
@@ -46,6 +50,14 @@ public class SupplierServiceImpl implements SupplierService {
     }
 
     @Override
+    public org.springframework.data.domain.Page<SupplierDto> getPage(int page, int size) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size,
+                org.springframework.data.domain.Sort.by("id").descending());
+        return supplierRepository.findAll(pageable)
+                .map(SupplierMapper::toDto);
+    }
+
+    @Override
     public SupplierDto update(Integer id, SupplierDto supplierDto) {
         Supplier supplier = supplierRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Supplier not found"));
@@ -62,9 +74,19 @@ public class SupplierServiceImpl implements SupplierService {
 
     @Override
     public void delete(Integer id) {
-        if (!supplierRepository.existsById(id)) {
-            throw new RuntimeException("Supplier not found");
+        Supplier supplier = supplierRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Supplier not found"));
+
+        // ✅ Kiểm tra ràng buộc dữ liệu: Không được xóa nếu đã có biến động kho liên
+        // quan
+        long movementCount = stockMovementRepository.countBySupplierId(id);
+        if (movementCount > 0) {
+            throw new IllegalStateException(
+                    "Không thể xóa nhà cung cấp [" + supplier.getName() +
+                            "] vì đã có " + movementCount + " giao dịch nhập hàng liên quan. " +
+                            "Vui lòng ngưng hợp tác thay vì xóa.");
         }
+
         supplierRepository.deleteById(id);
     }
 

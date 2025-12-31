@@ -1,4 +1,4 @@
-import apiCategory from "../../../api/user/apiCategory";
+import apiCategoryAdmin from "../../../api/admin/apiCategoryAdmin";
 import apiUpload from "../../../api/apiUpload";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -10,14 +10,16 @@ const AddCat = () => {
 
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   // ✅ STATE CHUẨN DTO SPRING
   const [formData, setFormData] = useState({
     name: "",
-    slug: "",
     description: "",
     parentId: null,
-    status: 1
+    status: 1,
+    image: "",
+    imagePublicId: ""
   });
 
   /* ===============================
@@ -26,7 +28,7 @@ const AddCat = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const data = await apiCategory.getAll();
+        const data = await apiCategoryAdmin.getAll();
         setCategories(data);
       } catch {
         toast.error("❌ Không thể tải danh mục cha");
@@ -34,21 +36,6 @@ const AddCat = () => {
     };
     fetchCategories();
   }, []);
-
-  /* ===============================
-      SLUG GENERATOR
-  =============================== */
-  const generateSlug = (text) =>
-    text
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/đ/g, "d")
-      .replace(/\s+/g, "-")
-      .replace(/[^\w-]+/g, "")
-      .replace(/--+/g, "-")
-      .replace(/^-+/, "")
-      .replace(/-+$/, "");
 
   /* ===============================
       HANDLE CHANGE (FIX QUAN TRỌNG)
@@ -65,12 +52,34 @@ const AddCat = () => {
             : value
       };
 
-      if (name === "name") {
-        updated.slug = generateSlug(value);
-      }
 
       return updated;
     });
+  };
+
+  /* ===============================
+      UPLOAD IMAGE
+  =============================== */
+  const handleUploadImage = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const res = await apiUpload.uploadCategoryImage(file);
+
+      setFormData((prev) => ({
+        ...prev,
+        image: res.url,
+        imagePublicId: res.publicId
+      }));
+
+      toast.success("✅ Đã tải ảnh lên");
+    } catch {
+      toast.error("❌ Lỗi upload ảnh");
+    } finally {
+      setUploading(false);
+    }
   };
 
   /* ===============================
@@ -83,15 +92,17 @@ const AddCat = () => {
     try {
       const payload = {
         name: formData.name,
-        slug: formData.slug,
+        // slug sẽ tự động sinh ở backend
         description: formData.description,
         status: Number(formData.status),
-        parentId: formData.parentId // ✅ ĐÃ LÀ number | null
+        parentId: formData.parentId,
+        image: formData.image,
+        imagePublicId: formData.imagePublicId
       };
 
       console.log("PAYLOAD GỬI LÊN:", payload);
 
-      await apiCategory.create(payload);
+      await apiCategoryAdmin.create(payload);
 
       toast.success("✅ Thêm danh mục thành công!");
       setTimeout(() => navigate("/admin/categories"), 1000);
@@ -133,13 +144,7 @@ const AddCat = () => {
                   required
                 />
 
-                <label className="block mb-2">Slug</label>
-                <input
-                  name="slug"
-                  value={formData.slug}
-                  onChange={handleChange}
-                  className="w-full border p-2 mb-4 bg-gray-100"
-                />
+                {/* Slug tự động sinh ở backend, không cần hiển thị */}
 
                 <label className="block mb-2">Mô tả</label>
                 <textarea
@@ -177,17 +182,44 @@ const AddCat = () => {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* ✅ UPLOAD ẢNH */}
+              <div className="bg-gray-50 p-6 rounded mt-6">
+                <label className="block mb-2 font-medium">Hình ảnh</label>
+
+                <div className="relative w-full aspect-square bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden">
+                  {formData.image ? (
+                    <img src={formData.image} alt="Preview" className="w-full h-full object-contain p-2" />
+                  ) : (
+                    <span className="text-gray-400">Chưa có ảnh</span>
+                  )}
+
+                  <label className="absolute inset-0 cursor-pointer hover:bg-black/10 flex items-center justify-center">
+                    <input type="file" accept="image/*" onChange={handleUploadImage} className="hidden" />
+                    <span className="bg-white px-4 py-2 rounded shadow text-sm font-medium">
+                      {formData.image ? "Thay đổi" : "Chọn ảnh"}
+                    </span>
+                  </label>
+
+                  {uploading && (
+                    <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+                      <div className="animate-spin h-8 w-8 border-4 border-indigo-600 rounded-full border-t-transparent"></div>
+                    </div>
+                  )}
+                </div>
 
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="w-full mt-6 bg-indigo-600 text-white py-2 rounded"
+                  disabled={loading || uploading}
+                  className="w-full mt-6 bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700"
                 >
                   {loading ? "Đang thêm..." : "Thêm danh mục"}
                 </button>
               </div>
 
             </div>
+
           </form>
         </div>
       </div>

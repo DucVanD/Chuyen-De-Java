@@ -4,9 +4,9 @@ import { toast } from "react-toastify";
 import AsyncSelect from "react-select/async";
 import { FaArrowLeft, FaSave, FaBoxOpen } from "react-icons/fa";
 
-import apiStock from "../../../api/user/apiStock";
-import apiProduct from "../../../api/user/apiProduct";
-import apiSupplier from "../../../api/user/apiSupplier";
+import apiStockAdmin from "../../../api/admin/apiStockAdmin";
+import apiProductAdmin from "../../../api/admin/apiProductAdmin";
+import apiSupplierAdmin from "../../../api/admin/apiSupplierAdmin";
 
 const FormNhapKho = () => {
   const navigate = useNavigate(); // ✅ Hook điều hướng
@@ -24,7 +24,7 @@ const FormNhapKho = () => {
 
   /* LOAD SUPPLIERS */
   useEffect(() => {
-    apiSupplier.getAll()
+    apiSupplierAdmin.getAll()
       .then(setSuppliers)
       .catch(() => toast.error("Không tải được nhà cung cấp"));
   }, []);
@@ -32,7 +32,9 @@ const FormNhapKho = () => {
   /* SEARCH PRODUCT */
   const loadProductOptions = async (inputValue) => {
     if (!inputValue || inputValue.trim().length < 2) return [];
-    const products = await apiProduct.search(inputValue);
+    const response = await apiProductAdmin.search(inputValue);
+    // Lưu ý: search của Admin trả về Page<ProductDto>
+    const products = response.content || [];
     return products.map((p) => ({
       value: p.id,
       label: p.name,
@@ -42,19 +44,26 @@ const FormNhapKho = () => {
   /* CHANGE PRODUCT */
   const handleProductChange = async (opt) => {
     if (!opt) {
-      setForm((prev) => ({ ...prev, productId: "", unitPrice: "" }));
+      setForm((prev) => ({ ...prev, productId: "", unitPrice: "", supplierId: "" }));
       return;
     }
 
-    setForm((prev) => ({ ...prev, productId: opt.value }));
+    const productId = opt.value;
+    setForm((prev) => ({ ...prev, productId }));
 
-    // AUTO GET LAST PRICE
+    // AUTO GET LAST PRICE & SUPPLIER
     try {
       setLoadingPrice(true);
-      const lastPrice = await apiStock.getLastImportPrice(opt.value);
-      if (lastPrice && lastPrice > 0) {
-        setForm((prev) => ({ ...prev, unitPrice: lastPrice }));
-      }
+      const [lastPrice, lastSupId] = await Promise.all([
+        apiStockAdmin.getLastImportPrice(productId),
+        apiStockAdmin.getLastSupplierId(productId)
+      ]);
+
+      setForm((prev) => ({
+        ...prev,
+        unitPrice: (lastPrice && lastPrice > 0) ? lastPrice : prev.unitPrice,
+        supplierId: lastSupId || prev.supplierId
+      }));
     } catch {
       // Ignore error
     } finally {
@@ -73,7 +82,7 @@ const FormNhapKho = () => {
 
     setSubmitting(true);
     try {
-      await apiStock.create({
+      await apiStockAdmin.create({
         ...form,
         movementType: "IN",
       });
@@ -103,7 +112,7 @@ const FormNhapKho = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        
+
         {/* ROW 1: Product & Supplier */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>

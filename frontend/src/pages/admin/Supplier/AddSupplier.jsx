@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import apiSupplier from "../../../api/user/apiSupplier";
+import apiSupplierAdmin from "../../../api/admin/apiSupplierAdmin";
 
 const AddSupplier = () => {
   const navigate = useNavigate();
@@ -20,7 +20,7 @@ const AddSupplier = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await apiSupplier.create(form);
+      await apiSupplierAdmin.create(form);
       toast.success("Thêm nhà cung cấp thành công");
       navigate("/admin/suppliers");
     } catch {
