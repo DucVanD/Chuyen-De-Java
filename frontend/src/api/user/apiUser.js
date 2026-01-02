@@ -34,6 +34,16 @@ const apiUser = {
 
   unlock: (id) =>
     axiosInstance.put(`users/${id}/unlock`),
+
+  // =====================
+  // UPLOAD
+  // =====================
+  uploadAvatar: (formData) =>
+    axiosInstance
+      .post("upload/user", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      .then((res) => res.data),
 };
 
 export default apiUser;

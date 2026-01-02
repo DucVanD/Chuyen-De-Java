@@ -25,7 +25,7 @@ public class StockMovement {
     private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false)
+    @JoinColumn(name = "product_id", nullable = true)
     private Product product;
 
     // Có thể null (Ví dụ: Xuất kho bán hàng thì không cần Nhà cung cấp)

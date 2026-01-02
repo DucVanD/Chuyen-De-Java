@@ -1,7 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import apiOrder from "../../../api/user/apiOrder"; // ✅ import API thật
+import apiOrderAdmin from "../../../api/admin/apiOrderAdmin";
 import { imageURL } from "../../../api/config";
+
+// Helper function to get image URL
+const getImageUrl = (thumbnail) => {
+  if (!thumbnail) return "/placeholder.png";
+  if (thumbnail.startsWith("http")) return thumbnail;
+  return `${imageURL}/products/${thumbnail}`;
+};
 
 const DetailOrder = () => {
   const { id } = useParams();
@@ -13,12 +20,8 @@ const DetailOrder = () => {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const res = await apiOrder.getOrderId(id);
-        if (res.status && res.data) {
-          setOrder(res.data);
-        } else {
-          alert("Không tìm thấy đơn hàng!");
-        }
+        const res = await apiOrderAdmin.getById(id);
+        setOrder(res);
       } catch (err) {
         console.error("Lỗi tải chi tiết đơn hàng:", err);
         alert("Lỗi khi tải chi tiết đơn hàng!");
@@ -40,15 +43,13 @@ const DetailOrder = () => {
 
 
 
-  // Map trạng thái đơn hàng
+  // Map trạng thái đơn hàng (Backend Enum)
   const statusLabels = {
-    1: { text: "Đang chờ xác nhận", color: "bg-yellow-100 text-yellow-800" },
-    2: { text: "Đã xác nhận", color: "bg-blue-100 text-blue-800" },
-    3: { text: "Đang đóng gói", color: "bg-orange-100 text-orange-800" },
-    4: { text: "Đang giao hàng", color: "bg-teal-100 text-teal-800" },
-    5: { text: "Đã giao", color: "bg-green-100 text-green-800" },
-    6: { text: "Hoàn hàng / Trả hàng", color: "bg-purple-100 text-purple-800" },
-    7: { text: "Đã hủy", color: "bg-red-100 text-red-800" },
+    PENDING: { text: "Chờ xử lý", color: "bg-yellow-100 text-yellow-800" },
+    CONFIRMED: { text: "Đã xác nhận", color: "bg-blue-100 text-blue-800" },
+    SHIPPING: { text: "Đang giao", color: "bg-teal-100 text-teal-800" },
+    COMPLETED: { text: "Hoàn thành", color: "bg-green-100 text-green-800" },
+    CANCELLED: { text: "Đã hủy", color: "bg-red-100 text-red-800" },
   };
 
   // Hàm lấy text hiển thị
@@ -90,7 +91,7 @@ const DetailOrder = () => {
 
             <button
               onClick={() => {
-                const lastPage = localStorage.getItem("currentOrderPage") || 1;
+                const lastPage = localStorage.getItem("currentOrderPage") || 0;
                 navigate(`/admin/orders/${lastPage}`);
               }}
               className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded text-sm inline-flex items-center"
@@ -109,20 +110,20 @@ const DetailOrder = () => {
               <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-100 text-gray-800 max-w-md mx-auto">
                 {/* Header */}
                 <h2 className="text-2xl font-bold text-gray-800 mb-1">Thông tin người nhận</h2>
-                <h3 className="text-2xl font-bold text-gray-800 mb-1">Tên: {order.name}</h3>
-                <p className="text-sm text-gray-500 mb-3">Email: {order.email}</p>
+                <h3 className="text-2xl font-bold text-gray-800 mb-1">Tên: {order.receiverName}</h3>
+                <p className="text-sm text-gray-500 mb-3">Email: {order.receiverEmail}</p>
 
                 <div className="flex items-center justify-center space-x-1 text-sm text-gray-600 mb-4">
-                  <span className="font-medium">{order.phone}</span>
+                  <span className="font-medium">{order.receiverPhone}</span>
                 </div>
 
                 {/* Address section */}
                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-100 mb-4">
                   <h3 className="text-sm font-semibold text-gray-700 mb-1">Địa chỉ giao hàng</h3>
                   <p className="text-gray-600 leading-relaxed text-sm">
-                    {order.address}
+                    {order.receiverAddress}
                     <br />
-                    {order.ward}, {order.district}, {order.province}
+                    {order.ward}, {order.district}
                   </p>
                 </div>
                 {/* note */}
@@ -134,18 +135,32 @@ const DetailOrder = () => {
 
                 </div>
 
+                {/* Cancel Reason - Display only if cancelled */}
+                {order.status === "CANCELLED" && (
+                  <div className="bg-red-50 rounded-lg p-4 border border-red-100 mb-4">
+                    <h3 className="text-sm font-semibold text-red-700 mb-1 flex items-center gap-1">
+                      <span className="text-lg">🚫</span> Lý do hủy đơn
+                    </h3>
+                    <p className="text-red-700 leading-relaxed text-sm font-medium">
+                      {order.cancelReason || "Không có lý do cụ thể"}
+                    </p>
+                  </div>
+                )}
+
                 {/* Payment section */}
                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-100 mb-4">
                   <h3 className="text-sm font-semibold text-gray-700 mb-1">
                     Phương thức thanh toán
                   </h3>
                   <p
-                    className={`text-sm font-medium italic ${order.payment === "cod" ? "text-green-600" : "text-blue-600"
+                    className={`text-sm font-medium italic ${order.paymentMethod === "COD" ? "text-green-600" : "text-blue-600"
                       }`}
                   >
-                    {order.payment === "cod"
+                    {order.paymentMethod === "COD"
                       ? "Thanh toán khi nhận hàng (COD)"
-                      : "Chuyển khoản ngân hàng"}
+                      : order.paymentMethod === "VNPAY"
+                        ? "Thanh toán VNPAY"
+                        : "Chuyển khoản ngân hàng"}
                   </p>
                 </div>
 
@@ -179,12 +194,11 @@ const DetailOrder = () => {
                     >
                       <div className="flex items-center gap-3">
                         <img
-                          src={
-                            detail.product?.thumbnail?.startsWith("http")
-                              ? detail.product.thumbnail
-                              : `${imageURL}/products/${detail.product?.thumbnail}`
-                          }
-                          alt={detail.product?.name}
+                          src={getImageUrl(detail.product?.image)}
+                          alt={detail.product?.name || "Product"}
+                          onError={(e) => {
+                            e.target.src = "/placeholder.png";
+                          }}
                           className="w-16 h-16 rounded object-cover"
                         />
                         <div>
@@ -192,12 +206,12 @@ const DetailOrder = () => {
                             {detail.product?.name}
                           </p>
                           <p className="text-gray-600 text-sm">
-                            Giá: {detail.price_buy.toLocaleString("vi-VN")} đ
+                            Giá: {detail.priceBuy.toLocaleString("vi-VN")} đ
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-gray-700">Số lượng: {detail.qty}</p>
+                        <p className="text-gray-700">Số lượng: {detail.quantity}</p>
                         <p className="text-gray-700 font-semibold">
                           Tổng: {detail.amount.toLocaleString("vi-VN")} đ
                         </p>
@@ -206,10 +220,26 @@ const DetailOrder = () => {
                   ))}
                 </div>
 
-                <div className="mt-6 text-right">
-                  <h2 className="text-xl font-bold text-gray-800">
-                    Tổng tiền: {totalAmount.toLocaleString("vi-VN")} đ
-                  </h2>
+                <div className="mt-6 border-t pt-4">
+                  <div className="flex justify-between text-gray-700 mb-2">
+                    <span>Tạm tính:</span>
+                    <span className="font-medium">{totalAmount.toLocaleString("vi-VN")} đ</span>
+                  </div>
+
+                  {order.discountAmount > 0 && (
+                    <>
+                      <div className="flex justify-between text-green-600 mb-2">
+                        <span>Giảm giá {order.voucherCode ? `(${order.voucherCode})` : ''}:</span>
+                        <span className="font-medium">-{order.discountAmount.toLocaleString("vi-VN")} đ</span>
+                      </div>
+                      <div className="border-t pt-2"></div>
+                    </>
+                  )}
+
+                  <div className="flex justify-between text-xl font-bold text-gray-800 mt-2">
+                    <span>Tổng thanh toán:</span>
+                    <span className="text-red-600">{order.totalAmount.toLocaleString("vi-VN")} đ</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -222,22 +252,22 @@ const DetailOrder = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <p className="font-medium text-gray-700">Mã đơn hàng:</p>
-                  <p className="text-gray-800">{order.order_code}</p>
+                  <p className="text-gray-800">{order.orderCode}</p>
                 </div>
                 <div>
                   <p className="font-medium text-gray-700">Ngày tạo:</p>
                   <p className="text-gray-800">
-                    {new Date(order.created_at).toLocaleString("vi-VN")}
+                    {new Date(order.createdAt).toLocaleString("vi-VN")}
                   </p>
                 </div>
                 <div>
                   <p className="font-medium text-gray-700">Người đặt:</p>
-                  <p className="text-gray-800">{order.user?.name}</p>
+                  <p className="text-gray-800">{order.receiverName}</p>
                 </div>
                 <div>
                   <p className="font-medium text-gray-700">Ngày cập nhật:</p>
                   <p className="text-gray-800">
-                    {new Date(order.updated_at).toLocaleString("vi-VN")}
+                    {new Date(order.updatedAt).toLocaleString("vi-VN")}
                   </p>
                 </div>
               </div>

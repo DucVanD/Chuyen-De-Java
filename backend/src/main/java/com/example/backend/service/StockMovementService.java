@@ -18,4 +18,6 @@ public interface StockMovementService {
     BigDecimal getLastImportPrice(Integer productId);
 
     Integer getLastSupplierId(Integer productId);
+
+    List<StockMovementDto> getByMovementType(String type);
 }

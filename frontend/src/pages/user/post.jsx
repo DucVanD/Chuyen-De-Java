@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom"; // ✅ Thêm useParams & useNavigate
 import { FaSearch, FaCalendarAlt, FaEye } from "react-icons/fa";
+import { FaSortAmountDownAlt, FaFilter, FaCheck } from "react-icons/fa"; // Thêm FaFilter, FaCheck
+
 import {
   FaTruck,
   FaUndoAlt,
@@ -125,7 +127,7 @@ const Post = () => {
                       <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
                         <span className="flex items-center gap-1">
                           <FaCalendarAlt />
-                          {new Date(post.created_at).toLocaleDateString(
+                          {new Date(post.createdAt).toLocaleDateString(
                             "vi-VN"
                           )}
                         </span>
@@ -269,7 +271,7 @@ const Post = () => {
       </div>
 
       {/* ======= DỊCH VỤ MINI ======= */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">
+      {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">
         {[
           {
             icon: <FaTruck className="text-green-600 text-2xl" />,
@@ -303,7 +305,30 @@ const Post = () => {
             </div>
           </div>
         ))}
-      </div>
+      </div> */}
+       <section className="mt-16 pt-10 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 px-2 sm:px-0">
+        {[
+          { t: "Vận chuyển miễn phí", s: "Hóa đơn trên 3 triệu" },
+          { t: "Đổi trả miễn phí", s: "Trong vòng 7 ngày" },
+          { t: "100% Hoàn tiền", s: "Nếu sản phẩm lỗi" },
+          { t: "Hotline: 1900 6750", s: "Hỗ trợ 24/7" },
+        ].map((b, i) => (
+          <div
+            key={i}
+            className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4 flex items-center gap-4 hover:shadow-md transition-shadow cursor-default"
+          >
+            <div className="h-10 w-10 flex-shrink-0 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-sm">
+               <FaCheck className="text-sm" />
+            </div>
+            <div>
+              <div className="text-sm font-bold text-emerald-800 uppercase tracking-wide">
+                {b.t}
+              </div>
+              <div className="text-xs text-emerald-600 font-medium mt-0.5">{b.s}</div>
+            </div>
+          </div>
+        ))}
+      </section>
     </div>
   );
 };

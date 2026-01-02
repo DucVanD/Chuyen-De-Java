@@ -1,4 +1,4 @@
-import axiosAdmin from "../axiosAdmin";
+import axiosAdmin from "../axios";
 
 const apiSupplierAdmin = {
     // Lấy tất cả (không phân trang)

@@ -1,213 +1,208 @@
 // src/pages/admin/orders/EditOrder.jsx
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import apiOrder from "../../../api/user/apiOrder";
+import apiOrderAdmin from "../../../api/admin/apiOrderAdmin";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
+/* ===== MAP LABEL TRẠNG THÁI ===== */
+const ORDER_STATUS_LABELS = {
+  PENDING: "Đang chờ xác nhận",
+  CONFIRMED: "Đã xác nhận",
+  SHIPPING: "Đang giao hàng",
+  COMPLETED: "Đã giao",
+  CANCELLED: "Đã hủy",
+};
 
 const EditOrder = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [order, setOrder] = useState(null);
 
-  // ✅ Lấy thông tin đơn hàng theo ID
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [originalStatus, setOriginalStatus] = useState(null); // Lưu status gốc từ DB
+
+  /* ===== LOAD ORDER ===== */
   useEffect(() => {
-    apiOrder.getOrderId(id).then((res) => {
-      if (res.status && res.data) setOrder(res.data);
-    });
+    const fetchOrder = async () => {
+      try {
+        const res = await apiOrderAdmin.getById(id);
+        console.log("Order data:", res);
+        setOrder(res);
+        setOriginalStatus(res.status); // Lưu status gốc
+      } catch (err) {
+        console.error(err);
+        toast.error("❌ Không thể tải thông tin đơn hàng");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrder();
   }, [id]);
 
-  // ✅ Kiểm tra trạng thái bị khóa
-  const isLocked = order && [6, 7].includes(order.status); // chỉ khóa khi hoàn hàng hoặc đã hủy
+  /* ===== KHÓA ĐƠN ===== */
+  // Khóa dựa trên STATUS GỐC từ DB, không phải state đang thay đổi
+  const isLocked = originalStatus && ["COMPLETED", "CANCELLED"].includes(originalStatus);
 
-  // ✅ Tính danh sách trạng thái có thể chọn
+  /* ===== TRẠNG THÁI HỢP LỆ ===== */
   const allowedStatuses = (() => {
     if (!order) return [];
     switch (order.status) {
-      case 1:
-        return [1, 2, 3, 4, 5, 6, 7];
-      case 2:
-        return [2, 3, 4, 5, 6, 7];
-      case 3:
-        return [3, 4, 5, 6, 7];
-      case 4:
-        return [4, 5, 6, 7]; // đang giao → chỉ được lên giao/thành công/hủy
-      case 5:
-        return [5, 6]; // đã giao → chỉ có thể hoàn hàng
-      case 6:
-      case 7:
-        return [order.status]; // hoàn hàng hoặc hủy → khóa
+      case "PENDING":
+        return ["PENDING", "CONFIRMED", "SHIPPING", "COMPLETED", "CANCELLED"];
+      case "CONFIRMED":
+        return ["CONFIRMED", "SHIPPING", "COMPLETED", "CANCELLED"];
+      case "SHIPPING":
+        return ["SHIPPING", "COMPLETED", "CANCELLED"];
+      case "COMPLETED":
+      case "CANCELLED":
+        // Đã giao hoặc đã hủy → KHÓA, không thay đổi được
+        return [order.status];
       default:
         return [order.status];
     }
   })();
 
-  // ✅ Submit cập nhật
+  /* ===== SUBMIT ===== */
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (isLocked) {
-      toast.warning("⚠️ Đơn hàng đã hoàn hàng hoặc bị hủy — không thể chỉnh sửa!");
+      toast.warning("⚠️ Đơn hàng đã hoàn tất hoặc bị hủy");
       return;
     }
 
     try {
-      const res = await apiOrder.editOrder(id, {
-        status: parseInt(order.status),
-        note: order.note, // note chỉ đọc, giữ nguyên
+      await apiOrderAdmin.updateStatus(id, {
+        status: order.status, // STRING
+        paymentStatus: order.paymentStatus,
       });
-      if (res.status) {
-        toast.success("✅ Cập nhật đơn hàng thành công!");
-        setTimeout(() => navigate("/admin/orders"), 1500);
-      }
+
+      toast.success("✅ Cập nhật đơn hàng thành công");
+      setTimeout(() => navigate("/admin/orders/0"), 1200);
     } catch (err) {
-      console.error("❌ Lỗi cập nhật:", err.response?.data || err.message);
-      toast.error("❌ Lỗi khi cập nhật đơn hàng!");
+      console.error(err);
+      toast.error("❌ Cập nhật thất bại");
     }
   };
 
-  if (!order)
+  if (loading || !order) {
     return (
       <div className="flex justify-center items-center h-64 text-gray-500">
         Đang tải dữ liệu...
       </div>
     );
+  }
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden animate-fadeIn">
-      {/* Header */}
-      <div className="p-6 flex flex-col sm:flex-row justify-between items-center border-b border-gray-200">
-        <h3 className="text-2xl font-semibold text-gray-800 mb-3 sm:mb-0">
-          Chỉnh sửa đơn hàng #{order.order_code || order.id}
+      {/* ===== HEADER ===== */}
+      <div className="p-6 flex justify-between items-center border-b">
+        <h3 className="text-2xl font-semibold">
+          Chỉnh sửa đơn hàng #{order.orderCode}
         </h3>
         <button
-          onClick={() => navigate("/admin/orders")}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded inline-flex items-center transition duration-200"
+          onClick={() => navigate("/admin/orders/0")}
+          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded"
         >
-          <i className="fas fa-arrow-left mr-2"></i> Về danh sách
+          ← Quay lại
         </button>
       </div>
 
-      {/* Form */}
+      {/* ===== FORM ===== */}
       <div className="p-6">
         <form onSubmit={handleSubmit}>
-          <div className="flex flex-col lg:flex-row gap-6">
-            {/* Cột trái - Thông tin khách hàng */}
-            <div className="lg:w-1/2">
-              <div className="bg-gray-50 p-6 rounded-lg shadow-sm mb-6">
-                <h4 className="text-lg font-semibold text-gray-700 mb-4 pb-2 border-b border-gray-200">
-                  Thông tin khách hàng
-                </h4>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* ===== KHÁCH HÀNG ===== */}
+            <div className="bg-gray-50 p-6 rounded-lg">
+              <h4 className="text-lg font-semibold mb-4">
+                Thông tin khách hàng
+              </h4>
 
-                {[
-                  { label: "Tên khách hàng", value: order.name },
-                  { label: "Email", value: order.email },
-                  { label: "Điện thoại", value: order.phone },
-                  { label: "Địa chỉ", value: order.address },
-                ].map((item, i) => (
-                  <div key={i} className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {item.label}
-                    </label>
-                    <input
-                      type="text"
-                      value={item.value}
-                      readOnly
-                      className="w-full p-2.5 border border-gray-300 rounded-md bg-gray-100"
-                    />
-                  </div>
-                ))}
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tổng tiền
-                  </label>
+              {[
+                { label: "Tên", value: order.receiverName },
+                { label: "Email", value: order.receiverEmail },
+                { label: "Điện thoại", value: order.receiverPhone },
+                {
+                  label: "Địa chỉ",
+                  value: `${order.receiverAddress}, ${order.ward}, ${order.district}`,
+                },
+              ].map((item, i) => (
+                <div key={i} className="mb-4">
+                  <label className="block text-sm mb-1">{item.label}</label>
                   <input
-                    type="text"
-                    value={`${Number(order.total_amount || 0).toLocaleString(
-                      "vi-VN"
-                    )} đ`}
                     readOnly
-                    className="w-full p-2.5 border border-gray-300 rounded-md bg-gray-100"
+                    value={item.value || ""}
+                    className="w-full p-2 border rounded bg-gray-100"
                   />
                 </div>
+              ))}
+
+              <div>
+                <label className="block text-sm mb-1">Tổng tiền</label>
+                <input
+                  readOnly
+                  value={`${Number(order.totalAmount).toLocaleString(
+                    "vi-VN"
+                  )} đ`}
+                  className="w-full p-2 border rounded bg-gray-100 font-semibold text-red-600"
+                />
               </div>
             </div>
 
-            {/* Cột phải - Trạng thái & Ghi chú */}
-            <div className="lg:w-1/2">
-              <div className="bg-indigo-50 p-6 rounded-lg shadow-sm mb-6">
-                <h4 className="text-lg font-semibold text-indigo-700 mb-4 pb-2 border-b border-indigo-200">
-                  Trạng thái & Ghi chú
-                </h4>
+            {/* ===== TRẠNG THÁI ===== */}
+            <div className="bg-indigo-50 p-6 rounded-lg">
+              <h4 className="text-lg font-semibold mb-4">
+                Trạng thái đơn hàng
+              </h4>
 
-                {/* Trạng thái */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Trạng thái
-                  </label>
-                  <select
-                    value={order.status}
-                    onChange={(e) =>
-                      setOrder({ ...order, status: parseInt(e.target.value) })
-                    }
-                    disabled={isLocked}
-                    className={`w-full p-2.5 border rounded-md focus:ring-indigo-500 focus:border-indigo-500 ${
-                      isLocked
-                        ? "bg-gray-100 text-gray-500 cursor-not-allowed"
-                        : "border-gray-300"
-                    }`}
-                  >
-                    {[
-                      { value: 1, label: "Đang chờ xác nhận" },
-                      { value: 2, label: "Đã xác nhận" },
-                      { value: 3, label: "Đang đóng gói" },
-                      { value: 4, label: "Đang giao hàng" },
-                      { value: 5, label: "Đã giao" },
-                      { value: 6, label: "Hoàn hàng / Trả hàng" },
-                      { value: 7, label: "Đã hủy" },
-                    ]
-                      .filter((s) => allowedStatuses.includes(s.value))
-                      .map((s) => (
-                        <option key={s.value} value={s.value}>
-                          {s.label}
-                        </option>
-                      ))}
-                  </select>
-                  {isLocked && (
-                    <p className="text-xs text-gray-500 mt-1 italic">
-                      ⚠️ Không thể thay đổi khi đơn đã hoàn hàng hoặc bị hủy.
-                    </p>
-                  )}
-                </div>
-
-                {/* Ghi chú (chỉ đọc hoàn toàn) */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Ghi chú
-                  </label>
-                  <textarea
-                    value={order.note || ""}
-                    readOnly
-                    rows="5"
-                    className="w-full p-2.5 border border-gray-300 rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"
-                    placeholder="Ghi chú chỉ đọc (không thể chỉnh sửa)"
-                  ></textarea>
-                </div>
-
-                {/* Nút cập nhật */}
-                <button
-                  type="submit"
+              <div className="mb-4">
+                <label className="block text-sm mb-1">Trạng thái</label>
+                <select
+                  value={order.status}
                   disabled={isLocked}
-                  className={`w-full py-2.5 px-4 rounded-md flex items-center justify-center transition duration-200 ${
-                    isLocked
-                      ? "bg-gray-400 cursor-not-allowed text-white"
-                      : "bg-indigo-600 hover:bg-indigo-700 text-white"
-                  }`}
+                  onChange={(e) =>
+                    setOrder({ ...order, status: e.target.value })
+                  }
+                  className={`w-full p-2 border rounded ${isLocked
+                    ? "bg-gray-200 cursor-not-allowed"
+                    : "bg-white"
+                    }`}
                 >
-                  <i className="fas fa-save mr-2"></i>
-                  {isLocked ? "Không thể cập nhật" : "Cập nhật đơn hàng"}
-                </button>
+                  {allowedStatuses.map((s) => (
+                    <option key={s} value={s}>
+                      {ORDER_STATUS_LABELS[s]}
+                    </option>
+                  ))}
+                </select>
+
+                {isLocked && (
+                  <p className="text-xs text-gray-500 mt-1 italic">
+                    ⚠️ Đơn hàng đã hoàn tất hoặc đã hủy – không thể chỉnh sửa
+                  </p>
+                )}
               </div>
+
+              <div className="mb-4">
+                <label className="block text-sm mb-1">Ghi chú</label>
+                <textarea
+                  readOnly
+                  rows={4}
+                  value={order.note || ""}
+                  className="w-full p-2 border rounded bg-gray-100"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLocked}
+                className={`w-full py-2 rounded text-white font-semibold ${isLocked
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-indigo-600 hover:bg-indigo-700"
+                  }`}
+              >
+                {isLocked ? "Không thể cập nhật" : "Cập nhật đơn hàng"}
+              </button>
             </div>
           </div>
         </form>

@@ -17,4 +17,8 @@ public interface VoucherService {
     VoucherDto update(Integer id, VoucherDto dto);
 
     void deactivate(Integer id);
+
+    void delete(Integer id);
+
+    void incrementUsage(String voucherCode);
 }

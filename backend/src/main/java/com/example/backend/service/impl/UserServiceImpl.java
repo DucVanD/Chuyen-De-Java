@@ -121,8 +121,12 @@ public class UserServiceImpl implements UserService {
             user.setAvatarPublicId(dto.getAvatarPublicId());
         }
 
-        user.setRole(dto.getRole());
-        user.setStatus(dto.getStatus());
+        if (dto.getRole() != null) {
+            user.setRole(dto.getRole());
+        }
+        if (dto.getStatus() != null) {
+            user.setStatus(dto.getStatus());
+        }
 
         User updated = userRepository.save(user);
         return UserMapper.toDto(updated);

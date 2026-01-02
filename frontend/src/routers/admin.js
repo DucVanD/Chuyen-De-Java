@@ -52,6 +52,7 @@ import Inventory from "../pages/admin/Inventory/ListInventory";
 import FormNhapKho from "../pages/admin/Inventory/FormNhapKho";
 import FormXuatKho from "../pages/admin/Inventory/FormXuatKho";
 import FormDieuChinh from "../pages/admin/Inventory/FormDieuChinh";
+import ListOrderExport from "../pages/admin/Inventory/ListOrderExport";
 
 // employee 
 import EmployeeManagement from "../pages/admin/EmployeeManagement/ListEmployee";
@@ -60,6 +61,11 @@ import EmployeeManagement from "../pages/admin/EmployeeManagement/ListEmployee";
 import ListSupplier from "../pages/admin/Supplier/ListSupplier";
 import AddSupplier from "../pages/admin/Supplier/AddSupplier";
 import EditSupplier from "../pages/admin/Supplier/EditSupplier";
+
+// Voucher
+import ListVoucher from "../pages/admin/Voucher/ListVoucher";
+import AddVoucher from "../pages/admin/Voucher/AddVoucher";
+import EditVoucher from "../pages/admin/Voucher/EditVoucher";
 
 
 // định nghĩa các route cho trang admin
@@ -119,10 +125,16 @@ const AdminRoute = [
   { path: "suppliers/:page?", component: ListSupplier },
   { path: "supplier/add", component: AddSupplier },
   { path: "supplier/edit/:id", component: EditSupplier },
+
+  // voucher
+  { path: "vouchers", component: ListVoucher },
+  { path: "voucher/add", component: AddVoucher },
+  { path: "voucher/edit/:id", component: EditVoucher },
+
   // inventory
   { path: "inventory", component: Inventory },
   { path: "inventory/import", component: FormNhapKho },
-  { path: "inventory/export", component: FormXuatKho },
+  { path: "inventory/export", component: ListOrderExport },
   { path: "inventory/adjust", component: FormDieuChinh },
 ];
 

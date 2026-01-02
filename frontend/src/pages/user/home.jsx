@@ -2,8 +2,6 @@ import { use, useEffect, useState } from "react";
 import { Play } from "lucide-react";
 import { Link } from "react-router-dom";
 import slide from "../../assets/images/slide.png";
-import thitheo from "../../assets/images/thitheo.png";
-import rau from "../../assets/images/rau.png";
 import raucu from "../../assets/images/raucu.png";
 import cuqua from "../../assets/images/cuqua.png";
 import suatuoi from "../../assets/images/suatuoi.png";
@@ -14,10 +12,12 @@ import apiProduct from "../../api/user/apiProduct";
 import apiBrand from "../../api/user/apiBrand";
 import apiPost from "../../api/user/apiPost";
 import ProductItem from "./ProductItem";
-import { imageURL, getImageUrl } from "../../api/config";
+import { getImageUrl } from "../../api/config";
 import { useNavigate } from "react-router-dom";
 import useAddToCart from "../../hooks/useAddToCart";
 import "react-toastify/dist/ReactToastify.css";
+import { FaSortAmountDownAlt, FaFilter, FaCheck } from "react-icons/fa"; // Thêm FaFilter, FaCheck
+
 
 const videos = [
   {
@@ -141,88 +141,93 @@ const Home = () => {
   return (
     <div>
       <main className="max-w-7xl mx-auto pt-10 px-2 sm:px-0">
-        {/* Slide */}
-        <section className="slide flex justify-center mt-3 px-0">
-          <img
-            src={slide}
-            alt="banner"
-            className="
-             w-full object-cover h-auto rounded-2xl max-h-[420px]"
-          />
+        {/* ===== SLIDE BANNER ===== */}
+        <section className="mt-4 px-2 sm:px-0">
+          <div className="relative overflow-hidden rounded-2xl shadow-lg group">
+            <img
+              src={slide}
+              alt="banner"
+              className="
+        w-full h-auto max-h-[420px] object-cover
+        transition-transform duration-[1200ms] ease-out
+        group-hover:scale-[1.03]
+      "
+            />
+
+            {/* Overlay gradient nhẹ */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
+          </div>
         </section>
 
 
-        {/* 🌿 Danh mục nổi bật */}
-        <section className="mt-10">
+        {/* ===== DANH MỤC NỔI BẬT ===== */}
+        <section className="mt-12">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-4 px-2 sm:px-0">
-            <div className="flex items-center gap-2">
-              <span
-                className="text-yellow-400 text-2xl sm:text-3xl drop-shadow-lg"
-                style={{ animation: "shake 0.5s infinite" }}
-              >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 px-2 sm:px-0">
+            <div className="flex items-center gap-3">
+              <span className="text-yellow-400 text-3xl drop-shadow animate-shake">
                 🛒
               </span>
-              <h2 className="text-[22px] sm:text-[26px] font-extrabold text-emerald-600 tracking-tight">
+              <h2 className="text-[22px] sm:text-[26px] font-extrabold text-emerald-700 tracking-tight">
                 Danh mục nổi bật
               </h2>
             </div>
 
-            {/* Link nhóm danh mục */}
-            <div className="flex gap-2 sm:gap-4 overflow-x-auto scrollbar-hide">
-              <Link
-                to="/products?category=trai-cay"
-                state={{ categorySlug: "trai-cay", categoryName: "Trái cây" }}
-                className="whitespace-nowrap text-sm sm:text-base text-emerald-700 hover:text-yellow-600 transition font-medium"
-              >
-                Trái cây
-              </Link>
-
-              <Link
-                to="/products?category=rau-cu-qua"
-                state={{
-                  categorySlug: "rau-cu-qua",
-                  categoryName: "Rau củ quả",
-                }}
-                className="whitespace-nowrap text-sm sm:text-base text-emerald-700 hover:text-yellow-600 transition font-medium"
-              >
-                Rau củ quả
-              </Link>
-
-              <Link
-                to="/products?category=thit"
-                state={{
-                  categorySlug: "thit",
-                  categoryName: "Thịt",
-                }}
-                className="whitespace-nowrap text-sm sm:text-base text-emerald-700 hover:text-yellow-600 transition font-medium"
-              >
-                Thịt
-              </Link>
+            {/* Quick links */}
+            <div className="flex gap-3 overflow-x-auto scrollbar-hide">
+              {[
+                { slug: "trai-cay", name: "Trái cây" },
+                { slug: "rau-cu-qua", name: "Rau củ quả" },
+                { slug: "thit", name: "Thịt" },
+              ].map((c) => (
+                <Link
+                  key={c.slug}
+                  to={`/products?category=${c.slug}`}
+                  state={{ categorySlug: c.slug, categoryName: c.name }}
+                  className="
+            whitespace-nowrap text-sm sm:text-base font-medium
+            text-emerald-700
+            hover:text-yellow-500
+            transition-colors
+          "
+                >
+                  {c.name}
+                </Link>
+              ))}
             </div>
           </div>
 
-          {/* Danh sách danh mục */}
+          {/* List */}
           <div className="relative">
-            {/* Nút trái */}
+            {/* Left button */}
             <button
               onClick={() =>
                 document
                   .getElementById("category-list")
-                  .scrollBy({ left: -180, behavior: "smooth" })
+                  .scrollBy({ left: -220, behavior: "smooth" })
               }
-              className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white shadow hover:bg-gray-100 items-center justify-center"
+              className="
+        hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-20
+        w-10 h-10 rounded-full bg-white
+        shadow-md hover:shadow-lg
+        hover:bg-emerald-50 hover:scale-110
+        transition
+        items-center justify-center
+      "
             >
-              <MdArrowBackIos className="text-gray-600" />
+              <MdArrowBackIos className="text-gray-600 text-sm" />
             </button>
 
+            {/* Scroll container */}
             <div
               id="category-list"
-              className="flex gap-3 sm:gap-5 overflow-x-auto scroll-smooth pb-2 scrollbar-hide px-2 sm:px-0 relative"
-              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+              className="
+        flex gap-4 overflow-x-auto scroll-smooth
+        px-2 sm:px-0 pb-3 scrollbar-hide
+      "
             >
               {categorys
-                .filter((category) => category.parentId !== null)
+                .filter((c) => c.parentId !== null)
                 .map((category) => (
                   <div
                     key={category.id}
@@ -231,93 +236,165 @@ const Home = () => {
                         state: { categoryName: category.name },
                       })
                     }
-                    className="h-44 w-40 flex-shrink-0 rounded-2xl flex flex-col items-center justify-center 
-            p-3 cursor-pointer bg-gradient-to-br from-white via-green-50 to-emerald-50 border border-green-100 
-            shadow-sm hover:shadow-lg hover:border-green-400 hover:-translate-y-1 transition-all duration-300 mt-4"
+                    className="
+              group relative
+              h-44 w-40 flex-shrink-0
+              rounded-2xl p-3 cursor-pointer
+              bg-gradient-to-br from-white via-emerald-50 to-green-100
+              border border-emerald-100
+              shadow-sm
+              hover:shadow-xl hover:-translate-y-1
+              hover:border-emerald-400
+              transition-all duration-300
+            "
                   >
-                    {/* Ảnh danh mục */}
-                    <div className="w-full h-28 sm:h-32 flex items-center justify-center">
+                    {/* Glow overlay */}
+                    <div className="
+              absolute inset-0 rounded-2xl
+              bg-gradient-to-t from-emerald-200/20 to-transparent
+              opacity-0 group-hover:opacity-100
+              transition
+            " />
+
+                    {/* Image */}
+                    <div className="relative z-10 w-full h-28 flex items-center justify-center">
                       <img
-                        src={getImageUrl(category.image, 'category')}
+                        src={getImageUrl(category.image, "category")}
                         alt={category.name}
-                        className="h-full w-full object-contain transition-transform duration-500 hover:scale-110"
+                        className="
+                  h-full w-full object-contain
+                  transition-transform duration-500
+                  group-hover:scale-110
+                "
                       />
                     </div>
 
-                    {/* Tên danh mục */}
-                    <h3 className="text-sm sm:text-base font-semibold text-gray-800 text-center mt-2 hover:text-green-700 transition-colors">
+                    {/* Name */}
+                    <h3 className="
+              relative z-10 mt-2 text-center
+              text-sm sm:text-base font-semibold
+              text-gray-800
+              group-hover:text-emerald-700
+              transition-colors
+            ">
                       {category.name}
                     </h3>
                   </div>
                 ))}
             </div>
 
-            {/* Nút phải */}
+            {/* Right button */}
             <button
               onClick={() =>
                 document
                   .getElementById("category-list")
-                  .scrollBy({ left: 180, behavior: "smooth" })
+                  .scrollBy({ left: 220, behavior: "smooth" })
               }
-              className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white shadow hover:bg-gray-100 items-center justify-center"
+              className="
+        hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-20
+        w-10 h-10 rounded-full bg-white
+        shadow-md hover:shadow-lg
+        hover:bg-emerald-50 hover:scale-110
+        transition
+        items-center justify-center
+      "
             >
-              <MdArrowForwardIos className="text-gray-600" />
+              <MdArrowForwardIos className="text-gray-600 text-sm" />
             </button>
           </div>
         </section>
 
 
-        {/* Sale 1 */}
-        <section className="mt-10 bg-gray-50 rounded-2xl px-3 sm:px-4 lg:px-6 py-6">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-5 items-stretch">
-            {/* 🎨 Banner bên trái */}
-            <div className="lg:col-span-1 rounded-2xl bg-gradient-to-br from-amber-300 to-emerald-300 p-5 sm:p-6 flex flex-col justify-between relative overflow-hidden min-h-[220px] sm:min-h-[360px]">
-              <div className="absolute inset-0 bg-white/10 backdrop-blur-[2px]" />
+
+        {/* ===== SALE / BEST SELLING ===== */}
+        <section className="mt-12 bg-gradient-to-br from-gray-50 to-emerald-50 rounded-3xl px-3 sm:px-5 lg:px-8 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-stretch">
+
+            {/* ===== LEFT BANNER ===== */}
+            <div className="
+      lg:col-span-1
+      relative overflow-hidden rounded-3xl
+      bg-gradient-to-br from-yellow-300 via-amber-300 to-emerald-400
+      p-6 sm:p-8
+      flex flex-col justify-between
+      min-h-[240px] sm:min-h-[380px]
+      shadow-lg
+    ">
+              {/* overlay blur */}
+              <div className="absolute inset-0 bg-white/20 backdrop-blur-sm" />
+
               <div className="relative z-10">
-                <h3 className="text-lg sm:text-2xl font-semibold leading-snug text-emerald-900 drop-shadow-sm">
-                  Bán chạy nhất hôm nay
+                <span className="inline-block mb-3 px-3 py-1 text-xs font-bold rounded-full bg-white/80 text-emerald-700 shadow">
+                  🔥 HOT DEAL
+                </span>
+
+                <h3 className="text-xl sm:text-3xl font-extrabold text-emerald-900 leading-tight">
+                  Bán chạy <br /> hôm nay
                 </h3>
-                <p className="mt-2 sm:mt-3 text-emerald-900 text-sm sm:text-base">
-                  Ưu đãi độc quyền - Giảm giá 20%
+
+                <p className="mt-3 text-sm sm:text-base text-emerald-900 font-medium">
+                  Ưu đãi độc quyền <span className="font-bold">– Giảm đến 20%</span>
                 </p>
-                <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-emerald-900/80 max-w-[220px]">
-                  Mua sắm thoải mái chỉ từ 20.000₫. Chỉ trong tuần này – đừng bỏ lỡ!
+
+                <p className="mt-3 text-xs sm:text-sm text-emerald-900/80 max-w-[240px]">
+                  Mua sắm thực phẩm tươi – sạch – an toàn cho cả gia đình.
+                  Số lượng có hạn!
                 </p>
               </div>
-              <button className="relative z-10 self-start mt-5 sm:mt-6 rounded-full bg-white text-emerald-700 px-5 py-2 text-sm sm:text-base font-medium shadow hover:scale-105 hover:shadow-lg transition">
+
+              <button
+                className="
+          relative z-10 mt-6 self-start
+          px-6 py-2.5 rounded-full
+          bg-white text-emerald-700 font-semibold
+          shadow-md
+          hover:shadow-xl hover:scale-105
+          transition
+        "
+              >
                 Mua ngay
               </button>
             </div>
 
-            {/* 🛒 Danh sách sản phẩm */}
+            {/* ===== PRODUCT LIST ===== */}
             <div className="lg:col-span-3">
-              {/* Mobile: scroll ngang */}
+
+              {/* Mobile: horizontal scroll */}
               <div className="lg:hidden">
-                <div
-                  className="flex gap-3 sm:gap-5 overflow-x-auto scroll-smooth pb-2 scrollbar-hide"
-                  style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-                >
+                <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide scroll-smooth">
                   {productNew.map((product) => (
-                    <div key={product.id} className="min-w-[160px] sm:min-w-[200px]">
+                    <div
+                      key={product.id}
+                      className="min-w-[170px] sm:min-w-[210px]"
+                    >
                       <ProductItem product={product} />
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Laptop: dạng grid full chuẩn */}
-              <div className="hidden lg:grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {/* Desktop: grid */}
+              <div className="hidden lg:grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {productNew.slice(0, 8).map((product) => (
                   <ProductItem key={product.id} product={product} />
                 ))}
               </div>
 
-
-              {/* Nút xem tất cả */}
-              <div className="text-center mt-6">
+              {/* View all */}
+              <div className="text-center mt-7">
                 <Link to="/products">
-                  <button className="bg-white px-4 sm:px-5 py-1.5 rounded-2xl border border-green-600 text-green-600 hover:bg-green-600 hover:text-white transition text-sm sm:text-base flex items-center justify-center gap-1 mx-auto shadow-sm hover:shadow-md">
-                    Xem tất cả
+                  <button
+                    className="
+              inline-flex items-center gap-2
+              px-6 py-2 rounded-full
+              border border-emerald-600
+              text-emerald-600 font-medium
+              hover:bg-emerald-600 hover:text-white
+              shadow-sm hover:shadow-md
+              transition
+            "
+                  >
+                    Xem tất cả →
                   </button>
                 </Link>
               </div>
@@ -326,116 +403,119 @@ const Home = () => {
         </section>
 
 
-        {/* Banner */}
-        <section className="mt-8 px-2 sm:px-0">
-          {/* Grid desktop, scroll horizontal mobile */}
-          <div className="flex md:grid md:grid-cols-3 gap-4 sm:gap-6 overflow-x-auto md:overflow-visible scroll-smooth pb-2 scrollbar-hide">
 
-            {/* Card 1 */}
-            <div className="relative bg-white rounded-2xl overflow-hidden shadow-md group hover:shadow-lg transition-all duration-300 min-w-[260px] sm:min-w-0">
-              <img
-                src={cuqua}
-                alt="Nông sản tươi mới"
-                className="w-full h-36 sm:h-56 object-cover transform group-hover:scale-105 group-hover:brightness-90 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 flex flex-col justify-between p-4 sm:p-6 bg-black/30 text-white transition-all duration-300 group-hover:bg-black/40">
-                <div className="transition-transform duration-300 group-hover:-translate-y-1">
-                  <h3 className="text-base sm:text-lg font-semibold">
-                    Nông sản tươi mới
-                  </h3>
-                  <p className="text-xs sm:text-sm mt-1">
-                    Sản phẩm 100% từ Thiên nhiên
-                  </p>
-                </div>
-                <Link
-                  to="/products"
-                  className="bg-green-600 text-white px-3 sm:px-4 py-2 rounded-md self-start text-xs sm:text-sm hover:bg-yellow-500 transition-colors duration-300"
-                >
-                  Xem ngay
-                </Link>
-              </div>
-            </div>
+        {/* ===== PROMO BANNER ===== */}
+        <section className="mt-12 px-2 sm:px-0">
+          <div className="
+    flex md:grid md:grid-cols-3
+    gap-5 sm:gap-6
+    overflow-x-auto md:overflow-visible
+    scrollbar-hide scroll-smooth
+  ">
 
-            {/* Card 2 */}
-            <div className="relative bg-white rounded-2xl overflow-hidden shadow-md group hover:shadow-lg transition-all duration-300 min-w-[260px] sm:min-w-0">
-              <img
-                src={suatuoi}
-                alt="Sữa nguyên chất"
-                className="w-full h-36 sm:h-56 object-cover transform group-hover:scale-105 group-hover:brightness-90 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 flex flex-col justify-between p-4 sm:p-6 bg-black/20 text-white transition-all duration-300 group-hover:bg-black/40">
-                <div className="transition-transform duration-300 group-hover:-translate-y-1">
-                  <h3 className="text-base sm:text-lg font-semibold">
-                    Bữa sáng lành mạnh
-                  </h3>
-                  <p className="text-xs sm:text-sm mt-1">
-                    Sữa tươi nguyên chất Tiệt trùng
-                  </p>
-                </div>
-                <Link
-                  to="/products"
-                  className="bg-green-600 text-white px-3 sm:px-4 py-2 rounded-md self-start text-xs sm:text-sm hover:bg-yellow-500 transition-colors duration-300"
-                >
-                  Xem ngay
-                </Link>
-              </div>
-            </div>
+            {/* CARD ITEM */}
+            {[
+              {
+                img: cuqua,
+                title: "Nông sản tươi mới",
+                desc: "100% từ thiên nhiên",
+              },
+              {
+                img: suatuoi,
+                title: "Bữa sáng lành mạnh",
+                desc: "Sữa tươi nguyên chất",
+              },
+              {
+                img: raucu,
+                title: "Rau củ hữu cơ",
+                desc: "Sạch – an toàn – chất lượng",
+              },
+            ].map((item, i) => (
+              <div
+                key={i}
+                className="
+          relative group
+          bg-white rounded-3xl overflow-hidden
+          shadow-md hover:shadow-xl
+          transition-all duration-300
+          min-w-[260px] sm:min-w-0
+        "
+              >
+                {/* Image */}
+                <img
+                  src={item.img}
+                  alt={item.title}
+                  className="
+            w-full h-40 sm:h-60 object-cover
+            transition-transform duration-700
+            group-hover:scale-110
+          "
+                />
 
-            {/* Card 3 */}
-            <div className="relative bg-white rounded-2xl overflow-hidden shadow-md group hover:shadow-lg transition-all duration-300 min-w-[260px] sm:min-w-0">
-              <img
-                src={raucu}
-                alt="Rau củ hữu cơ"
-                className="w-full h-36 sm:h-56 object-cover transform group-hover:scale-105 group-hover:brightness-90 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 flex flex-col justify-between p-4 sm:p-6 bg-black/20 text-white transition-all duration-300 group-hover:bg-black/40">
-                <div className="transition-transform duration-300 group-hover:-translate-y-1">
-                  <h3 className="text-base sm:text-lg font-semibold">
-                    Rau củ hữu cơ 100%
+                {/* Overlay */}
+                <div className="
+          absolute inset-0
+          bg-gradient-to-t from-black/70 via-black/30 to-transparent
+          flex flex-col justify-end
+          p-5 sm:p-6
+        ">
+                  <h3 className="text-white text-base sm:text-lg font-bold">
+                    {item.title}
                   </h3>
-                  <p className="text-xs sm:text-sm mt-1">
-                    Sạch sẽ và an toàn, Chất lượng
+                  <p className="text-white/80 text-xs sm:text-sm mt-1">
+                    {item.desc}
                   </p>
+
+                  <Link
+                    to="/products"
+                    className="
+              mt-4 inline-flex items-center
+              w-fit px-4 py-2 rounded-full
+              bg-emerald-600 text-white text-xs sm:text-sm font-semibold
+              hover:bg-yellow-500
+              transition
+            "
+                  >
+                    Xem ngay →
+                  </Link>
                 </div>
-                <Link
-                  to="/products"
-                  className="bg-green-600 text-white px-3 sm:px-4 py-2 rounded-md self-start text-xs sm:text-sm hover:bg-yellow-500 transition-colors duration-300"
-                >
-                  Xem ngay
-                </Link>
               </div>
-            </div>
+            ))}
           </div>
         </section>
 
-        {/* Sale sản phẩm */}
-        <section className="mt-10">
-          <div className="rounded-2xl shadow-lg overflow-hidden border border-green-300 bg-gradient-to-br from-white via-green-50 to-emerald-100">
-            {/* ===== Header ===== */}
-            <div className="bg-gradient-to-r from-green-600 to-emerald-500 text-white p-5 sm:p-6 flex flex-col sm:flex-row justify-between items-center gap-3">
-              <div className="text-center sm:text-left flex items-center gap-2">
-                {/* ⚡ Icon rung */}
-                <span
-                  className="text-yellow-300 text-2xl sm:text-3xl drop-shadow-lg"
-                  style={{
-                    animation: "shake 0.5s infinite",
-                  }}
-                >
+
+        {/* ===== FLASH SALE ===== */}
+        <section className="mt-12">
+          <div className="
+    rounded-3xl overflow-hidden
+    border border-emerald-300
+    shadow-xl
+    bg-gradient-to-br from-white via-emerald-50 to-emerald-100
+  ">
+            {/* ===== HEADER ===== */}
+            <div className="
+      bg-gradient-to-r from-emerald-600 to-green-500
+      text-white p-5 sm:p-6
+      flex flex-col sm:flex-row
+      justify-between items-center gap-4
+    ">
+              <div className="flex items-center gap-3">
+                <span className="text-yellow-300 text-3xl drop-shadow animate-shake">
                   ⚡
                 </span>
-
                 <div>
                   <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight">
                     Khuyến mãi đặc biệt
                   </h2>
                   <p className="text-sm sm:text-base opacity-90 mt-1">
-                    Giảm giá hấp dẫn — Số lượng có hạn, nhanh tay kẻo lỡ!
+                    Giảm giá hấp dẫn — Số lượng có hạn
                   </p>
                 </div>
               </div>
 
               {/* Countdown */}
-              <div className="flex flex-wrap justify-center sm:justify-end gap-2">
+              <div className="flex flex-wrap justify-center gap-2">
                 {[
                   { label: "Ngày", value: countdown.days },
                   { label: "Giờ", value: countdown.hours },
@@ -444,53 +524,74 @@ const Home = () => {
                 ].map((t, i) => (
                   <div
                     key={i}
-                    className="bg-white text-green-700 rounded-lg px-3 sm:px-4 py-1 sm:py-1.5 font-semibold text-sm sm:text-base shadow-md flex flex-col items-center"
+                    className="
+              bg-white text-emerald-700
+              rounded-xl px-3 sm:px-4 py-1.5
+              font-semibold shadow-md
+              flex flex-col items-center
+              min-w-[56px]
+            "
                   >
                     <span className="text-lg sm:text-xl font-extrabold">
                       {String(t.value).padStart(2, "0")}
                     </span>
-                    <span className="text-xs font-medium opacity-80">{t.label}</span>
+                    <span className="text-[11px] font-medium opacity-80">
+                      {t.label}
+                    </span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* ===== MOBILE layout ===== */}
+            {/* ===== MOBILE ===== */}
             <div className="p-4 md:hidden bg-white">
-              <div className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-2">
+              <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
                 {saleProducts.slice(0, 6).map((p) => {
-                  const discountPercent = (p.salePrice && p.discountPrice && p.discountPrice < p.salePrice)
-                    ? Math.round(((p.salePrice - p.discountPrice) / p.salePrice) * 100)
-                    : 0;
+                  const discountPercent =
+                    p.salePrice && p.discountPrice && p.discountPrice < p.salePrice
+                      ? Math.round(((p.salePrice - p.discountPrice) / p.salePrice) * 100)
+                      : 0;
+
                   const soldCount = p.sold || 0;
                   const stockCount = p.qty || 0;
-                  const soldPercent = stockCount > 0 ? Math.round((soldCount / stockCount) * 100) : 0;
+                  const soldPercent =
+                    stockCount > 0 ? Math.round((soldCount / stockCount) * 100) : 0;
 
                   return (
                     <div
                       key={p.id}
-                      className="flex-shrink-0 w-[78%] sm:w-[48%] bg-white rounded-2xl border border-gray-200 shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300 relative"
+                      className="
+                relative flex-shrink-0
+                w-[78%] sm:w-[48%]
+                bg-white rounded-2xl
+                border border-gray-200
+                shadow-md hover:shadow-lg
+                hover:-translate-y-1
+                transition-all
+              "
                     >
-                      {/* Badge giảm giá */}
+                      {/* SALE BADGE */}
                       {discountPercent > 0 && (
                         <div
-                          className="absolute top-2 left-2 text-white text-xs font-bold px-2 py-0.5 shadow-md animate-pulse badge-shake"
-                          style={{
-                            background:
-                              "linear-gradient(90deg, #ff416c 0%, #ff4b2b 100%)",
-                            borderTopLeftRadius: "4px",
-                            borderBottomLeftRadius: "4px",
-                            borderTopRightRadius: "12px",
-                            borderBottomRightRadius: "12px",
-                          }}
+                          className="
+      absolute top-2 left-2
+      bg-gradient-to-r from-rose-500 to-pink-500
+      text-white text-xs font-bold
+      px-2 py-0.5
+      shadow-md
+      animate-pulse
+      badge-shake
+      rounded-r-xl rounded-l-sm
+    "
                         >
                           -{discountPercent}%
                         </div>
                       )}
 
+
                       <Link to={`/product/${p.slug}`} className="block p-3">
                         <img
-                          src={getImageUrl(p.image, 'product')}
+                          src={getImageUrl(p.image, "product")}
                           alt={p.name}
                           className="w-full h-28 object-contain mx-auto"
                         />
@@ -499,27 +600,29 @@ const Home = () => {
                       <div className="px-3 pb-3 space-y-1">
                         <Link
                           to={`/product/${p.slug}`}
-                          className="text-base sm:text-lg font-semibold text-gray-800 line-clamp-2 leading-snug hover:text-green-700 transition-colors"
+                          className="text-sm font-semibold text-gray-800 line-clamp-2 hover:text-emerald-700 transition"
                         >
                           {p.name}
                         </Link>
-                        <p className="text-[11px] text-gray-500 mt-1">
+
+                        <p className="text-[11px] text-gray-500">
                           Đã bán {soldCount}/{stockCount}{" "}
-                          <span className="text-green-600 font-semibold">
+                          <span className="text-emerald-600 font-semibold">
                             {soldPercent}%
                           </span>
                         </p>
+
                         {p.discountPrice && p.discountPrice < p.salePrice ? (
                           <>
                             <p className="text-gray-400 line-through text-[11px]">
-                              {p.salePrice?.toLocaleString()}₫
+                              {p.salePrice.toLocaleString()}₫
                             </p>
-                            <p className="text-red-600 font-bold text-[13px]">
-                              {p.discountPrice?.toLocaleString()}₫
+                            <p className="text-rose-600 font-bold text-sm">
+                              {p.discountPrice.toLocaleString()}₫
                             </p>
                           </>
                         ) : (
-                          <p className="text-red-600 font-bold text-[13px]">
+                          <p className="text-rose-600 font-bold text-sm">
                             {p.salePrice?.toLocaleString()}₫
                           </p>
                         )}
@@ -528,20 +631,24 @@ const Home = () => {
                         <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
                           <div
                             className={`h-2 rounded-full transition-all ${soldPercent > 70
-                              ? "bg-red-500 animate-pulse"
-                              : "bg-green-500"
+                              ? "bg-rose-500 animate-pulse"
+                              : "bg-emerald-500"
                               }`}
                             style={{ width: `${soldPercent}%` }}
-                          ></div>
+                          />
                         </div>
 
                         <button
                           onClick={() => handleAddToCart(p)}
                           disabled={p.qty === 0}
-                          className={`w-full py-2 mt-3 rounded-xl text-xs font-semibold transition-all ${p.qty === 0
-                            ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                            : "bg-green-600 text-white hover:bg-yellow-500"
-                            }`}
+                          className={`
+                    w-full py-2 mt-3 rounded-xl text-xs font-semibold
+                    transition
+                    ${p.qty === 0
+                              ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                              : "bg-emerald-600 text-white hover:bg-yellow-500"
+                            }
+                  `}
                         >
                           {p.qty === 0 ? "Hết hàng" : "Thêm vào giỏ"}
                         </button>
@@ -552,33 +659,43 @@ const Home = () => {
               </div>
             </div>
 
-            {/* ===== LAPTOP layout ===== */}
+            {/* ===== DESKTOP ===== */}
             <div className="hidden md:grid grid-cols-3 lg:grid-cols-4 gap-6 p-6 bg-white">
               {saleProducts.slice(0, 8).map((p) => {
-                const discountPercent = (p.salePrice && p.discountPrice && p.discountPrice < p.salePrice)
-                  ? Math.round(((p.salePrice - p.discountPrice) / p.salePrice) * 100)
-                  : 0;
+                const discountPercent =
+                  p.salePrice && p.discountPrice && p.discountPrice < p.salePrice
+                    ? Math.round(((p.salePrice - p.discountPrice) / p.salePrice) * 100)
+                    : 0;
+
                 const soldCount = p.sold || 0;
                 const stockCount = p.qty || 0;
-                const soldPercent = stockCount > 0 ? Math.round((soldCount / stockCount) * 100) : 0;
+                const soldPercent =
+                  stockCount > 0 ? Math.round((soldCount / stockCount) * 100) : 0;
 
                 return (
                   <div
                     key={p.id}
-                    className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 relative flex gap-2"
+                    className="
+              relative flex gap-3
+              bg-white border border-gray-200
+              rounded-2xl p-4
+              shadow-sm hover:shadow-lg
+              hover:-translate-y-1
+              transition-all
+            "
                   >
-                    {/* Badge giảm giá */}
                     {discountPercent > 0 && (
                       <div
-                        className="absolute top-2 left-2 text-white text-xs font-bold px-2 py-0.5 shadow-md animate-pulse badge-shake"
-                        style={{
-                          background:
-                            "linear-gradient(90deg, #ff416c 0%, #ff4b2b 100%)",
-                          borderTopLeftRadius: "4px",
-                          borderBottomLeftRadius: "4px",
-                          borderTopRightRadius: "12px",
-                          borderBottomRightRadius: "12px",
-                        }}
+                        className="
+      absolute top-2 left-2
+      bg-gradient-to-r from-rose-500 to-pink-500
+      text-white text-xs font-bold
+      px-2 py-0.5
+      shadow-md
+      animate-pulse
+      badge-shake
+      rounded-r-xl rounded-l-sm
+    "
                       >
                         -{discountPercent}%
                       </div>
@@ -587,7 +704,7 @@ const Home = () => {
                     <div className="basis-5/12">
                       <Link to={`/product/${p.slug}`}>
                         <img
-                          src={getImageUrl(p.image, 'product')}
+                          src={getImageUrl(p.image, "product")}
                           alt={p.name}
                           className="w-full h-32 object-contain"
                         />
@@ -597,49 +714,54 @@ const Home = () => {
                     <div className="basis-7/12">
                       <Link
                         to={`/product/${p.slug}`}
-                        className="text-base sm:text-lg font-semibold text-gray-800 line-clamp-2 leading-snug hover:text-green-700 transition-colors"
+                        className="font-semibold text-gray-800 line-clamp-2 hover:text-emerald-700 transition"
                       >
                         {p.name}
                       </Link>
+
                       <p className="text-xs text-gray-500 mt-1">
-                        Đã bán: {soldCount}/{stockCount}{" "}
-                        <span className="text-green-600 font-semibold">
+                        Đã bán {soldCount}/{stockCount}{" "}
+                        <span className="text-emerald-600 font-semibold">
                           {soldPercent}%
                         </span>
                       </p>
+
                       {p.discountPrice && p.discountPrice < p.salePrice ? (
                         <>
                           <p className="text-gray-400 line-through text-xs">
-                            {p.salePrice?.toLocaleString()}₫
+                            {p.salePrice.toLocaleString()}₫
                           </p>
-                          <p className="text-red-600 font-bold text-sm">
-                            {p.discountPrice?.toLocaleString()}₫
+                          <p className="text-rose-600 font-bold text-sm">
+                            {p.discountPrice.toLocaleString()}₫
                           </p>
                         </>
                       ) : (
-                        <p className="text-red-600 font-bold text-sm">
+                        <p className="text-rose-600 font-bold text-sm">
                           {p.salePrice?.toLocaleString()}₫
                         </p>
                       )}
 
-                      {/* Progress */}
                       <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
                         <div
                           className={`h-2 rounded-full transition-all ${soldPercent > 70
-                            ? "bg-red-500 animate-pulse"
-                            : "bg-green-500"
+                            ? "bg-rose-500 animate-pulse"
+                            : "bg-emerald-500"
                             }`}
                           style={{ width: `${soldPercent}%` }}
-                        ></div>
+                        />
                       </div>
 
                       <button
                         onClick={() => handleAddToCart(p)}
                         disabled={p.qty === 0}
-                        className={`w-full py-2 mt-3 rounded-lg text-sm font-semibold transition-all ${p.qty === 0
-                          ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                          : "bg-green-600 text-white hover:bg-yellow-500"
-                          }`}
+                        className={`
+                  w-full py-2 mt-3 rounded-lg text-sm font-semibold
+                  transition
+                  ${p.qty === 0
+                            ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                            : "bg-emerald-600 text-white hover:bg-yellow-500"
+                          }
+                `}
                       >
                         {p.qty === 0 ? "Hết hàng" : "Thêm vào giỏ"}
                       </button>
@@ -655,57 +777,115 @@ const Home = () => {
 
 
 
-        {/* Video hướng dẫn */}
 
-        <section className="bg-gradient-to-br from-white via-green-50 to-emerald-100 border border-green-200 shadow-lg p-4 sm:p-6 rounded-2xl mt-10">
+        {/* ===== VIDEO HƯỚNG DẪN ===== */}
+        <section className="
+  mt-12
+  bg-gradient-to-br from-white via-emerald-50 to-emerald-100
+  border border-emerald-200
+  shadow-xl
+  p-4 sm:p-6
+  rounded-3xl
+">
           {/* Header */}
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-2">
-              <span
-                className="text-yellow-400 text-2xl sm:text-3xl drop-shadow-lg"
-                style={{ animation: "shake 0.5s infinite" }}
-              >
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <span className="text-yellow-400 text-3xl drop-shadow animate-shake">
                 🎬
               </span>
-              <h2 className="text-lg sm:text-2xl font-extrabold text-emerald-600 tracking-tight">
+              <h2 className="text-lg sm:text-2xl font-extrabold text-emerald-700 tracking-tight">
                 Video hướng dẫn
               </h2>
             </div>
+
             <button
               onClick={() => navigate("/videos")}
-              className="hidden sm:inline-flex px-4 sm:px-6 py-2 border border-green-600 text-green-700 rounded-full hover:bg-green-600 hover:text-white transition text-sm sm:text-base font-medium shadow-sm hover:shadow-md"
+              className="
+        hidden sm:inline-flex
+        px-5 py-2 rounded-full
+        border border-emerald-600
+        text-emerald-700 font-medium
+        hover:bg-emerald-600 hover:text-white
+        shadow-sm hover:shadow-md
+        transition
+      "
             >
               Xem tất cả
             </button>
           </div>
 
-          {/* Scroll ngang ở mobile / Grid ở desktop */}
-          <div className="flex md:grid md:grid-cols-4 gap-3 sm:gap-4 overflow-x-auto md:overflow-visible scroll-smooth pb-2 scrollbar-hide rounded-lg">
+          {/* List */}
+          <div className="
+    flex md:grid md:grid-cols-4
+    gap-4
+    overflow-x-auto md:overflow-visible
+    scrollbar-hide scroll-smooth
+    pb-2
+  ">
             {videos.map((v, i) => (
               <div
                 key={i}
-                className="min-w-[60%] xs:min-w-[50%] sm:min-w-0 bg-white rounded-2xl border border-gray-200 shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex-shrink-0 overflow-hidden"
+                className="
+          group flex-shrink-0
+          min-w-[60%] xs:min-w-[50%] sm:min-w-0
+          bg-white rounded-2xl
+          border border-gray-200
+          shadow-md hover:shadow-xl
+          hover:-translate-y-1
+          hover:border-emerald-300
+          transition-all duration-300
+          overflow-hidden
+        "
               >
                 {/* Thumbnail */}
-                <div className="relative group">
+                <div className="relative">
                   <img
                     src={v.thumbnail}
                     alt={v.title}
-                    className="w-full h-44 sm:h-48 object-cover transform transition-transform duration-500 group-hover:scale-110"
+                    className="
+              w-full h-44 sm:h-48 object-cover
+              transition-transform duration-700
+              group-hover:scale-110
+            "
                   />
+
+                  {/* Overlay + Play */}
                   <a
                     href={v.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="
+              absolute inset-0
+              flex items-center justify-center
+              bg-gradient-to-t from-black/60 via-black/30 to-transparent
+              opacity-0 group-hover:opacity-100
+              transition-opacity
+            "
                   >
-                    <Play className="text-white w-10 h-10 sm:w-12 sm:h-12 drop-shadow-lg" />
+                    <div className="
+              w-14 h-14 sm:w-16 sm:h-16
+              rounded-full
+              bg-white/90
+              flex items-center justify-center
+              shadow-lg
+              ring-2 ring-white
+              group-hover:scale-110
+              transition
+            ">
+                      <Play className="text-emerald-600 w-7 h-7 sm:w-8 sm:h-8" />
+                    </div>
                   </a>
                 </div>
 
-                {/* Tiêu đề video */}
-                <div className="p-3">
-                  <p className="text-xs sm:text-sm font-semibold text-gray-800 line-clamp-2 hover:text-green-700 transition-colors">
+                {/* Title */}
+                <div className="p-4">
+                  <p className="
+            text-sm font-semibold
+            text-gray-800
+            line-clamp-2
+            group-hover:text-emerald-700
+            transition-colors
+          ">
                     {v.title}
                   </p>
                 </div>
@@ -713,11 +893,18 @@ const Home = () => {
             ))}
           </div>
 
-          {/* Nút xem tất cả (mobile) */}
+          {/* Mobile button */}
           <div className="text-center mt-6 sm:hidden">
             <button
               onClick={() => navigate("/videos")}
-              className="px-4 sm:px-6 py-2 border border-green-600 text-green-700 rounded-full hover:bg-green-600 hover:text-white transition text-sm sm:text-base font-medium shadow-sm hover:shadow-md"
+              className="
+        px-6 py-2 rounded-full
+        border border-emerald-600
+        text-emerald-700 font-medium
+        hover:bg-emerald-600 hover:text-white
+        shadow-sm hover:shadow-md
+        transition
+      "
             >
               Xem tất cả
             </button>
@@ -725,119 +912,209 @@ const Home = () => {
         </section>
 
 
-
-        {/* Banner cuối */}
-        <section className="mt-12 px-2 sm:px-0">
-          <div className="overflow-hidden rounded-lg mb-3">
+        {/* ===== BANNER CUỐI ===== */}
+        <section className="mt-14 px-2 sm:px-0">
+          <div className="
+    relative overflow-hidden
+    rounded-2xl
+    shadow-lg
+    group
+  ">
             <img
-              className="w-full h-32 sm:h-full object-cover transform transition-transform duration-700 ease-in-out hover:scale-110"
               src={bannerproduct5}
               alt=""
+              className="
+        w-full h-32 sm:h-full object-cover
+        transition-transform duration-[1200ms] ease-out
+        group-hover:scale-110
+      "
             />
+
+            {/* overlay gradient */}
+            <div className="
+      absolute inset-0
+      bg-gradient-to-r from-black/20 via-transparent to-black/10
+      pointer-events-none
+    " />
           </div>
         </section>
 
-        {/* Nhóm danh mục nhỏ */}
-        <section className="mt-10 grid grid-cols-1 lg:grid-cols-3 gap-6 px-2 sm:px-0">
+
+        {/* ===== NHÓM DANH MỤC NHỎ ===== */}
+        <section className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-6 px-2 sm:px-0">
           {producsCat.map((cat) => (
             <div
               key={cat.id}
-              className="rounded-2xl border border-green-300  shadow-lg hover:shadow-xl transition-all duration-300 p-4"
+              className="
+        rounded-3xl
+        border border-emerald-300
+        bg-gradient-to-br from-white via-emerald-50 to-emerald-100
+        shadow-lg hover:shadow-xl
+        transition-all duration-300
+        p-5
+      "
             >
-              {/* Tiêu đề danh mục */}
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="font-extrabold text-emerald-600 text-lg tracking-tight">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="font-extrabold text-emerald-700 text-lg tracking-tight">
                   {cat.name}
                 </h4>
 
-
                 <Link
-                  to={`/products?category=${cat.slug}`} // ✅ Sửa 'href' thành 'to' và đổi URL
-                  state={{ categoryName: cat.name }}     // ✅ Thêm 'state' để trang kia biết tên
-                  className="text-emerald-700 text-xs hover:underline"
+                  to={`/products?category=${cat.slug}`}
+                  state={{ categoryName: cat.name }}
+                  className="
+            text-emerald-700 text-xs font-semibold
+            hover:text-yellow-500
+            transition
+          "
                 >
-                  Xem thêm »
+                  Xem thêm →
                 </Link>
               </div>
 
-              {/* Danh sách sản phẩm */}
+              {/* Product list */}
               <div className="flex flex-col gap-3">
-                {cat.products.map((p) => (
-                  <div
-                    key={p.id}
-                    className="flex items-center gap-4 border border-gray-200 bg-white p-3 rounded-xl hover:-translate-y-1 hover:shadow-md transition-all duration-300 relative"
-                  >
-                    {/* Ảnh sản phẩm */}
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 relative">
-                      <Link to={`/product/${p.slug}`}>
-                        <img
-                          src={getImageUrl(p.image, 'product')}
-                          alt={p.name}
-                          className="object-contain w-full h-full rounded-lg"
-                        />
-                      </Link>
+                {cat.products.map((p) => {
+                  const hasDiscount =
+                    p.salePrice && p.discountPrice && p.discountPrice < p.salePrice;
 
-                      {/* Badge giảm giá */}
-                      {p.salePrice && p.discountPrice && p.discountPrice < p.salePrice && (
-                        <div className="absolute top-1 left-1 bg-gradient-to-r from-rose-500 to-pink-500 text-white text-[11px] sm:text-xs font-bold px-1.5 py-0.5 rounded-tr-lg rounded-bl-lg shadow animate-pulse">
-                          -{Math.round(((p.salePrice - p.discountPrice) / p.salePrice) * 100)}%
-                        </div>
-                      )}
-                    </div>
+                  const discountPercent = hasDiscount
+                    ? Math.round(((p.salePrice - p.discountPrice) / p.salePrice) * 100)
+                    : 0;
 
-                    {/* Thông tin sản phẩm */}
-                    <div className="flex-1">
-                      <Link
-                        to={`/product/${p.slug}`}
-                        className="text-base sm:text-lg font-semibold text-gray-800 line-clamp-2 leading-snug hover:text-green-700 transition-colors"
-                      >
-                        {p.name}
-                      </Link>
+                  return (
+                    <div
+                      key={p.id}
+                      className="
+                group relative
+                flex items-center gap-4
+                bg-white border border-gray-200
+                p-3 rounded-2xl
+                hover:-translate-y-1 hover:shadow-md
+                transition-all duration-300
+              "
+                    >
+                      {/* Image */}
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 relative">
+                        <Link to={`/product/${p.slug}`}>
+                          <img
+                            src={getImageUrl(p.image, "product")}
+                            alt={p.name}
+                            className="object-contain w-full h-full rounded-lg"
+                          />
+                        </Link>
 
-                      {/* Giá hiển thị logic giống phần khuyến mãi */}
-                      <div className="flex items-center gap-2 mt-1 text-sm sm:text-base">
-                        {p.discountPrice && p.discountPrice < p.salePrice ? (
-                          <>
-                            <span className="text-red-600 font-bold">
-                              {p.discountPrice.toLocaleString()}₫
-                            </span>
-                            <span className="text-gray-400 line-through text-xs sm:text-sm">
-                              {p.salePrice.toLocaleString()}₫
-                            </span>
-                          </>
-                        ) : (
-                          <span className="text-red-600 font-bold">
-                            {p.salePrice?.toLocaleString()}₫
-                          </span>
+                        {/* SALE BADGE */}
+                        {hasDiscount && (
+                          <div
+                            className="
+                      absolute top-1 left-1
+                      bg-gradient-to-r from-rose-500 to-pink-500
+                      text-white text-[11px] sm:text-xs font-bold
+                      px-1.5 py-0.5
+                      rounded-r-lg rounded-l-sm
+                      shadow
+                      animate-pulse badge-shake
+                    "
+                          >
+                            -{discountPercent}%
+                          </div>
                         )}
                       </div>
+
+                      {/* Info */}
+                      <div className="flex-1">
+                        <Link
+                          to={`/product/${p.slug}`}
+                          className="
+                    text-sm sm:text-base font-semibold
+                    text-gray-800
+                    line-clamp-2
+                    leading-snug
+                    group-hover:text-emerald-700
+                    transition-colors
+                  "
+                        >
+                          {p.name}
+                        </Link>
+
+                        <div className="flex items-center gap-2 mt-1 text-sm">
+                          {hasDiscount ? (
+                            <>
+                              <span className="text-rose-600 font-bold">
+                                {p.discountPrice.toLocaleString()}₫
+                              </span>
+                              <span className="text-gray-400 line-through text-xs">
+                                {p.salePrice.toLocaleString()}₫
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-rose-600 font-bold">
+                              {p.salePrice?.toLocaleString()}₫
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ))}
         </section>
 
-
-        {/* 📰 Tin tức & Đánh giá */}
-        <section className="mt-12 px-2 sm:px-0">
+        {/* ===== TIN TỨC & ĐÁNH GIÁ ===== */}
+        <section className="mt-14 px-2 sm:px-0">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-            {/* Tin tức mới nhất (9/12) */}
-            <div className="lg:col-span-9 bg-gray-50 rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
+            {/* ===== NEWS ===== */}
+            <div className="
+      lg:col-span-9
+      bg-gradient-to-br from-gray-50 to-white
+      rounded-3xl
+      p-5 sm:p-6
+      shadow-md
+      border border-gray-100
+    ">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl sm:text-2xl font-bold text-gray-800">Tin tức mới nhất</h3>
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
+                  Tin tức mới nhất
+                </h3>
+
                 <div className="flex gap-2">
                   <button
-                    onClick={() => document.getElementById('news-scroll').scrollBy({ left: -300, behavior: 'smooth' })}
-                    className="w-8 h-8 rounded-full bg-white shadow-sm border border-gray-200 flex items-center justify-center hover:bg-emerald-50 hover:border-emerald-200 transition"
+                    onClick={() =>
+                      document
+                        .getElementById("news-scroll")
+                        .scrollBy({ left: -300, behavior: "smooth" })
+                    }
+                    className="
+              w-8 h-8 rounded-full
+              bg-white border border-gray-200
+              shadow-sm
+              flex items-center justify-center
+              hover:bg-emerald-50 hover:border-emerald-200
+              transition
+            "
                   >
-                    <MdArrowBackIos className="translate-x-1 text-gray-600 text-sm" />
+                    <MdArrowBackIos className="text-gray-600 text-sm translate-x-1" />
                   </button>
+
                   <button
-                    onClick={() => document.getElementById('news-scroll').scrollBy({ left: 300, behavior: 'smooth' })}
-                    className="w-8 h-8 rounded-full bg-white shadow-sm border border-gray-200 flex items-center justify-center hover:bg-emerald-50 hover:border-emerald-200 transition"
+                    onClick={() =>
+                      document
+                        .getElementById("news-scroll")
+                        .scrollBy({ left: 300, behavior: "smooth" })
+                    }
+                    className="
+              w-8 h-8 rounded-full
+              bg-white border border-gray-200
+              shadow-sm
+              flex items-center justify-center
+              hover:bg-emerald-50 hover:border-emerald-200
+              transition
+            "
                   >
                     <MdArrowForwardIos className="text-gray-600 text-sm" />
                   </button>
@@ -846,32 +1123,69 @@ const Home = () => {
 
               <div
                 id="news-scroll"
-                className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
+                className="flex gap-4 overflow-x-auto scrollbar-hide  scroll-smooth pb-4"
                 style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
               >
                 {latestPosts.length > 0 ? (
                   latestPosts.slice(0, 6).map((post) => {
                     const date = new Date(post.createdAt);
                     const day = date.getDate();
-                    const monthYear = `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+                    const monthYear = `${(date.getMonth() + 1)
+                      .toString()
+                      .padStart(2, "0")}/${date.getFullYear()}`;
 
                     return (
-                      <div key={post.id} className="min-w-[280px] sm:min-w-[320px] bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition group">
+                      <div
+                        key={post.id}
+                        className="
+                  group min-w-[280px] sm:min-w-[320px]
+                  bg-white rounded-2xl
+                  overflow-hidden
+                  border border-gray-100
+                  shadow-sm hover:shadow-md
+                  transition
+                "
+                      >
                         <div className="relative h-44 overflow-hidden">
                           <img
-                            src={getImageUrl(post.image, 'post')}
+                            src={getImageUrl(post.image, "post")}
                             alt={post.title}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            className="
+                      w-full h-full object-cover
+                      transition-transform duration-500
+                      group-hover:scale-110
+                    "
                           />
-                          <div className="absolute top-2 left-2 bg-emerald-600 text-white rounded-lg p-1 px-2 text-center shadow-lg">
-                            <div className="text-sm font-bold leading-none">{day}</div>
-                            <div className="text-[10px] opacity-80">{monthYear}</div>
+
+                          <div className="
+                    absolute top-2 left-2
+                    bg-emerald-600 text-white
+                    rounded-lg px-2 py-1
+                    text-center shadow
+                  ">
+                            <div className="text-sm font-bold leading-none">
+                              {day}
+                            </div>
+                            <div className="text-[10px] opacity-80">
+                              {monthYear}
+                            </div>
                           </div>
                         </div>
+
                         <div className="p-4 flex flex-col gap-2">
-                          <Link to={`/post/${post.slug}`} className="font-bold text-gray-800 hover:text-emerald-600 line-clamp-2 transition-colors min-h-[3rem]">
+                          <Link
+                            to={`/post/${post.slug}`}
+                            className="
+                      font-bold text-gray-800
+                      line-clamp-2
+                      hover:text-emerald-600
+                      transition
+                      min-h-[3rem]
+                    "
+                          >
                             {post.title}
                           </Link>
+
                           <p className="text-sm text-gray-500 line-clamp-2">
                             {post.description}
                           </p>
@@ -880,43 +1194,87 @@ const Home = () => {
                     );
                   })
                 ) : (
-                  <div className="w-full py-10 text-center text-gray-400">Đang cập nhật tin tức...</div>
+                  <div className="w-full py-10 text-center text-gray-400">
+                    Đang cập nhật tin tức...
+                  </div>
                 )}
               </div>
 
-              <div className="text-center mt-4">
-                <Link to="/posts" className="inline-block py-2 px-8 rounded-full border border-emerald-600 text-emerald-600 text-sm font-semibold hover:bg-emerald-600 hover:text-white transition shadow-sm">
+              <div className="text-center mt-5">
+                <Link
+                  to="/posts"
+                  className="
+            inline-block
+            py-2 px-8 rounded-full
+            border border-emerald-600
+            text-emerald-600 text-sm font-semibold
+            hover:bg-emerald-600 hover:text-white
+            transition shadow-sm
+          "
+                >
                   Xem tất cả
                 </Link>
               </div>
             </div>
 
-            {/* Đánh giá (3/12) */}
-            <div className="lg:col-span-3 bg-gray-50 rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 flex flex-col">
-              <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-6">Đánh giá</h3>
+            {/* ===== TESTIMONIAL ===== */}
+            <div className="
+      lg:col-span-3
+      bg-gradient-to-br from-gray-50 to-white
+      rounded-3xl
+      p-5 sm:p-6
+      shadow-md
+      border border-gray-100
+      flex flex-col 
+    ">
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-6">
+                Đánh giá
+              </h3>
 
-              <div className="flex-1 bg-white rounded-2xl p-6 shadow-inner relative overflow-hidden flex flex-col items-center text-center">
+              <div className="
+        flex-1 bg-white rounded-2xl
+        p-6 shadow-inner
+        flex flex-col items-center text-center
+      ">
                 <div className="relative mb-4">
-                  <div className="w-20 h-20 rounded-full border-4 border-emerald-100 overflow-hidden shadow-md">
+                  <div className="
+            w-20 h-20 rounded-full
+            border-4 border-emerald-100
+            overflow-hidden shadow-md
+          ">
                     <img
                       src={testimonials[activeTestimonial].avatar}
                       alt={testimonials[activeTestimonial].name}
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <div className="absolute -bottom-1 -right-1 bg-yellow-400 w-6 h-6 rounded-full flex items-center justify-center text-white text-xs shadow-sm">
+
+                  <div className="
+            absolute -bottom-1 -right-1
+            bg-yellow-400
+            w-6 h-6 rounded-full
+            flex items-center justify-center
+            text-white text-xs shadow
+          ">
                     "
                   </div>
                 </div>
 
-                <blockquote className="text-sm text-gray-600 italic mb-6 leading-relaxed">
+                <blockquote className="
+          text-sm text-gray-600 italic
+          mb-6 leading-relaxed
+        ">
                   "{testimonials[activeTestimonial].content}"
                 </blockquote>
 
                 <div className="mt-auto">
-                  <div className="font-bold text-emerald-700">{testimonials[activeTestimonial].name}</div>
-                  <div className="text-xs text-gray-400 uppercase tracking-widest mt-1">
-                    <span className="inline-block w-8 h-[1px] bg-yellow-400 align-middle mr-2"></span>
+                  <div className="font-bold text-emerald-700">
+                    {testimonials[activeTestimonial].name}
+                  </div>
+                  <div className="
+            text-xs text-gray-400 uppercase tracking-widest mt-1
+          ">
+                    <span className="inline-block w-8 h-[1px] bg-yellow-400 mr-2 align-middle"></span>
                     {testimonials[activeTestimonial].role}
                   </div>
                 </div>
@@ -926,7 +1284,13 @@ const Home = () => {
                     <button
                       key={i}
                       onClick={() => setActiveTestimonial(i)}
-                      className={`h-1.5 rounded-full transition-all duration-300 ${activeTestimonial === i ? 'w-6 bg-emerald-600' : 'w-2 bg-gray-200 hover:bg-emerald-300'}`}
+                      className={`
+                h-1.5 rounded-full transition-all duration-300
+                ${activeTestimonial === i
+                          ? "w-6 bg-emerald-600"
+                          : "w-2 bg-gray-200 hover:bg-emerald-300"
+                        }
+              `}
                     />
                   ))}
                 </div>
@@ -937,42 +1301,80 @@ const Home = () => {
         </section>
 
 
-        {/* // Thương hiệu đối tác */}
-        <section className="mt-12 px-2 sm:px-0">
-          <div className="rounded-2xl border border-green-200  shadow-lg p-4 sm:p-6">
+
+        {/* ===== THƯƠNG HIỆU ĐỐI TÁC ===== */}
+        <section className="mt-14 px-2 sm:px-0">
+          <div className="
+    rounded-3xl
+    border border-emerald-200
+    bg-gradient-to-br from-white via-emerald-50 to-emerald-100
+    shadow-xl
+    p-4 sm:p-6
+  ">
             {/* Header */}
-            <div className="flex items-center gap-2 mb-4">
-              <span
-                className="text-yellow-400 text-2xl sm:text-3xl drop-shadow-lg"
-                style={{ animation: "shake 0.5s infinite" }}
-              >
+            <div className="flex items-center gap-3 mb-6">
+              <span className="text-yellow-400 text-3xl drop-shadow animate-shake">
                 🤝
               </span>
-              <h3 className="text-lg sm:text-2xl font-extrabold text-emerald-600 tracking-tight">
+              <h3 className="text-lg sm:text-2xl font-extrabold text-emerald-700 tracking-tight">
                 Đối tác của chúng tôi
               </h3>
             </div>
 
-            {/* Danh sách đối tác */}
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 sm:gap-4 items-center">
+            {/* Brand list */}
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-4 sm:gap-5 items-center">
               {Brands.length > 0 ? (
                 Brands.map((brand, i) => (
                   <div
                     key={i}
-                    className="bg-white rounded-xl border border-green-100 p-3 sm:p-4 flex flex-col items-center justify-center shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300"
+                    className="
+              group
+              bg-white rounded-2xl
+              border border-emerald-100
+              p-3 sm:p-4
+              flex flex-col items-center justify-center
+              shadow-sm
+              hover:shadow-lg hover:-translate-y-1
+              hover:border-emerald-300
+              transition-all duration-300
+            "
                   >
+                    {/* Logo */}
                     {brand.image ? (
-                      <img
-                        src={getImageUrl(brand.image, 'brand')}
-                        alt={brand.name}
-                        className="w-14 h-14 sm:w-16 sm:h-16 object-contain grayscale hover:grayscale-0 transition duration-300"
-                      />
+                      <div className="
+                w-14 h-14 sm:w-16 sm:h-16
+                flex items-center justify-center
+              ">
+                        <img
+                          src={getImageUrl(brand.image, "brand")}
+                          alt={brand.name}
+                          className="
+                    w-full h-full object-contain
+                    grayscale
+                    group-hover:grayscale-0
+                    transition duration-300
+                    group-hover:scale-110
+                  "
+                        />
+                      </div>
                     ) : (
-                      <div className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center text-gray-400 text-xs border border-gray-200 rounded-full">
+                      <div className="
+                w-14 h-14 sm:w-16 sm:h-16
+                flex items-center justify-center
+                text-gray-400 text-xs
+                border border-gray-200 rounded-full
+              ">
                         No Image
                       </div>
                     )}
-                    <p className="text-xs sm:text-sm font-medium text-gray-700 mt-2 text-center hover:text-green-700 transition">
+
+                    {/* Name */}
+                    <p className="
+              text-xs sm:text-sm font-medium
+              text-gray-700 mt-2 text-center
+              group-hover:text-emerald-700
+              transition
+            ">
                       {brand.name}
                     </p>
                   </div>
@@ -989,7 +1391,9 @@ const Home = () => {
 
 
         {/* Service badges */}
-        <section className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 px-2 sm:px-0 ">
+
+
+        <section className="mt-16 pt-10 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 px-2 sm:px-0">
           {[
             { t: "Vận chuyển miễn phí", s: "Hóa đơn trên 3 triệu" },
             { t: "Đổi trả miễn phí", s: "Trong vòng 7 ngày" },
@@ -998,16 +1402,16 @@ const Home = () => {
           ].map((b, i) => (
             <div
               key={i}
-              className="rounded-xl border border-emerald-100 bg-emerald-50 p-2 sm:p-3 flex items-center gap-2 sm:gap-3"
+              className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4 flex items-center gap-4 hover:shadow-md transition-shadow cursor-default"
             >
-              <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs sm:text-sm">
-                ✓
+              <div className="h-10 w-10 flex-shrink-0 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-sm">
+                <FaCheck className="text-sm" />
               </div>
               <div>
-                <div className="text-xs sm:text-sm font-medium text-emerald-800">
+                <div className="text-sm font-bold text-emerald-800 uppercase tracking-wide">
                   {b.t}
                 </div>
-                <div className="text-xs text-emerald-700/80">{b.s}</div>
+                <div className="text-xs text-emerald-600 font-medium mt-0.5">{b.s}</div>
               </div>
             </div>
           ))}

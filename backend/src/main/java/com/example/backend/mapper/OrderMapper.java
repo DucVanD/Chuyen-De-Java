@@ -9,7 +9,8 @@ public class OrderMapper {
 
     // Entity → DTO
     public static OrderDto toDto(Order order) {
-        if (order == null) return null;
+        if (order == null)
+            return null;
 
         return OrderDto.builder()
                 .id(order.getId())
@@ -35,10 +36,9 @@ public class OrderMapper {
                 .orderDetails(
                         order.getOrderDetails() != null
                                 ? order.getOrderDetails().stream()
-                                    .map(OrderDetailMapper::toDto)
-                                    .collect(Collectors.toList())
-                                : null
-                )
+                                        .map(OrderDetailMapper::toDto)
+                                        .collect(Collectors.toList())
+                                : null)
                 .createdBy(order.getCreatedBy())
                 .updatedBy(order.getUpdatedBy())
                 .createdAt(order.getCreatedAt())
@@ -50,9 +50,9 @@ public class OrderMapper {
     public static Order toEntity(
             OrderDto dto,
             User user,
-            Voucher voucher
-    ) {
-        if (dto == null) return null;
+            Voucher voucher) {
+        if (dto == null)
+            return null;
 
         return Order.builder()
                 .orderCode(dto.getOrderCode())
@@ -71,8 +71,10 @@ public class OrderMapper {
                 .discountAmount(dto.getDiscountAmount())
                 .totalAmount(dto.getTotalAmount())
                 .paymentMethod(dto.getPaymentMethod())
-                .paymentStatus(dto.getPaymentStatus())
-                .status(dto.getStatus())
+                .paymentStatus(dto.getPaymentStatus() != null ? dto.getPaymentStatus()
+                        : com.example.backend.entity.enums.PaymentStatus.UNPAID)
+                .status(dto.getStatus() != null ? dto.getStatus()
+                        : com.example.backend.entity.enums.OrderStatus.PENDING)
                 .cancelReason(dto.getCancelReason())
                 .build();
     }

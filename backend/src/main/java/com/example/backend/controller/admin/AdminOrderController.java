@@ -23,6 +23,17 @@ public class AdminOrderController {
         return ResponseEntity.ok(orderService.getAll());
     }
 
+    // 📄 Admin / Staff xem đơn hàng với phân trang và lọc
+    @GetMapping("/page")
+    public ResponseEntity<org.springframework.data.domain.Page<OrderDto>> getPage(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String orderCode,
+            @RequestParam(required = false) com.example.backend.entity.enums.OrderStatus status,
+            @RequestParam(required = false) com.example.backend.entity.enums.PaymentMethod paymentMethod) {
+        return ResponseEntity.ok(orderService.getPage(page, size, orderCode, status, paymentMethod));
+    }
+
     // 🔎 Xem chi tiết đơn
     @GetMapping("/{id}")
     public ResponseEntity<OrderDto> getById(@PathVariable Integer id) {
@@ -33,8 +44,7 @@ public class AdminOrderController {
     @PutMapping("/{id}/status")
     public ResponseEntity<OrderDto> updateStatus(
             @PathVariable Integer id,
-            @RequestBody OrderDto dto
-    ) {
+            @RequestBody OrderDto dto) {
         return ResponseEntity.ok(orderService.updateStatus(id, dto));
     }
 

@@ -138,4 +138,14 @@ public class StockMovementServiceImpl implements StockMovementService {
                 .map(m -> m.getSupplier() != null ? m.getSupplier().getId() : null)
                 .orElse(null);
     }
+
+    @Override
+    public List<StockMovementDto> getByMovementType(String type) {
+        StockMovementType movementType = StockMovementType.valueOf(type.toUpperCase());
+        return stockMovementRepository.findAll()
+                .stream()
+                .filter(m -> m.getMovementType() == movementType)
+                .map(StockMovementMapper::toDto)
+                .collect(Collectors.toList());
+    }
 }

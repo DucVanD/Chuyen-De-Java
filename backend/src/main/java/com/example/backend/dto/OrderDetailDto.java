@@ -17,6 +17,9 @@ public class OrderDetailDto {
     private Integer orderId;
     private Integer productId;
 
+    // Thông tin sản phẩm đầy đủ
+    private ProductDto product;
+
     private BigDecimal priceBuy;
     private Integer quantity;
     private BigDecimal amount;

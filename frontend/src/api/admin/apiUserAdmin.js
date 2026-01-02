@@ -1,4 +1,4 @@
-import axiosAdmin from "../axiosAdmin";
+import axiosAdmin from "../axios";
 
 const apiUserAdmin = {
     // GET ALL

@@ -1,570 +1,432 @@
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import logo from "/src/assets/images/logo.png";
-import { CiSearch } from "react-icons/ci";
-import { SiHomeassistantcommunitystore } from "react-icons/si";
-import { LuShuffle, LuHeart, LuShoppingBag } from "react-icons/lu";
-import { BiAlignLeft } from "react-icons/bi";
-import { FaUser, FaSortDown } from "react-icons/fa";
-import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import apiCategory from "../api/user/apiCategory";
-import { imageURL, getImageUrl } from "../api/config";
-import { logout } from "../Redux/authSlice";
 import { toast } from "react-toastify";
-import { TbBrandShopee } from "react-icons/tb";
-import { HiOutlineClipboardDocumentCheck } from "react-icons/hi2";
 
+// Icons
+import { 
+  CiSearch, 
+  CiUser, 
+  CiShoppingCart, 
+  CiMenuBurger 
+} from "react-icons/ci";
+import { 
+  FaUser, 
+  FaSortDown, 
+  FaStore, 
+  FaHistory, 
+  FaPhoneAlt, 
+  FaSignOutAlt,
+  FaChevronRight,
+  FaBars,
+  FaTimes
+} from "react-icons/fa";
+import { BiAlignLeft } from "react-icons/bi";
+import { HiOutlineClipboardDocumentCheck } from "react-icons/hi2";
+import { LuShuffle, LuShoppingBag } from "react-icons/lu";
+import { TbBrandShopee } from "react-icons/tb";
+
+// API & Redux
+import apiCategory from "../api/user/apiCategory";
+import { getImageUrl } from "../api/config";
+import { logout } from "../Redux/authSlice";
+import logo from "/src/assets/images/logo.png"; // Đảm bảo đường dẫn đúng
 
 const HeaderUser = () => {
-  const [openMenu, setOpenMenu] = useState(false); // Menu mobile
-  const [showDropdown, setShowDropdown] = useState(false); // Dropdown desktop
+  const [openMenu, setOpenMenu] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [categories, setCategories] = useState([]);
   const [keyword, setKeyword] = useState("");
+  const [showUserMenu, setShowUserMenu] = useState(false); // Dropdown user
 
   const cartItems = useSelector((state) => state.cart.items);
   const cartCount = cartItems.reduce((total, item) => total + item.qty, 0);
-  const [showLogout, setShowLogout] = useState(false);
   const user = useSelector((state) => state.auth.user);
+  
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Load danh mục
+  // --- API LOAD CATEGORIES ---
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const res = await apiCategory.getParentsWithChildren();
-        if (res.status) setCategories(res.data);
+        // Kiểm tra cấu trúc data trả về (res.data hoặc res trực tiếp tùy backend)
+        const data = res.data || res; 
+        if (Array.isArray(data)) setCategories(data);
       } catch (error) {
-        console.error("Lỗi khi tải danh mục:", error);
+        console.error("Lỗi tải danh mục:", error);
       }
     };
     fetchCategories();
   }, []);
 
+  // --- HANDLERS ---
   const handleSearch = (e) => {
     e.preventDefault();
     if (keyword.trim()) {
       navigate(`/products?keyword=${keyword}`);
       setKeyword("");
+      setOpenMenu(false); // Đóng menu mobile nếu đang mở
     }
   };
 
-  // Tìm hàm này trong file HeaderUser.js (dòng 53)
   const handleCategoryClick = (slug, name) => {
-
-
     navigate(`/products?category=${slug}`, {
       state: { categorySlug: slug, categoryName: name },
     });
-
     setShowDropdown(false);
+    setOpenMenu(false);
   };
 
   const handleLogout = () => {
-    // Hộp thoại xác nhận
-    const confirmLogout = window.confirm("Bạn có chắc muốn đăng xuất không?");
-    if (confirmLogout) {
+    if (window.confirm("Bạn có chắc muốn đăng xuất?")) {
       dispatch(logout());
-      toast.success("Đăng xuất thành công!", {
-        position: "top-right",
-        autoClose: 1500,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: false,
-        draggable: true,
-        theme: "colored",
-      });
+      toast.success("Đăng xuất thành công!", { theme: "colored" });
       navigate("/");
+      setShowUserMenu(false);
     }
   };
 
-
-
-  const handleQuickCheckout = (e) => {
-    e.preventDefault();
+  const handleQuickCheckout = () => {
     if (!user) {
-      toast.warn("Vui lòng đăng nhập để thanh toán!", {
-        position: "top-right",
-        autoClose: 1000,
-      });
+      toast.warn("Vui lòng đăng nhập để thanh toán!");
       navigate("/registered");
       return;
     }
     navigate("/checkout");
   };
 
-
-
-  const menuItems = [
-    {
-      label: "Hệ thống",
-      count: 8,
-      icon: <SiHomeassistantcommunitystore className="h-6 w-6" />,
-      href: "/system",
-    },
-    {
-      label: "Cá Nhân",
-      count: 2,
-      icon: <LuShuffle className="h-6 w-6" />,
-      href: "/profile",
-    },
-    {
-      label: "Lịch sử",
-      count: 0,
-      icon: <HiOutlineClipboardDocumentCheck className="h-6 w-6" />,
-      href: "/history-bought",
-    },
-    {
-      label: "Giỏ hàng",
-      count: cartCount,
-      icon: <LuShoppingBag className="h-6 w-6" />,
-      href: "/cart",
-    },
-  ];
-
-  //
-  // Danh sách câu placeholder ngẫu nhiên
-  const placeholders = [
-    "Bạn muốn tìm gì?",
-    "Trái cây",
-    "Thực phẩm sạch",
-  ];
-
-  // State hiển thị placeholder động
-  const [currentPlaceholder, setCurrentPlaceholder] = useState("");
-  const [index, setIndex] = useState(0);
+  // --- TYPING EFFECT FOR SEARCH ---
+  const placeholders = ["Hôm nay bạn muốn ăn gì?", "Rau củ tươi sạch...", "Trái cây nhập khẩu..."];
   const [typing, setTyping] = useState("");
+  const [phIndex, setPhIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    let typingSpeed = isDeleting ? 100 : 100; // tốc độ gõ nhanh hơn khi xóa
-    const currentText = placeholders[index];
-    const handleTyping = () => {
+    const currentText = placeholders[phIndex];
+    const speed = isDeleting ? 50 : 100;
+    
+    const timer = setTimeout(() => {
       if (!isDeleting && typing.length < currentText.length) {
         setTyping(currentText.substring(0, typing.length + 1));
       } else if (isDeleting && typing.length > 0) {
         setTyping(currentText.substring(0, typing.length - 1));
       } else if (!isDeleting && typing.length === currentText.length) {
-        // Dừng 2 giây trước khi xóa
-        setTimeout(() => setIsDeleting(true), 1500);
+        setTimeout(() => setIsDeleting(true), 2000);
       } else if (isDeleting && typing.length === 0) {
         setIsDeleting(false);
-        setIndex((prev) => (prev + 1) % placeholders.length);
+        setPhIndex((prev) => (prev + 1) % placeholders.length);
       }
-    };
-    const timer = setTimeout(handleTyping, typingSpeed);
-    return () => clearTimeout(timer);
-  }, [typing, isDeleting, index]);
+    }, speed);
 
+    return () => clearTimeout(timer);
+  }, [typing, isDeleting, phIndex]);
+
+  // --- MENU CONFIG ---
+  const menuItems = [
+    { label: "Cửa hàng", icon: <FaStore size={18} />, href: "/system" },
+    { label: "Hồ sơ", icon: <FaUser size={16} />, href: "/profile" },
+    { label: "Đơn hàng", icon: <FaHistory size={16} />, href: "/history-bought" },
+  ];
+
+  const isActive = (path) => {
+      if (path === "/products" && location.pathname.startsWith("/products")) return true;
+      return location.pathname === path;
+  };
 
   return (
-    <header className="w-full bg-gray-100 shadow">
-      {/* --- TOP BAR --- */}
-      {/* 🔹 Desktop */}
-      <div className="hidden md:flex h-[35px] bg-emerald-600 text-gray-50 justify-between items-center px-4 md:px-20 text-sm">
-        <h4 className="truncate">Chào mừng bạn đến với Bean Farm!</h4>
+    <header className="w-full bg-white shadow-sm z-50 relative font-sans">
+      
+      {/* ================= TOP BAR (Desktop & Mobile) ================= */}
+      <div className="bg-emerald-700 text-white text-xs sm:text-sm py-2">
+        <div className="max-w-7xl mx-auto px-4 flex justify-between items-center">
+          <p className="hidden sm:block opacity-90">🌱 Bean Farm - Nông sản sạch cho mọi nhà</p>
+          <div className="flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-end">
+             {/* Hotline */}
+             <a href="tel:19006750" className="flex items-center gap-2 hover:text-amber-300 transition">
+                <FaPhoneAlt size={12} /> <span>1900 6750</span>
+             </a>
 
-        <div className="flex gap-6 text-xs md:text-sm">
-          {/* User */}
-          <div className="flex items-center gap-1 relative">
-            <FaUser />
-            {user ? (
-              <div className="relative group">
-                <span className="cursor-pointer hover:text-amber-400 flex items-start gap-1">
-                  {user.name} <FaSortDown />
-                </span>
-                <div className="absolute right-0 hidden group-hover:block bg-white shadow rounded  min-w-[120px] z-50">
-                  <button
-                    onClick={handleLogout}
-                    className="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 w-full text-left"
+             {/* User Auth */}
+             <div className="relative">
+                {user ? (
+                  <div 
+                    className="flex items-center gap-2 cursor-pointer hover:text-amber-300 transition"
+                    onMouseEnter={() => setShowUserMenu(true)}
+                    onMouseLeave={() => setShowUserMenu(false)}
                   >
-                    Đăng xuất
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <Link to="/registered" className="hover:text-amber-400">
-                Tài khoản
-              </Link>
+                     <img 
+                        src={getImageUrl(user.avatar, 'avatar')} 
+                        alt="avatar" 
+                        className="w-6 h-6 rounded-full border border-white object-cover"
+                        onError={(e) => e.target.src = "https://via.placeholder.com/150"}
+                     />
+                     <span className="font-medium max-w-[100px] truncate">{user.name}</span>
+                     <FaSortDown className="mb-1"/>
 
-            )}
-          </div>
-
-          {/* Hotline */}
-          <div className="flex items-center gap-1">
-            <span>Hotline:</span>
-            <Link to="/hotline" className="hover:text-amber-400">
-              1900 6750
-            </Link>
+                     {/* Dropdown User */}
+                     {showUserMenu && (
+                        <div className="absolute top-full right-0 pt-2 w-48 z-50">
+                           <div className="bg-white text-gray-800 rounded-lg shadow-xl border border-gray-100 overflow-hidden">
+                              <Link to="/profile" className="block px-4 py-2 hover:bg-gray-50 hover:text-emerald-600">Hồ sơ cá nhân</Link>
+                              <Link to="/history-bought" className="block px-4 py-2 hover:bg-gray-50 hover:text-emerald-600">Lịch sử mua hàng</Link>
+                              <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-50">Đăng xuất</button>
+                           </div>
+                        </div>
+                     )}
+                  </div>
+                ) : (
+                  <Link to="/registered" className="flex items-center gap-1 hover:text-amber-300 font-medium">
+                     <CiUser size={18} /> Đăng nhập / Đăng ký
+                  </Link>
+                )}
+             </div>
           </div>
         </div>
       </div>
 
-      {/* 🔹 Mobile */}
-      <div className="flex md:hidden h-[35px] bg-emerald-600 text-gray-50 justify-center px-4 text-sm gap-10 relative">
-        {/* Tài khoản */}
-        <div className="flex items-center gap-1 relative">
-          <FaUser />
-          {user ? (
-            <div className="relative">
-              <button
-                onClick={() => setShowLogout(!showLogout)}
-                className="flex items-center gap-1 hover:text-amber-400 focus:outline-none"
-              >
-                {user.name} <FaSortDown />
-              </button>
+      {/* ================= MAIN HEADER (Desktop) ================= */}
+      <div className="hidden md:block border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center gap-8">
+            {/* Logo */}
+            <Link to="/" className="flex-shrink-0">
+               <img src={logo} alt="Bean Farm" className="h-12 w-auto object-contain" />
+            </Link>
 
-              {showLogout && (
-                <div className="absolute right-0 mt-1 bg-white text-gray-800 rounded shadow z-50 min-w-[120px]">
-                  <button
-                    onClick={handleLogout}
-                    className="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 w-full text-left"
-                  >
-                    Đăng xuất
+            {/* Search Bar */}
+            <div className="flex-1 max-w-2xl relative">
+               <form onSubmit={handleSearch} className="relative group">
+                  <input 
+                    type="text" 
+                    value={keyword}
+                    onChange={(e) => setKeyword(e.target.value)}
+                    placeholder={typing}
+                    className="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-full pl-5 pr-12 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all shadow-sm"
+                  />
+                  <button type="submit" className="absolute right-1 top-1/2 -translate-y-1/2 bg-emerald-600 text-white p-1.5 rounded-full hover:bg-emerald-700 transition">
+                     <CiSearch size={20} />
                   </button>
-                </div>
-              )}
+               </form>
             </div>
-          ) : (
-            <Link to="/registered" className="hover:text-amber-400">
-              Tài khoản
-            </Link>
-          )}
-        </div>
 
-        {/* Hotline */}
-        <div className="flex items-center gap-1">
-          <span>Hotline:</span>
-          <Link to="/hotline" className="hover:text-amber-400">
-            1900 6750
-          </Link>
-        </div>
-      </div>
+            {/* Right Actions */}
+            <div className="flex items-center gap-6">
+                {menuItems.map((item, idx) => (
+                   <Link key={idx} to={item.href} className="flex flex-col items-center gap-0.5 text-gray-500 hover:text-emerald-600 transition group">
+                      <div className="p-2 rounded-full group-hover:bg-emerald-50 transition">{item.icon}</div>
+                      <span className="text-[10px] font-medium uppercase tracking-wide">{item.label}</span>
+                   </Link>
+                ))}
 
-      {/* --- MOBILE HEADER --- */}
-      <div className="flex md:hidden justify-between items-center px-4 py-2 bg-gray-100 text-black">
-        <button onClick={() => setOpenMenu(!openMenu)}>
-          <BiAlignLeft className="h-7 w-7" />
-        </button>
-
-        <Link to="/">
-          <img src={logo} alt="logo" className="h-10 cursor-pointer" />
-        </Link>
-
-        <Link to="/cart" className="relative">
-          <LuShoppingBag className="h-6 w-6" />
-          {cartCount > 0 && (
-            <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-              {cartCount}
-            </span>
-          )}
-        </Link>
-      </div>
-
-      {/* --- MOBILE SEARCH BAR --- */}
-      {/* Thanh tìm kiếm + nút mua nhanh (Mobile Only) */}
-      <div className="md:hidden px-4 py-2 bg-gray-100 shadow">
-        <form onSubmit={handleSearch} className="relative flex items-center gap-2">
-          {/* Ô tìm kiếm */}
-          <div className="relative flex-1">
-            <input
-              type="text"
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              placeholder={typing}
-              className="w-full rounded-full border border-gray-300 pl-4 pr-10 py-2 text-sm focus:ring-2 focus:ring-green-600 outline-none"
-            />
-            <button type="submit">
-              <CiSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 h-5 w-5" />
-            </button>
-          </div>
-
-          {/* Icon mua nhanh */}
-          <button
-            onClick={handleQuickCheckout}
-            className="bg-red-600 text-white p-2 rounded-full shadow hover:bg-red-700 transition animate-bounce  relative" style={{ animationDuration: "0.8s" }}
-            title="Mua hàng nhanh"
-          >
-            <TbBrandShopee className="h-5 w-5 " />
-          </button>
-        </form>
-      </div>
-
-
-      {/* --- DESKTOP HEADER --- */}
-      <div className="hidden md:flex items-center justify-between px-10 py-3 bg-gray-50">
-        <div className="flex items-center gap-4 w-6/12">
-          <img src={logo} alt="logo" className="w-44" />
-          <form onSubmit={handleSearch} className="relative flex-1">
-            <input
-              type="text"
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              placeholder={typing}
-              className="w-full rounded-full border border-gray-200 bg-gray-50 pl-4 pr-10 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
-            />
-            <button type="submit">
-              <CiSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 h-5 w-5" />
-            </button>
-          </form>
-        </div>
-
-        <div className="flex gap-4 w-6/12 justify-end">
-          {menuItems.map((item, i) => {
-            const isActive = location.pathname === item.href;
-
-            return (
-              <Link
-                key={i}
-                to={item.href}
-                className={`relative flex items-center gap-2 px-3 py-2 rounded-full border font-medium text-sm transition
-        ${isActive
-                    ? "bg-amber-300 border-amber-400 text-green-800 shadow" // ✅ giữ màu amber khi active
-                    : "bg-white border-gray-200 text-green-700 hover:bg-amber-300 hover:text-green-800"
-                  }`}
-              >
-                <div className="relative">
-                  {item.icon}
-                  {item.count > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-green-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                      {item.count}
-                    </span>
-                  )}
-                </div>
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
-
-
+                {/* Cart */}
+                <Link to="/cart" className="relative flex flex-col items-center gap-0.5 text-gray-500 hover:text-emerald-600 transition group">
+                   <div className="p-2 rounded-full group-hover:bg-emerald-50 transition relative">
+                      <CiShoppingCart size={24} />
+                      <span className="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center border border-white">
+                        {cartCount > 99 ? '99+' : cartCount}
+                      </span>
+                   </div>
+                   <span className="text-[10px] font-medium uppercase tracking-wide">Giỏ hàng</span>
+                </Link>
+            </div>
         </div>
       </div>
 
-
-      {/* --- DESKTOP NAVIGATION --- */}
-      <nav className="hidden md:flex items-center justify-between px-10 py-2 bg-gray-100 border-b border-gray-300 shadow-md gap-2 relative">
-        <button
-          onClick={() => setShowDropdown(!showDropdown)}
-          className="flex items-center gap-2 bg-amber-400 text-gray-800 font-medium px-4 py-2 rounded-md hover:bg-amber-500 transition"
-        >
-          <BiAlignLeft className="h-5 w-5" />
-          <span>Danh mục sản phẩm</span>
-        </button>
-
-        {/* UL Nút điều hướng đã đồng bộ */}
-        <ul className="flex flex-wrap justify-center gap-2 items-center">
-          {/* Hàm kiểm tra active */}
-          {(() => {
-            const isActive = (path) => {
-              if (path === "/products" && location.pathname.startsWith("/products"))
-                return true;
-              return location.pathname === path;
-            };
-
-            return (
-              <>
-                {/* Trang chủ */}
-                <li>
-                  <Link
-                    to="/"
-                    className={`py-2 px-4 rounded-full transition focus:outline-none focus:ring-2 focus:ring-emerald-400 ${isActive("/")
-                      ? "bg-emerald-700 text-white"
-                      : "bg-gray-200 text-gray-800 hover:bg-emerald-700 hover:text-white"
-                      }`}
-                  >
-                    Trang chủ
-                  </Link>
-                </li>
-
-                {/* Giới thiệu */}
-                <li>
-                  <Link
-                    to="/about"
-                    className={`py-2 px-4 rounded-full transition focus:outline-none focus:ring-2 focus:ring-emerald-400 ${isActive("/about")
-                      ? "bg-emerald-700 text-white"
-                      : "bg-gray-200 text-gray-800 hover:bg-emerald-700 hover:text-white"
-                      }`}
-                  >
-                    Giới thiệu
-                  </Link>
-                </li>
-
-                {/* Sản phẩm (Dropdown) */}
-                <li
-                  className="relative group"
-                  onMouseEnter={() => setShowDropdown(true)}
-                  onMouseLeave={() => setShowDropdown(false)}
-                >
-                  <Link
-                    to="/products"
-                    className={`py-2 px-4 rounded-full transition flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-emerald-400 ${isActive("/products") || showDropdown
-                      ? "bg-emerald-700 text-white hover:bg-emerald-600"
-                      : "bg-gray-200 text-gray-800 hover:bg-emerald-700 hover:text-white"
-                      }`}
-                  >
-                    Sản phẩm
-                    <FaSortDown
-                      className={`transition-transform duration-300 ${showDropdown ? "rotate-180" : ""
-                        }`}
-                    />
-                  </Link>
-
-                  {/* Dropdown */}
-                  {showDropdown && (
-                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-[700px] bg-white shadow-lg border border-gray-300 rounded-xl p-6 grid grid-cols-3 gap-4 z-50 animate-fadeIn">
-                      {categories.length > 0 ? (
-                        categories.map((cat) => (
-                          <div key={cat.id}>
-                            <button
-                              onClick={() => handleCategoryClick(cat.slug, cat.name)}
-                              className="flex items-center gap-3 mb-2 hover:text-green-600 transition"
-                            >
-                              <img
-                                src={getImageUrl(cat.image, 'category')}
-                                alt={cat.name}
-                                className="w-10 h-10 object-cover rounded-full border border-gray-200"
-                              />
-                              <span className="font-semibold text-green-700 text-left">
-                                {cat.name}
-                              </span>
-                            </button>
-                            <ul className="ml-12 space-y-1 text-sm">
-                              {cat.children?.length ? (
-                                cat.children.map((child) => (
-                                  <li key={child.id}>
-                                    <button
-                                      onClick={() =>
-                                        handleCategoryClick(child.slug, child.name)
-                                      }
-                                      className="text-gray-600 hover:text-green-600 transition w-full text-left"
-                                    >
-                                      {child.name}
-                                    </button>
-                                  </li>
-                                ))
-                              ) : (
-                                <li className="text-gray-400 italic">
-                                  Đang cập nhật
-                                </li>
-                              )}
-                            </ul>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="col-span-full text-center text-gray-500">
-                          Đang tải danh mục...
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </li>
-
-                {/* Câu hỏi */}
-                <li>
-                  <Link
-                    to="/request"
-                    className={`py-2 px-4 rounded-full transition focus:outline-none focus:ring-2 focus:ring-emerald-400 ${isActive("/request")
-                      ? "bg-emerald-700 text-white"
-                      : "bg-gray-200 text-gray-800 hover:bg-emerald-700 hover:text-white"
-                      }`}
-                  >
-                    Câu hỏi thường gặp
-                  </Link>
-                </li>
-
-                {/* Tin tức */}
-                <li>
-                  <Link
-                    to="/posts"
-                    className={`py-2 px-4 rounded-full transition focus:outline-none focus:ring-2 focus:ring-emerald-400 ${isActive("/posts")
-                      ? "bg-emerald-700 text-white"
-                      : "bg-gray-200 text-gray-800 hover:bg-emerald-700 hover:text-white"
-                      }`}
-                  >
-                    Tin tức
-                  </Link>
-                </li>
-
-                {/* Liên hệ */}
-                <li>
-                  <Link
-                    to="/contact"
-                    className={`py-2 px-4 rounded-full transition focus:outline-none focus:ring-2 focus:ring-emerald-400 ${isActive("/contact")
-                      ? "bg-emerald-700 text-white"
-                      : "bg-gray-200 text-gray-800 hover:bg-emerald-700 hover:text-white"
-                      }`}
-                  >
-                    Liên hệ
-                  </Link>
-                </li>
-              </>
-            );
-          })()}
-        </ul>
-
-        {/* Nút Thanh toán nhanh */}
-        <button
-          onClick={handleQuickCheckout}
-          className="bg-red-600 py-2 px-5 rounded-full text-white font-medium shadow hover:bg-red-700 transition animate-bounce"
-          style={{ animationDuration: "0.7s" }}
-        >
-          Thanh toán nhanh
-        </button>
-      </nav>
-
-
-      {/* --- MOBILE SIDEBAR --- */}
-      {openMenu && (
-        <div className="fixed top-0 left-0 w-64 h-full bg-white shadow-lg z-50 p-4 overflow-y-auto animate-fadeIn">
-          <button
-            onClick={() => setOpenMenu(false)}
-            className="mb-4 text-red-600 font-bold"
-          >
-            ✕ Đóng
-          </button>
-          <ul className="space-y-3">
-            <li>
-              <Link to="/" onClick={() => setOpenMenu(false)}>
-                Trang chủ
-              </Link>
-            </li>
-            <li>
-              <Link to="/about" onClick={() => setOpenMenu(false)}>
-                Giới thiệu
-              </Link>
-            </li>
-            <li>
-              <Link to="/products" onClick={() => setOpenMenu(false)}>
-                Sản phẩm
-              </Link>
-            </li>
-            <li>
-              <Link to="/request" onClick={() => setOpenMenu(false)}>
-                Câu hỏi thường gặp
-              </Link>
-            </li>
-            <li>
-              <Link to="/posts" onClick={() => setOpenMenu(false)}>
-                Tin tức
-              </Link>
-            </li>
-            <li>
-              <Link to="/contact" onClick={() => setOpenMenu(false)}>
-                Liên hệ
-              </Link>
-            </li>
-            <li>
-              <button
-                onClick={handleQuickCheckout}
-                className="w-full bg-red-600 text-white py-2 rounded-full mt-4"
-              >
-                Mua hàng nhanh
+      {/* ================= NAVIGATION BAR (Desktop) ================= */}
+      <div className="hidden md:block bg-white shadow-sm sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 flex justify-between items-center h-12">
+           
+           {/* Category Dropdown */}
+           <div 
+              className="relative h-full flex items-center"
+              onMouseEnter={() => setShowDropdown(true)}
+              onMouseLeave={() => setShowDropdown(false)}
+           >
+              <button className="flex items-center gap-2 bg-amber-400 text-gray-900 px-6 h-full font-bold uppercase text-sm tracking-wide hover:bg-amber-500 transition rounded-t-sm">
+                 <BiAlignLeft size={20} /> Danh mục sản phẩm
               </button>
-            </li>
-          </ul>
+
+              {/* Mega Menu */}
+              {showDropdown && (
+                 <div className="absolute top-full left-0 w-[800px] bg-white shadow-xl border border-gray-100 rounded-b-xl p-6 grid grid-cols-3 gap-6 animate-fade-in-up z-50">
+                    {categories.length > 0 ? categories.map((cat) => (
+                       <div key={cat.id} className="group">
+                          <div 
+                            onClick={() => handleCategoryClick(cat.slug, cat.name)}
+                            className="flex items-center gap-3 cursor-pointer mb-2 p-2 rounded-lg hover:bg-gray-50 transition"
+                          >
+                             <img src={getImageUrl(cat.image, 'category')} alt={cat.name} className="w-10 h-10 rounded-full object-cover border" onError={(e) => e.target.style.display='none'} />
+                             <h5 className="font-bold text-emerald-800 group-hover:text-emerald-600 transition">{cat.name}</h5>
+                          </div>
+                          <ul className="pl-14 space-y-1">
+                             {cat.children?.map(child => (
+                                <li key={child.id}>
+                                   <span 
+                                     onClick={() => handleCategoryClick(child.slug, child.name)}
+                                     className="text-sm text-gray-500 hover:text-emerald-600 hover:translate-x-1 transition-all cursor-pointer block py-0.5"
+                                   >
+                                      {child.name}
+                                   </span>
+                                </li>
+                             ))}
+                          </ul>
+                       </div>
+                    )) : (
+                       <p className="text-gray-400 col-span-3 text-center py-4">Đang cập nhật danh mục...</p>
+                    )}
+                 </div>
+              )}
+           </div>
+
+           {/* Main Links */}
+           <ul className="flex items-center gap-1 h-full">
+              {[
+                 { label: "Trang chủ", path: "/" },
+                 { label: "Giới thiệu", path: "/about" },
+                 { label: "Sản phẩm", path: "/products" },
+                 { label: "Tin tức", path: "/posts" },
+                 { label: "Liên hệ", path: "/contact" },
+                 { label: "Câu hỏi", path: "/request" },
+              ].map((link, idx) => (
+                 <li key={idx} className="h-full">
+                    <Link 
+                       to={link.path}
+                       className={`h-full px-5 flex items-center text-sm font-semibold transition-colors border-b-2 
+                       ${isActive(link.path) 
+                          ? 'border-emerald-600 text-emerald-700 bg-emerald-50/50' 
+                          : 'border-transparent text-gray-600 hover:text-emerald-600 hover:bg-gray-50'}`}
+                    >
+                       {link.label}
+                    </Link>
+                 </li>
+              ))}
+           </ul>
+
+           {/* Quick Action */}
+           <button 
+              onClick={handleQuickCheckout}
+              className="flex items-center gap-2 text-red-600 font-bold text-sm bg-red-50 px-4 py-1.5 rounded-full hover:bg-red-600 hover:text-white transition-all duration-300 animate-pulse"
+           >
+              <TbBrandShopee size={20} /> Mua hàng nhanh
+           </button>
         </div>
+      </div>
+
+      {/* ================= MOBILE HEADER ================= */}
+      <div className="md:hidden bg-white sticky top-0 z-40 shadow-sm">
+         <div className="px-4 py-3 flex justify-between items-center">
+            {/* Hamburger */}
+            <button onClick={() => setOpenMenu(true)} className="text-gray-700 p-1">
+               <BiAlignLeft size={28} />
+            </button>
+
+            {/* Logo */}
+            <Link to="/">
+               <img src={logo} alt="Bean Farm" className="h-8 w-auto" />
+            </Link>
+
+            {/* Cart */}
+            <Link to="/cart" className="relative text-gray-700 p-1">
+               <LuShoppingBag size={24} />
+               <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">
+                  {cartCount}
+               </span>
+            </Link>
+         </div>
+
+         {/* Mobile Search */}
+         <div className="px-4 pb-3">
+            <form onSubmit={handleSearch} className="relative">
+               <input 
+                  type="text"
+                  value={keyword}
+                  onChange={(e) => setKeyword(e.target.value)}
+                  placeholder="Tìm kiếm..."
+                  className="w-full bg-gray-100 border-none rounded-lg py-2 pl-4 pr-10 text-sm focus:ring-1 focus:ring-emerald-500"
+               />
+               <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+                  <CiSearch size={20} />
+               </button>
+            </form>
+         </div>
+      </div>
+
+      {/* ================= MOBILE MENU DRAWER (Slide in) ================= */}
+      {/* Overlay */}
+      {openMenu && (
+         <div className="fixed inset-0 bg-black/50 z-50 md:hidden" onClick={() => setOpenMenu(false)}></div>
       )}
+      
+      {/* Drawer Content */}
+      <div className={`fixed top-0 left-0 h-full w-[280px] bg-white z-[60] shadow-2xl transform transition-transform duration-300 ease-in-out md:hidden ${openMenu ? 'translate-x-0' : '-translate-x-full'}`}>
+         
+         <div className="p-4 bg-emerald-700 text-white flex justify-between items-center">
+            <div className="flex items-center gap-3">
+               {user ? (
+                  <>
+                     <img src={getImageUrl(user.avatar, 'avatar')} className="w-10 h-10 rounded-full border-2 border-white" alt="avatar"/>
+                     <div>
+                        <p className="font-bold text-sm truncate w-[140px]">{user.name}</p>
+                        <p className="text-xs opacity-80">Thành viên</p>
+                     </div>
+                  </>
+               ) : (
+                  <Link to="/registered" onClick={() => setOpenMenu(false)} className="flex items-center gap-2 font-bold">
+                     <CiUser size={24} /> Đăng nhập
+                  </Link>
+               )}
+            </div>
+            <button onClick={() => setOpenMenu(false)}><FaTimes size={20}/></button>
+         </div>
+
+         <div className="overflow-y-auto h-[calc(100%-80px)] p-4">
+            <h6 className="text-xs font-bold text-gray-400 uppercase mb-3 tracking-wider">Menu Chính</h6>
+            <ul className="space-y-1">
+               {[
+                  { l: "Trang chủ", i: <FaStore/>, to: "/" },
+                  { l: "Sản phẩm", i: <LuShoppingBag/>, to: "/products" },
+                  { l: "Tin tức", i: <HiOutlineClipboardDocumentCheck/>, to: "/posts" },
+                  { l: "Liên hệ", i: <FaPhoneAlt/>, to: "/contact" },
+               ].map((m, idx) => (
+                  <li key={idx}>
+                     <Link 
+                        to={m.to} 
+                        onClick={() => setOpenMenu(false)}
+                        className={`flex items-center gap-4 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${isActive(m.to) ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50'}`}
+                     >
+                        <span className={`${isActive(m.to) ? 'text-emerald-600' : 'text-gray-400'}`}>{m.i}</span>
+                        {m.l}
+                     </Link>
+                  </li>
+               ))}
+            </ul>
+
+            <div className="mt-6 pt-6 border-t border-gray-100">
+               <h6 className="text-xs font-bold text-gray-400 uppercase mb-3 tracking-wider">Tài khoản</h6>
+               <ul className="space-y-1">
+                  <li>
+                     <Link to="/profile" onClick={() => setOpenMenu(false)} className="flex items-center gap-4 px-4 py-3 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        <span className="text-gray-400"><FaUser/></span> Hồ sơ cá nhân
+                     </Link>
+                  </li>
+                  <li>
+                     <Link to="/history-bought" onClick={() => setOpenMenu(false)} className="flex items-center gap-4 px-4 py-3 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        <span className="text-gray-400"><FaHistory/></span> Lịch sử đơn hàng
+                     </Link>
+                  </li>
+                  {user && (
+                     <li>
+                        <button onClick={handleLogout} className="w-full flex items-center gap-4 px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50">
+                           <span className="text-red-400"><FaSignOutAlt/></span> Đăng xuất
+                        </button>
+                     </li>
+                  )}
+               </ul>
+            </div>
+         </div>
+      </div>
     </header>
   );
 };

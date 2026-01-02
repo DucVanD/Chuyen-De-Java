@@ -61,4 +61,11 @@ public class AdminStockMovementController {
                 stockMovementService.getLastSupplierId(productId));
     }
 
+    @GetMapping("/by-type/{type}")
+    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    public ResponseEntity<List<StockMovementDto>> getByMovementType(
+            @PathVariable String type) {
+        return ResponseEntity.ok(stockMovementService.getByMovementType(type));
+    }
+
 }

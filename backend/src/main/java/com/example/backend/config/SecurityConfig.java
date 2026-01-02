@@ -57,7 +57,9 @@ public class SecurityConfig {
                 .authenticationProvider(authenticationProvider())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/upload/**").hasAnyRole("ADMIN", "STAFF") // ✅ Upload cần authentication
+                        .requestMatchers("/api/upload/user").authenticated() // ✅ Cho phép user upload avatar
+                        .requestMatchers("/api/upload/**").hasAnyRole("ADMIN", "STAFF") // ✅ Upload khác cần quyền
+                                                                                        // admin/staff
                         .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "STAFF")
 
                         .anyRequest().authenticated())

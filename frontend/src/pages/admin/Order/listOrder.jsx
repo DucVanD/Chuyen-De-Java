@@ -1,6 +1,6 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
-import apiOrder from "../../../api/user/apiOrder";
+import apiOrderAdmin from "../../../api/admin/apiOrderAdmin";
 import {
   FaTrash,
   FaEye,
@@ -24,43 +24,41 @@ const ListOrder = () => {
     order_code: "",
   });
 
-  // Danh sách trạng thái đơn hàng
+  // Danh sách trạng thái đơn hàng (Backend Enum)
   const statusLabels = {
-    1: { text: "Đang chờ xác nhận", color: "bg-yellow-100 text-yellow-800" },
-    2: { text: "Đã xác nhận", color: "bg-blue-100 text-blue-800" },
-    3: { text: "Đang đóng gói", color: "bg-orange-100 text-orange-800" },
-    4: { text: "Đang giao hàng", color: "bg-teal-100 text-teal-800" },
-    5: { text: "Đã giao", color: "bg-green-100 text-green-800" },
-    6: { text: "Hoàn hàng / Trả hàng", color: "bg-purple-100 text-purple-800" },
-    7: { text: "Đã hủy", color: "bg-red-100 text-red-800" },
+    PENDING: { text: "Chờ xử lý", color: "bg-yellow-100 text-yellow-800" },
+    CONFIRMED: { text: "Đã xác nhận", color: "bg-blue-100 text-blue-800" },
+    SHIPPING: { text: "Đang giao", color: "bg-teal-100 text-teal-800" },
+    COMPLETED: { text: "Hoàn thành", color: "bg-green-100 text-green-800" },
+    CANCELLED: { text: "Đã hủy", color: "bg-red-100 text-red-800" },
   };
 
   // 🔹 Lấy danh sách đơn hàng
-  const fetchOrders = async (page = 1) => {
+  const fetchOrders = async (page = 0) => {
     setLoading(true);
     try {
-      const res = await apiOrder.getAllFilter(page, filters);
-      if (res.status) {
-        setOrders(res.data.data);
-        setCurrentPage(res.data.current_page);
-        setLastPage(res.data.last_page);
-      }
+      const res = await apiOrderAdmin.getPage(page, 10, filters);
+      setOrders(res.content || []);
+      setCurrentPage(res.number);
+      setLastPage(res.totalPages - 1);
     } catch (err) {
       console.error("Lỗi khi lấy đơn hàng:", err);
+      toast.error("Không thể tải danh sách đơn hàng");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchOrders(Number(page) || 1);
+    const pageNumber = Number(page) || 0;
+    fetchOrders(pageNumber);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
   // Phân trang
   const goToPage = (pageNumber) => {
-    if (pageNumber >= 1 && pageNumber <= lastPage) {
-      localStorage.setItem("currentOrderPage", pageNumber); // ✅ Lưu trang hiện tại
+    if (pageNumber >= 0 && pageNumber <= lastPage) {
+      localStorage.setItem("currentOrderPage", pageNumber);
       navigate(`/admin/orders/${pageNumber}`);
     }
   };
@@ -68,35 +66,19 @@ const ListOrder = () => {
 
   // Áp dụng bộ lọc
   const handleFilter = () => {
-    navigate(`/admin/orders/1`);
-    fetchOrders(1);
+    navigate(`/admin/orders/0`);
+    fetchOrders(0);
   };
 
   // Xóa đơn hàng
   const deleteOrder = async (id) => {
     if (window.confirm("Bạn có chắc muốn xóa đơn hàng này không?")) {
       try {
-        const res = await apiOrder.delete(id);
-
-        if (res.status === true) {
-          // ✅ Xóa thành công
-          toast.success("✅ Đã xóa đơn hàng thành công!");
-
-          // Reload lại danh sách sau 1s
-          setTimeout(() => fetchOrders(currentPage), 1000);
-        } else {
-          // ⚠️ API trả về lỗi logic (ví dụ chưa đủ điều kiện xóa)
-          toast.warning(res.message || "Không thể xóa đơn hàng này!");
-        }
-
+        await apiOrderAdmin.delete(id);
+        toast.success("✅ Đã xóa đơn hàng thành công!");
+        setTimeout(() => fetchOrders(currentPage), 1000);
       } catch (error) {
-        // ❌ Bắt lỗi từ backend (400, 500, v.v.)
-        // console.error("Lỗi khi xóa đơn hàng:", error);
-
-        const message =
-          error.response?.data?.message ||
-          "Đã xảy ra lỗi. Không thể xóa đơn hàng.";
-
+        const message = error.response?.data?.message || "Đã xảy ra lỗi. Không thể xóa đơn hàng.";
         toast.error("⚠️ " + message);
       }
     }
@@ -127,11 +109,11 @@ const ListOrder = () => {
             className="border rounded-md p-2 text-sm w-48"
           >
             <option value="">Tất cả</option>
-            {Object.entries(statusLabels).map(([key, val]) => (
-              <option key={key} value={key}>
-                {val.text}
-              </option>
-            ))}
+            <option value="PENDING">Chờ xử lý</option>
+            <option value="CONFIRMED">Đã xác nhận</option>
+            <option value="SHIPPING">Đang giao</option>
+            <option value="COMPLETED">Hoàn thành</option>
+            <option value="CANCELLED">Đã hủy</option>
           </select>
         </div>
 
@@ -146,7 +128,7 @@ const ListOrder = () => {
             <option value="">Tất cả</option>
             <option value="COD">Tiền mặt (COD)</option>
             <option value="BANK">Chuyển khoản</option>
-            <option value="MOMO">Momo</option>
+            <option value="VNPAY">VNPAY</option>
           </select>
         </div>
 
@@ -197,15 +179,15 @@ const ListOrder = () => {
                 return (
                   <tr key={order.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 text-sm">{order.id}</td>
-                    <td className="px-4 py-3 text-sm font-mono">{order.order_code}</td>
-                    <td className="px-4 py-3 text-sm">{order.name || order.user?.name}</td>
+                    <td className="px-4 py-3 text-sm font-mono">{order.orderCode}</td>
+                    <td className="px-4 py-3 text-sm">{order.receiverName}</td>
                     <td className="px-4 py-3 text-sm">
-                      {Number(order.total_amount).toLocaleString("vi-VN", {
+                      {Number(order.totalAmount).toLocaleString("vi-VN", {
                         style: "currency",
                         currency: "VND",
                       })}
                     </td>
-                    <td className="px-4 py-3 text-sm">{order.payment}</td>
+                    <td className="px-4 py-3 text-sm">{order.paymentMethod}</td>
                     <td className="px-4 py-3 text-sm">
                       <span
                         className={`px-3 py-1 text-xs font-semibold rounded-full ${status.color}`}
@@ -282,7 +264,7 @@ const ListOrder = () => {
           </button>
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 

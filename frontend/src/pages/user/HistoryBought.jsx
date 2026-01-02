@@ -8,13 +8,11 @@ import { HiOutlineClipboardDocumentCheck } from "react-icons/hi2";
 
 // ---------------- STATUS ----------------
 const statusLabels = {
-  1: { text: "Đang chờ xác nhận", color: "bg-yellow-100 text-yellow-800" },
-  2: { text: "Đã xác nhận", color: "bg-blue-100 text-blue-800" },
-  3: { text: "Đang đóng gói", color: "bg-orange-100 text-orange-800" },
-  4: { text: "Đang giao hàng", color: "bg-teal-100 text-teal-800" },
-  5: { text: "Đã giao", color: "bg-green-100 text-green-800" },
-  6: { text: "Hoàn hàng / Trả hàng", color: "bg-purple-100 text-purple-800" },
-  7: { text: "Đã hủy", color: "bg-red-100 text-red-800" },
+  1: { text: "Đang chờ xác nhận", color: "bg-yellow-100 text-yellow-800" }, // PENDING
+  2: { text: "Đã xác nhận", color: "bg-blue-100 text-blue-800" },          // CONFIRMED
+  3: { text: "Đang giao hàng", color: "bg-orange-100 text-orange-800" },   // SHIPPING
+  4: { text: "Hoàn thành", color: "bg-green-100 text-green-800" },         // COMPLETED
+  5: { text: "Đã hủy", color: "bg-red-100 text-red-800" },                 // CANCELLED
 };
 
 // ---------------- CANCEL REASONS ----------------
@@ -61,19 +59,55 @@ const HistoryBought = () => {
 
   // ---------------- FETCH HISTORY ----------------
   const fetchHistory = async (pageNum = 1) => {
-    if (!userId) {
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     try {
       const activeFilters = Object.fromEntries(
         Object.entries(filters).filter(([_, v]) => v !== "")
       );
-      const params = new URLSearchParams({ page: pageNum, ...activeFilters }).toString();
 
-      const res = await apiUser.all(userId, params);
-      setUserData(res.status ? res.data : null);
+      // Use new API endpoint for user order history
+      const res = await apiOrder.getMyOrders(pageNum, activeFilters);
+
+      // Map backend status enum to frontend status ID
+      const mapStatus = (statusStr) => {
+        const mapping = {
+          "PENDING": 1,
+          "CONFIRMED": 2,
+          "SHIPPING": 3,
+          "COMPLETED": 4,
+          "CANCELLED": 5
+        };
+        return mapping[statusStr] || 1;
+      };
+
+      // Transform data to match component expectations
+      if (res.status && res.data) {
+        const transformedData = {
+          ...res.data,
+          orders: res.data.orders.map(order => ({
+            ...order,
+            order_code: order.orderCode,
+            created_at: new Date(order.createdAt).toLocaleString("vi-VN"),
+            payment: order.paymentMethod,
+            // Keep as numbers for logic, format in render
+            subtotal: order.subtotal || 0,
+            discount_amount: order.discountAmount || 0,
+            voucher_code: order.voucherCode,
+            total_amount: order.totalAmount || 0,
+            status: mapStatus(order.status),
+            products: order.orderDetails?.map(detail => ({
+              name: detail.productName || detail.product?.name,
+              thumbnail: detail.product?.image || "/placeholder.png",
+              price_buy: detail.priceBuy || 0,
+              qty: detail.quantity,
+              amount: detail.amount || 0
+            })) || []
+          }))
+        };
+        setUserData(transformedData);
+      } else {
+        setUserData(null);
+      }
     } catch (err) {
       console.error("❌ Lỗi khi lấy lịch sử:", err);
       setUserData(null);
@@ -274,7 +308,7 @@ const HistoryBought = () => {
                 <span
                   className={`px-3 py-1 rounded-full text-xs font-semibold ${statusLabels[order.status]?.color}`}
                 >
-                  {statusLabels[order.status]?.text}
+                  {statusLabels[order.status]?.text || "Không xác định"}
                 </span>
               </div>
 
@@ -292,27 +326,57 @@ const HistoryBought = () => {
                     <div>
                       <p className="font-medium text-gray-800">{p.name}</p>
                       <p className="text-sm text-gray-500">
-                        Giá: {p.price_buy} | SL: {p.qty}
+                        Giá: {p.price_buy.toLocaleString("vi-VN")} đ | SL: {p.qty}
                       </p>
                     </div>
                   </div>
-                  <p className="font-semibold text-gray-700">{p.amount}</p>
+                  <p className="font-semibold text-gray-700">{p.amount.toLocaleString("vi-VN")} đ</p>
                 </div>
               ))}
 
-              <div className="p-4 bg-gray-50 flex justify-between items-center">
-                <span className="font-semibold">
-                  Tổng tiền:{" "}
-                  <span className="text-indigo-700">{order.total_amount}</span>
-                </span>
-                {[1, 2].includes(order.status) && (
-                  <button
-                    onClick={() => openCancelModal(order)}
-                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm transition"
-                  >
-                    Hủy đơn hàng
-                  </button>
-                )}
+              <div className="p-4 bg-gray-50 border-t border-gray-200">
+                {/* Price Breakdown */}
+                <div className="space-y-2 mb-4">
+                  <div className="flex justify-between text-sm text-gray-700">
+                    <span>Tạm tính:</span>
+                    <span className="font-medium">{order.subtotal.toLocaleString("vi-VN")} đ</span>
+                  </div>
+
+                  {order.discount_amount > 0 && (
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span>Giảm giá {order.voucher_code ? `(${order.voucher_code})` : ''}:</span>
+                      <span className="font-medium">-{order.discount_amount.toLocaleString("vi-VN")} đ</span>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between text-base font-bold text-gray-800 pt-2 border-t border-gray-300">
+                    <span>Tổng thanh toán:</span>
+                    <span className="text-indigo-700">{order.total_amount.toLocaleString("vi-VN")} đ</span>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex justify-end gap-2">
+                  {/* Review Button - Only for completed orders (status 5) */}
+                  {order.status === 5 && (
+                    <button
+                      onClick={() => {/* TODO: Open review modal */ }}
+                      className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md text-sm transition flex items-center gap-1"
+                    >
+                      ⭐ Đánh giá
+                    </button>
+                  )}
+
+                  {/* Cancel Button - Only for pending/confirmed orders */}
+                  {[1, 2].includes(order.status) && (
+                    <button
+                      onClick={() => openCancelModal(order)}
+                      className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm transition"
+                    >
+                      Hủy đơn hàng
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           ))
@@ -346,7 +410,7 @@ const HistoryBought = () => {
           </button>
         </div>
       )}
-{/* bg-gray-900 bg-opacity-40 */}
+      {/* bg-gray-900 bg-opacity-40 */}
       {/* Cancel Modal */}
       {showCancelModal && (
         <div className="fixed inset-0  backdrop-blur-sm flex justify-center items-center z-50">

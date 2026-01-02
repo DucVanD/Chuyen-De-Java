@@ -16,7 +16,23 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     // ✅ Support both user token and admin token (admin stores under `adminToken`)
-    const token = localStorage.getItem("token") || localStorage.getItem("adminToken");
+    const userToken = localStorage.getItem("token");
+    const adminToken = localStorage.getItem("adminToken");
+
+    let token = userToken;
+
+    // ✅ Logic chọn token thông minh:
+    // Nếu request là API Admin hoặc Upload (trừ avatar User) -> Ưu tiên Admin Token
+    const isAdminRequest = config.url.includes("/admin") ||
+      (config.url.includes("/upload") && !config.url.includes("/upload/user"));
+
+    if (isAdminRequest && adminToken) {
+      token = adminToken;
+    } else if (!token && adminToken) {
+      // Fallback: nếu không có user token thì dùng tạm admin token
+      token = adminToken;
+    }
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

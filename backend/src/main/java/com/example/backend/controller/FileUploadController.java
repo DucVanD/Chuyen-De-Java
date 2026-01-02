@@ -69,12 +69,15 @@ public class FileUploadController {
     @PostMapping("/user")
     public ResponseEntity<?> uploadUser(
             @RequestParam("file") MultipartFile file) {
+        System.out.println(
+                "Processing upload/user request for file: " + (file != null ? file.getOriginalFilename() : "null"));
         try {
             return ResponseEntity.ok(
                     cloudinaryService.uploadImage(file, "users/avatar"));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body("Upload user thất bại");
+        } catch (Throwable e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500)
+                    .body("Upload user thất bại: " + e.getMessage());
         }
     }
 

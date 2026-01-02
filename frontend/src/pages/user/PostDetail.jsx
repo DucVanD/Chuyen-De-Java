@@ -96,7 +96,7 @@ const DetailPost = () => {
                     <div className="flex items-center text-sm text-gray-500 mb-6 gap-4">
                         <span className="flex items-center gap-1">
                             <FaCalendarAlt />
-                            {new Date(post.created_at).toLocaleDateString("vi-VN")}
+                            {new Date(post.createdAt).toLocaleDateString("vi-VN")}
                         </span>
                         <span className="flex items-center gap-1">
                             <FaUser /> {post.created_by || "Admin"}

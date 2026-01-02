@@ -1,258 +1,250 @@
 import React, { useState, useEffect } from "react";
 import {
-  FaCaretSquareUp,
   FaComments,
-  FaFacebookMessenger,
   FaPhoneAlt,
   FaMapMarkerAlt,
   FaTimes,
   FaChevronUp,
-
+  FaFacebookMessenger,
+  FaFacebook,
+  FaYoutube,
+  FaInstagram
 } from "react-icons/fa";
 import { SiZalo } from "react-icons/si";
 
 const FooterUser = () => {
-  const [showButton, setShowButton] = useState(false);         // nút scroll-to-top
-  const [showContactMenu, setShowContactMenu] = useState(false); // menu liên hệ
+  const [showButton, setShowButton] = useState(false);      // Trạng thái nút Scroll Top
+  const [showContactMenu, setShowContactMenu] = useState(false); // Trạng thái Menu Liên hệ
 
+  // 1. Xử lý sự kiện cuộn trang
   useEffect(() => {
-    const handleScroll = () => setShowButton(window.scrollY > 300);
+    const handleScroll = () => {
+      if (window.scrollY > 300) {
+        setShowButton(true);
+      } else {
+        setShowButton(false);
+      }
+    };
+
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // ✅ Cuộn chậm từng bước lên đầu trang
+  // 2. Hàm cuộn lên đầu trang mượt mà
   const scrollToTop = () => {
-    const scrollStep = -window.scrollY / 50; // tăng số này (60/80) để chậm hơn
-    const scrollInterval = () => {
-      if (window.scrollY !== 0) {
-        window.scrollBy(0, scrollStep);
-        requestAnimationFrame(scrollInterval);
-      }
-    };
-    requestAnimationFrame(scrollInterval);
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
   return (
     <>
+      {/* ================= FOOTER CONTENT ================= */}
       <footer className="mt-12 border-t border-gray-100 bg-white">
-        {/* Nội dung chính */}
-        <div className="lg:px-20 mx-auto px-4 py-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
-          {/* 🔹 Thông tin thương hiệu */}
+        <div className="max-w-7xl mx-auto px-4 lg:px-8 py-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          
+          {/* Cột 1: Thông tin thương hiệu */}
           <div>
-            <div className="flex items-center gap-3">
-              <img
-                src="/src/assets/images/logo.png"
-                alt="Bean Farm"
-                className="h-10 w-auto"
+            <div className="flex items-center gap-2">
+              {/* Logo - Hãy thay đường dẫn ảnh logo của bạn vào đây */}
+              <img 
+                src="/src/assets/images/logo.png" 
+                alt="Bean Farm Logo" 
+                className="h-10 w-auto object-contain" 
+                onError={(e) => {e.target.style.display='none'; e.target.nextSibling.style.display='block'}}
               />
+              <span className="text-2xl font-bold text-emerald-700 hidden">Bean Farm</span>
             </div>
-            <p className="mt-4 text-gray-700 leading-relaxed text-sm sm:text-base">
-              Bean Farm - Siêu thị trực tuyến mua sắm nông sản, chất lượng, tươi xanh.
+            
+            <p className="mt-4 text-gray-600 text-sm leading-relaxed">
+              Bean Farm - Siêu thị trực tuyến mua sắm nông sản, chất lượng, tươi xanh. 
+              <span className="block font-medium text-emerald-600 mt-1">Giá siêu tốt - Giao siêu tốc.</span>
             </p>
-            <p className="mt-2 text-emerald-700 font-medium text-sm sm:text-base">
-              Giá siêu tốt - Giao siêu tốc.
-            </p>
-
-            <div className="mt-4 space-y-2 text-sm">
+            
+            <div className="mt-5 space-y-2 text-sm text-gray-600">
               <p>
-                <span className="font-medium">Địa chỉ:</span> 70 Lữ Gia, P.15, Q.11, TP.HCM
+                <span className="font-bold text-gray-800">Địa chỉ:</span> 70 Lữ Gia, P.15, Q.11, TP.HCM
               </p>
               <p>
-                <span className="font-medium">Điện thoại:</span>{" "}
-                <a href="tel:19006750" className="text-emerald-700 font-semibold">
-                  1900 6750
-                </a>
+                <span className="font-bold text-gray-800">Hotline:</span>{" "}
+                <a href="tel:19006750" className="text-emerald-700 font-bold hover:underline">1900 6750</a>
               </p>
               <p>
-                <span className="font-medium">Email:</span>{" "}
-                <a
-                  href="mailto:support@sapo.vn"
-                  className="text-emerald-700 font-semibold"
-                >
-                  support@sapo.vn
-                </a>
+                <span className="font-bold text-gray-800">Email:</span>{" "}
+                <a href="mailto:support@beanfarm.vn" className="text-emerald-700 font-bold hover:underline">support@beanfarm.vn</a>
               </p>
             </div>
           </div>
 
-          {/* 🔹 Chính sách */}
-          <div className="hidden md:block">
-            <h4 className="font-semibold text-lg">Chính sách</h4>
-            <ul className="mt-4 space-y-3 text-gray-700 text-sm">
-              {[
-                "Chính sách thành viên",
-                "Chính sách thanh toán",
-                "Chính sách đổi sản phẩm",
-                "Chính sách bảo mật",
-              ].map((t, i) => (
-                <li key={i}>
-                  <a href="#" className="hover:text-emerald-700">{t}</a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* 🔹 Hướng dẫn */}
-          <div className="hidden md:block">
-            <h4 className="font-semibold text-lg">Hướng dẫn</h4>
-            <ul className="mt-4 space-y-3 text-gray-700 text-sm">
-              {[
-                "Hướng dẫn mua hàng",
-                "Hướng dẫn đổi trả",
-                "Hướng dẫn thanh toán",
-                "Liên hệ",
-              ].map((t, i) => (
-                <li key={i}>
-                  <a href="#" className="hover:text-emerald-700">{t}</a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* 🔹 Kết nối & QR */}
+          {/* Cột 2: Chính sách (Hiển thị full trên mobile) */}
           <div>
-            <h4 className="font-semibold text-lg">Kết nối với chúng tôi</h4>
-            <div className="mt-4 flex gap-2">
-              {["facebook", "youtube", "instagram"].map((n, i) => (
-                <a
-                  key={i}
-                  href="#"
-                  className="h-9 w-9 rounded-md bg-emerald-600 text-white flex items-center justify-center hover:bg-emerald-700"
-                >
-                  <span className="sr-only">{n}</span>
-                  <span className="h-1.5 w-1.5 bg-white rounded-full" />
-                </a>
+            <h4 className="font-bold text-gray-800 text-lg mb-4 border-l-4 border-emerald-500 pl-3">
+              Chính sách
+            </h4>
+            <ul className="space-y-3 text-sm text-gray-600">
+              {["Chính sách thành viên", "Chính sách thanh toán", "Chính sách đổi trả", "Bảo mật thông tin cá nhân"].map((item, i) => (
+                <li key={i}>
+                  <a href="#" className="hover:text-emerald-600 hover:translate-x-1 transition-all inline-block">
+                    {item}
+                  </a>
+                </li>
               ))}
+            </ul>
+          </div>
+
+          {/* Cột 3: Hướng dẫn */}
+          <div>
+            <h4 className="font-bold text-gray-800 text-lg mb-4 border-l-4 border-emerald-500 pl-3">
+              Hướng dẫn
+            </h4>
+            <ul className="space-y-3 text-sm text-gray-600">
+              {["Hướng dẫn mua hàng", "Vận chuyển & Giao nhận", "Phương thức thanh toán", "Câu hỏi thường gặp (FAQ)"].map((item, i) => (
+                <li key={i}>
+                  <a href="#" className="hover:text-emerald-600 hover:translate-x-1 transition-all inline-block">
+                    {item}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Cột 4: Kết nối & Mạng xã hội */}
+          <div>
+            <h4 className="font-bold text-gray-800 text-lg mb-4 border-l-4 border-emerald-500 pl-3">
+              Kết nối với chúng tôi
+            </h4>
+            <div className="flex gap-3 mb-6">
+              <a href="#" className="w-10 h-10 rounded-full bg-[#1877F2] text-white flex items-center justify-center hover:scale-110 transition shadow-sm">
+                <FaFacebook size={20} />
+              </a>
+              <a href="#" className="w-10 h-10 rounded-full bg-[#FF0000] text-white flex items-center justify-center hover:scale-110 transition shadow-sm">
+                <FaYoutube size={20} />
+              </a>
+              <a href="#" className="w-10 h-10 rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 text-white flex items-center justify-center hover:scale-110 transition shadow-sm">
+                <FaInstagram size={20} />
+              </a>
             </div>
 
-            <div className="mt-5">
-              <h4 className="font-semibold text-base">Zalo Mini App</h4>
-              <div className="mt-2 flex items-center gap-3">
-                <div className="h-16 w-16 rounded-md border flex items-center justify-center text-xs text-gray-500">
-                  QR
-                </div>
-                <p className="text-xs text-gray-600 leading-snug">
-                  Quét mã để mua hàng nhanh
-                </p>
-              </div>
+            <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 flex items-center gap-3">
+               <div className="bg-white border p-1 rounded">
+                  {/* Placeholder QR Code */}
+                  <div className="w-12 h-12 bg-gray-200 flex items-center justify-center text-[10px] text-gray-500">QR CODE</div>
+               </div>
+               <div>
+                  <p className="text-xs font-bold text-gray-700">Zalo Mini App</p>
+                  <p className="text-[10px] text-gray-500">Quét mã để nhận ưu đãi</p>
+               </div>
             </div>
           </div>
         </div>
 
-        {/* Footer cuối */}
-        <div className="bg-emerald-700 text-white">
-          <div className="max-w-7xl mx-auto px-4 py-3 text-xs sm:text-sm text-center">
-            © Bản quyền thuộc về <span className="font-semibold">Mr. Bean</span> | Cung cấp bởi{" "}
-            <span className="font-semibold">Sapo</span>
+        {/* Copyright Bar */}
+        <div className="bg-emerald-800 text-white/90 py-4 text-center text-sm border-t border-emerald-900">
+          <div className="max-w-7xl mx-auto px-4">
+            © 2024 Bản quyền thuộc về <span className="font-bold text-white">Bean Farm</span> | Design by Sapo
           </div>
         </div>
       </footer>
 
-      {/* ✅ Cụm nút nổi bên phải */}
-      <div className="fixed bottom-6 right-6 flex flex-col items-center gap-3 z-50">
 
-        {/* Nút cuộn lên đầu trang (vuông, chạy chậm) */}
+      {/* ================= FLOATING ACTION BUTTONS (NÚT NỔI) ================= */}
+      <div className="fixed bottom-6 right-6 flex flex-col items-center gap-4 z-50">
+        
+        {/* 1. Nút Scroll Top (Chỉ hiện khi cuộn xuống) */}
         {showButton && (
           <button
             onClick={scrollToTop}
-            className={`bg-gradient-to-br from-emerald-500 to-green-600 text-white p-3 rounded-md shadow-xl hover:scale-110 transition-all duration-500 ${showButton ? "opacity-100" : "opacity-0"}`}
-            aria-label="Lên đầu trang"
+            className="w-10 h-10 bg-gray-600/50 hover:bg-emerald-600 backdrop-blur-sm text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 transform hover:-translate-y-1"
+            title="Lên đầu trang"
           >
-            <FaChevronUp size={20} />
-            {/* <FaCaretSquareUp size={20} /> */}
+            <FaChevronUp size={16} />
           </button>
         )}
 
-        {/* Vùng nút Liên hệ + Popup */}
-        <div className="relative">
-          {/* Popup menu */}
-          {showContactMenu && (
-            <div className="absolute bottom-16 right-0 w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 animate-fadeIn overflow-hidden">
-              <ul className="text-sm text-gray-700">
-                <li className="border-b border-gray-100">
-                  <a
-                    href="tel:19006750"
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition"
-                  >
-                    <span className="bg-red-500 text-white p-2 rounded-full">
-                      <FaPhoneAlt size={14} />
-                    </span>
-                    <span className="font-medium">Gọi ngay cho chúng tôi</span>
-                  </a>
-                </li>
-                <li className="border-b border-gray-100">
-                  <a
-                    href="https://zalo.me/123456789"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition"
-                  >
-                    <span className="bg-blue-500 text-white p-2 rounded-full ">
-                      <SiZalo size={14} />
-                    </span>
-                    <span className="font-medium">Chat với chúng tôi qua Zalo</span>
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="/contact"
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition"
-                  >
-                    <span className="bg-yellow-400 text-white p-2 rounded-full">
-                      <FaMapMarkerAlt size={14} />
-                    </span>
-                    <span className="font-medium">Thông tin cửa hàng</span>
-                  </a>
-                </li>
-              </ul>
-
-              {/* Nút đóng góc */}
-              <button
-                onClick={() => setShowContactMenu(false)}
-                className="absolute top-2 right-2 h-7 w-7 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-gray-200"
-                aria-label="Đóng menu liên hệ"
-              >
-                <FaTimes size={12} />
-              </button>
+        {/* 2. Cụm Nút Liên Hệ Đa Năng */}
+        <div className="relative group">
+          
+          {/* Menu Popup (Hiện ra khi state showContactMenu = true) */}
+          <div 
+            className={`absolute bottom-full right-0 mb-4 w-60 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden transition-all duration-300 origin-bottom-right 
+            ${showContactMenu ? 'opacity-100 scale-100 translate-y-0 visible' : 'opacity-0 scale-90 translate-y-4 invisible pointer-events-none'}`}
+          >
+            <div className="p-3 bg-emerald-50 text-emerald-800 text-xs font-bold text-center border-b border-emerald-100">
+              HỖ TRỢ TRỰC TUYẾN 24/7
             </div>
-          )}
+            
+            <ul className="flex flex-col">
+              {/* Gọi Hotline */}
+              <li>
+                <a href="tel:19006750" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition border-b border-gray-50 group/item">
+                  <div className="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center shadow-sm group-hover/item:scale-110 transition-transform">
+                    <FaPhoneAlt size={14}/>
+                  </div>
+                  <div>
+                    <span className="block text-xs text-gray-500">Hotline</span>
+                    <span className="text-sm font-bold text-gray-700">1900 6750</span>
+                  </div>
+                </a>
+              </li>
+              
+              {/* Chat Zalo */}
+              <li>
+                <a href="https://zalo.me/YOUR_ZALO_ID" target="_blank" rel="noreferrer" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition border-b border-gray-50 group/item">
+                  <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-sm group-hover/item:scale-110 transition-transform">
+                    <SiZalo size={16}/>
+                  </div>
+                  <div>
+                    <span className="block text-xs text-gray-500">Chat Zalo</span>
+                    <span className="text-sm font-medium text-gray-700">Bean Farm Support</span>
+                  </div>
+                </a>
+              </li>
 
-          {/* Nút Liên hệ (tròn, lúc lắc khi đóng, đổi thành dấu X khi mở) */}
-          {/* Nút Liên hệ (tròn, icon lắc bên trong) */}
+              {/* Chat Messenger */}
+              <li>
+                <a href="https://m.me/YOUR_PAGE_ID" target="_blank" rel="noreferrer" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition border-b border-gray-50 group/item">
+                  <div className="w-8 h-8 rounded-full bg-[#0084FF] text-white flex items-center justify-center shadow-sm group-hover/item:scale-110 transition-transform">
+                    <FaFacebookMessenger size={18}/>
+                  </div>
+                  <div>
+                    <span className="block text-xs text-gray-500">Facebook</span>
+                    <span className="text-sm font-medium text-gray-700">Chat Messenger</span>
+                  </div>
+                </a>
+              </li>
+
+              {/* Tìm cửa hàng */}
+              <li>
+                <a href="/contact" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition group/item">
+                  <div className="w-8 h-8 rounded-full bg-yellow-500 text-white flex items-center justify-center shadow-sm group-hover/item:scale-110 transition-transform">
+                    <FaMapMarkerAlt size={14}/>
+                  </div>
+                  <span className="text-sm font-medium text-gray-700">Tìm cửa hàng</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Nút Toggle Chính (Tròn to) */}
           <button
             onClick={() => setShowContactMenu(!showContactMenu)}
-            className={`  relative w-12 h-12 flex flex-col items-center justify-center rounded-full shadow-xl text-white transition-all duration-300
-    ${showContactMenu ? "bg-green-700" : "bg-green-600 hover:bg-green-700"}`}
-            aria-label="Mở menu liên hệ"
+            className={`w-14 h-14 rounded-full shadow-xl flex items-center justify-center text-white transition-all duration-300 relative z-50
+              ${showContactMenu ? 'bg-gray-600 rotate-90 hover:bg-gray-700' : 'bg-emerald-600 hover:bg-emerald-700 animate-bounce'}`}
+            title="Liên hệ với chúng tôi"
           >
-            {/* Icon: 💬 -> ❌ khi mở menu */}
-            <span
-              className={`  flex items-center justify-center ${!showContactMenu ? "animate-iconWobble" : ""
-                }`}
-            >
-              {showContactMenu ? <FaTimes size={20} /> : <FaComments className="" size={20} />}
-            </span>
-
-            {/* Chữ Liên hệ, chỉ hiển thị khi menu chưa mở */}
+            {showContactMenu ? <FaTimes size={24} /> : <FaComments size={26} />}
+            
+            {/* Chấm đỏ thông báo (Ping animation) */}
             {!showContactMenu && (
-              <span className="text-[8px] mt-0.5 leading-none">Liên hệ</span>
+              <span className="absolute top-0 right-0 flex h-4 w-4">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500 border-2 border-white"></span>
+              </span>
             )}
           </button>
-
-
         </div>
 
-        {/* Messenger */}
-        <a
-          href="https://m.me/beanfarm"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="bg-[#0084FF] hover:bg-[#0074E3] text-white w-12 h-12 flex items-center justify-center rounded-full shadow-xl transition-all duration-300"
-          aria-label="Chat Messenger"
-        >
-          <FaFacebookMessenger size={22} />
-        </a>
       </div>
     </>
   );

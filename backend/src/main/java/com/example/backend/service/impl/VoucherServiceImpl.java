@@ -87,4 +87,23 @@ public class VoucherServiceImpl implements VoucherService {
 
         voucherRepository.save(voucher);
     }
+
+    @Override
+    public void delete(Integer id) {
+        Voucher voucher = voucherRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Voucher not found"));
+
+        // Soft delete
+        voucher.setDeletedAt(LocalDateTime.now());
+        voucherRepository.save(voucher);
+    }
+
+    @Override
+    public void incrementUsage(String voucherCode) {
+        Voucher voucher = voucherRepository.findByVoucherCode(voucherCode)
+                .orElseThrow(() -> new RuntimeException("Voucher not found"));
+
+        voucher.setUsedCount(voucher.getUsedCount() + 1);
+        voucherRepository.save(voucher);
+    }
 }

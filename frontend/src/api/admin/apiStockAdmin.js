@@ -1,4 +1,4 @@
-import axiosAdmin from "../axiosAdmin";
+import axiosAdmin from "../axios";
 
 const apiStockAdmin = {
     // Lấy tất cả (không phân trang) - Dùng cho các mục đích đặc biệt
@@ -19,8 +19,15 @@ const apiStockAdmin = {
         axiosAdmin.get(`/admin/stock-movements/last-import-price/${productId}`).then(res => res.data),
 
     // Lấy nhà cung cấp cuối cùng của 1 sản phẩm
-    getLastSupplierId: (productId) =>
-        axiosAdmin.get(`/admin/stock-movements/last-supplier/${productId}`).then(res => res.data),
+    getLastSupplierId: async (productId) => {
+        const res = await axiosAdmin.get(`/admin/stock-movements/last-supplier/${productId}`);
+        return res.data;
+    },
+
+    getByType: async (type) => {
+        const res = await axiosAdmin.get(`/admin/stock-movements/by-type/${type}`);
+        return res.data;
+    },
 };
 
 export default apiStockAdmin;
