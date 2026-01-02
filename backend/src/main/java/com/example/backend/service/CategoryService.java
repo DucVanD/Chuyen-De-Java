@@ -22,4 +22,6 @@ public interface CategoryService {
     Page<CategoryDto> getPage(int page, int size);
 
     void toggleStatus(Integer id);
+
+    List<CategoryDto> getParentsWithChildren();
 }

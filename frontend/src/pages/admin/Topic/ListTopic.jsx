@@ -1,8 +1,7 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import apiTopic from "../../../api/user/apiTopic";
-import { imageURL } from "../../../api/config";
+import apiTopicAdmin from "../../../api/admin/apiTopicAdmin";
 import {
   FaPlus,
   FaTrash,
@@ -23,12 +22,10 @@ const ListTopic = () => {
   // ✅ Lấy danh sách chủ đề
   const fetchTopics = async (page = 1) => {
     try {
-      const res = await apiTopic.getAllPage(page);
-      if (res.status) {
-        setTopics(res.data.data);
-        setCurrentPage(res.data.current_page);
-        setLastPage(res.data.last_page);
-      }
+      const res = await apiTopicAdmin.getPage(page - 1, 8);
+      setTopics(res.content);
+      setCurrentPage(res.number + 1);
+      setLastPage(res.totalPages);
     } catch (err) {
       console.error("Lỗi khi lấy chủ đề:", err);
       toast.error("Không thể tải danh sách chủ đề!");
@@ -49,13 +46,9 @@ const ListTopic = () => {
   // ✅ Toggle trạng thái
   const handleToggleStatus = async (id) => {
     try {
-      const res = await apiTopic.toggleStatus(id);
-      if (res.status) {
-        toast.success(res.message);
-        fetchTopics(currentPage);
-      } else {
-        toast.error(res.message);
-      }
+      await apiTopicAdmin.toggleStatus(id);
+      toast.success("Cập nhật trạng thái thành công");
+      fetchTopics(currentPage);
     } catch (err) {
       console.error(err);
       toast.error("Không thể cập nhật trạng thái chủ đề!");
@@ -66,16 +59,12 @@ const ListTopic = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("Bạn có chắc muốn xóa chủ đề này không?")) return;
     try {
-      const res = await apiTopic.delete(id);
-      if (res.status) {
-        toast.success(res.message);
-        fetchTopics(currentPage);
-      } else {
-        toast.error(res.message);
-      }
+      await apiTopicAdmin.delete(id);
+      toast.success("Xóa chủ đề thành công");
+      fetchTopics(currentPage);
     } catch (err) {
       console.error(err);
-      toast.error(err.response?.data?.message || "Xóa chủ đề thất bại!");
+      toast.error("Xóa chủ đề thất bại!");
     }
   };
 
@@ -88,7 +77,7 @@ const ListTopic = () => {
         </h3>
         <div className="flex space-x-3">
           <Link
-            to="/admin/addTopic"
+            to="/admin/topic/add"
             className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded flex items-center transition duration-200"
           >
             <FaPlus className="mr-2" /> Thêm mới
@@ -117,7 +106,7 @@ const ListTopic = () => {
                 <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Mô tả
                 </th>
-              
+
                 <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Trạng thái
                 </th>
@@ -140,7 +129,7 @@ const ListTopic = () => {
                     <td className="px-4 py-3 text-sm text-gray-600 max-w-[300px] truncate">
                       {topic.description || "Không có mô tả"}
                     </td>
-                   
+
                     <td className="px-4 py-3">
                       {topic.status ? (
                         <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
@@ -180,10 +169,11 @@ const ListTopic = () => {
                               currentPage
                             )
                           }
-                          to={`/admin/edittopic/${topic.id}`}
-                          className="text-blue-500 hover:text-blue-700"
+                          to={`/admin/topic/edit/${topic.id}`}
+                          className="text-blue-600 hover:text-blue-800 text-lg"
+                          title="Chỉnh sửa chủ đề"
                         >
-                          <FaEdit className="text-lg" />
+                          <FaEdit />
                         </Link>
 
                         <Link
@@ -220,11 +210,10 @@ const ListTopic = () => {
               <button
                 key={i}
                 onClick={() => goToPage(i + 1)}
-                className={`px-3 py-1 rounded ${
-                  currentPage === i + 1
-                    ? "bg-indigo-600 text-white"
-                    : "bg-gray-200 hover:bg-gray-300"
-                }`}
+                className={`px-3 py-1 rounded ${currentPage === i + 1
+                  ? "bg-indigo-600 text-white"
+                  : "bg-gray-200 hover:bg-gray-300"
+                  }`}
               >
                 {i + 1}
               </button>

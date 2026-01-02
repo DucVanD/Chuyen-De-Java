@@ -224,7 +224,7 @@ const ListCat = () => {
               <button onClick={() => handleToggleStatus(node)} className="text-gray-500 hover:text-green-600 transition-colors" title="Bật/Tắt">
                 {node.status === 1 ? <FaToggleOn size={22} /> : <FaToggleOff size={22} />}
               </button>
-              <Link to={`/admin/editcat/${node.id}`} className="text-blue-500 hover:text-blue-700 transition-colors" title="Sửa">
+              <Link to={`/admin/category/edit/${node.id}`} className="text-blue-500 hover:text-blue-700 transition-colors" title="Sửa">
                 <FaEdit size={18} />
               </Link>
               <button onClick={() => handleDelete(node.id)} className="text-red-500 hover:text-red-700 transition-colors" title="Xóa">
@@ -245,7 +245,7 @@ const ListCat = () => {
       {/* HEADER */}
       <div className="p-6 flex justify-between items-center border-b">
         <h3 className="text-2xl font-semibold text-gray-800">Quản lý Danh mục</h3>
-        <Link to="/admin/addCat" className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded flex items-center shadow-sm transition-all">
+        <Link to="/admin/category/add" className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded flex items-center shadow-sm transition-all">
           <FaPlus className="mr-2" /> Thêm mới
         </Link>
       </div>

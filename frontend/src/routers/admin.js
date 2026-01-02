@@ -11,7 +11,7 @@ import TrashCat from "../pages/admin/Category/TrashCat";
 // product
 import ListProduct from "../pages/admin/Product/ListProduct";
 import DelProduct from "../pages/admin/Product/DelProduct";
-import EditProduct from "../pages/admin/Product/Editproduct";
+import EditProduct from "../pages/admin/Product/EditProduct";
 import AddProduct from "../pages/admin/Product/AddProduct";
 import TrashProduct from "../pages/admin/Product/TrashProduct";
 
@@ -20,20 +20,25 @@ import ListPost from "../pages/admin/post/ListPost";
 import EditPost from "../pages/admin/post/EditPost";
 import AddPost from "../pages/admin/post/AddPost";
 
+// page
+import ListPage from "../pages/admin/post/ListPage";
+import EditPage from "../pages/admin/post/EditPage";
+import AddPage from "../pages/admin/post/AddPage";
+
 // topic
 import ListTopic from "../pages/admin/Topic/ListTopic";
 import EditTopic from "../pages/admin/Topic/EditTopic";
 import AddTopic from "../pages/admin/Topic/Addtopic";
 
 // brand
-import ListBrand from "../pages/admin/Brand/listBrand";
+import ListBrand from "../pages/admin/Brand/ListBrand";
 import AddBrand from "../pages/admin/Brand/AddBrand";
 import EditBrand from "../pages/admin/Brand/EditBrand";
 
 // order
-import listOrder from "../pages/admin/Order/listOrder";
+import ListOrder from "../pages/admin/Order/ListOrder";
 import EditOrder from "../pages/admin/Order/EditOrder";
-import OrderDetail from "../pages/admin/Order/detailOrder";
+import OrderDetail from "../pages/admin/Order/OrderDetail";
 
 
 // user
@@ -66,48 +71,54 @@ const AdminRoute = [
   // { path: "categories/:page?", component: ListCat },
   { path: "categories", component: ListCat },
 
-  { path: "addCat", component: AddCat },
-  { path: "delCat", component: DelCat },
-  { path: "editCat/:id", component: EditCat },
-  { path: "trashCat/:page?", component: TrashCat },
+  { path: "category/add", component: AddCat },
+  { path: "category/delete", component: DelCat },
+  { path: "category/edit/:id", component: EditCat },
+  { path: "category/trash/:page?", component: TrashCat },
 
   // product
   { path: "products/:page?", component: ListProduct },
-  { path: "addProduct", component: AddProduct },
-  { path: "editProduct/:id", component: EditProduct },
-  { path: "trashProduct/:page?", component: TrashProduct },
+  { path: "product/add", component: AddProduct },
+  { path: "product/edit/:id", component: EditProduct },
+  { path: "product/trash/:page?", component: TrashProduct },
 
   // post
   { path: "posts/:page?", component: ListPost },
-  { path: "addPost", component: AddPost },
-  { path: "editPost/:id", component: EditPost },
+  { path: "post/add", component: AddPost },
+  { path: "post/edit/:id", component: EditPost },
+
+  // pages
+  { path: "pages/:page?", component: ListPage },
+  { path: "page/add", component: AddPage },
+  { path: "page/edit/:id", component: EditPage },
 
   // topic
   { path: "topics/:page?", component: ListTopic },
-  { path: "addTopic", component: AddTopic },
-  { path: "editTopic/:id", component: EditTopic },
+  { path: "topic/add", component: AddTopic },
+  { path: "topic/edit/:id", component: EditTopic },
 
   // brand
   { path: "brands/:page?", component: ListBrand },
-  { path: "brand/create", component: AddBrand },
-  { path: "brand/Edit/:id", component: EditBrand },
+  { path: "brand/add", component: AddBrand },
+  { path: "brand/edit/:id", component: EditBrand },
   // order
-  { path: "orders/:page?", component: listOrder },
-  { path: "editOrder/:id", component: EditOrder },
-  { path: "orderDetail/:id", component: OrderDetail },
+  { path: "orders/:page?", component: ListOrder },
+  { path: "order/edit/:id", component: EditOrder },
+  { path: "order/detail/:id", component: OrderDetail },
 
   // user
   { path: "users/:page?", component: ListUser },
-  { path: "userDetail/:id", component: UserDetail },
-  { path: "user/createUser", component: AddUser },
-  { path: "user/EditUser/:id", component: EditUser },
+  { path: "user/detail/:id", component: UserDetail },
+  { path: "user/add", component: AddUser },
+  { path: "user/edit/:id", component: EditUser },
 
   // employee 
   { path: "employees", component: EmployeeManagement },
-//supplier
+
+  // supplier
   { path: "suppliers/:page?", component: ListSupplier },
-  { path: "supplier/create", component: AddSupplier },
-  { path: "supplier/Edit/:id", component: EditSupplier },
+  { path: "supplier/add", component: AddSupplier },
+  { path: "supplier/edit/:id", component: EditSupplier },
   // inventory
   { path: "inventory", component: Inventory },
   { path: "inventory/import", component: FormNhapKho },

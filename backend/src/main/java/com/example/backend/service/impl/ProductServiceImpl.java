@@ -2,9 +2,11 @@ package com.example.backend.service.impl;
 
 import com.example.backend.config.CloudinaryService;
 import com.example.backend.dto.ProductDto;
+import com.example.backend.dto.CategoryHomeDto;
 import com.example.backend.entity.Brand;
 import com.example.backend.entity.Category;
 import com.example.backend.entity.Product;
+import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.mapper.ProductMapper;
 import com.example.backend.repository.BrandRepository;
 import com.example.backend.repository.CategoryRepository;
@@ -12,6 +14,7 @@ import com.example.backend.repository.ProductRepository;
 import com.example.backend.service.ProductService;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +23,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
@@ -81,10 +85,11 @@ public class ProductServiceImpl implements ProductService {
     // FILTER
     // =====================
     @Override
-    public List<ProductDto> filter(Integer categoryId, Integer brandId, Integer status, java.math.BigDecimal minPrice,
+    public List<ProductDto> filter(List<Integer> categoryIds, List<Integer> brandIds, Integer status,
+            java.math.BigDecimal minPrice,
             java.math.BigDecimal maxPrice, Boolean hasPromotion) {
         return productRepository
-                .filter(categoryId, brandId, status, minPrice, maxPrice, hasPromotion, Pageable.unpaged())
+                .filter(categoryIds, brandIds, status, minPrice, maxPrice, hasPromotion, Pageable.unpaged())
                 .getContent()
                 .stream()
                 .map(ProductMapper::toDto)
@@ -92,11 +97,21 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Page<ProductDto> filter(Integer categoryId, Integer brandId, Integer status, java.math.BigDecimal minPrice,
-            java.math.BigDecimal maxPrice, Boolean hasPromotion, int page, int size) {
-        Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size,
-                org.springframework.data.domain.Sort.by("id").descending());
-        return productRepository.filter(categoryId, brandId, status, minPrice, maxPrice, hasPromotion, pageable)
+    public Page<ProductDto> filter(List<Integer> categoryIds, List<Integer> brandIds, Integer status,
+            java.math.BigDecimal minPrice,
+            java.math.BigDecimal maxPrice, Boolean hasPromotion, String sortBy, int page, int size) {
+
+        org.springframework.data.domain.Sort sort;
+        if ("price_asc".equals(sortBy)) {
+            sort = org.springframework.data.domain.Sort.by("salePrice").ascending();
+        } else if ("price_desc".equals(sortBy)) {
+            sort = org.springframework.data.domain.Sort.by("salePrice").descending();
+        } else {
+            sort = org.springframework.data.domain.Sort.by("id").descending();
+        }
+
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, sort);
+        return productRepository.filter(categoryIds, brandIds, status, minPrice, maxPrice, hasPromotion, pageable)
                 .map(ProductMapper::toDto);
     }
 
@@ -107,6 +122,13 @@ public class ProductServiceImpl implements ProductService {
     public ProductDto getById(Integer id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
+        return ProductMapper.toDto(product);
+    }
+
+    @Override
+    public ProductDto getBySlug(String slug) {
+        Product product = productRepository.findBySlug(slug)
+                .orElseThrow(() -> new ResourceNotFoundException("Product with slug '" + slug + "' not found"));
         return ProductMapper.toDto(product);
     }
 
@@ -130,7 +152,10 @@ public class ProductServiceImpl implements ProductService {
 
         // Auto-generate slug
         if (product.getSlug() == null || product.getSlug().isBlank()) {
-            product.setSlug(generateUniqueSlug(dto.getName()));
+            String baseSlug = generateSlugFromName(dto.getName());
+            product.setSlug(generateUniqueSlug(baseSlug, null));
+        } else {
+            product.setSlug(generateUniqueSlug(dto.getSlug(), null));
         }
 
         product.setUpdatedBy(1); // TODO: Replace with actual User ID from context
@@ -162,14 +187,10 @@ public class ProductServiceImpl implements ProductService {
 
         // Auto-generate slug update logic
         if (dto.getSlug() == null || dto.getSlug().isBlank()) {
-            if (product.getSlug() == null || product.getSlug().isBlank()) {
-                product.setSlug(generateUniqueSlug(dto.getName()));
-            }
-            // Keep old slug if not provided
-        } else {
-            if (!dto.getSlug().equals(product.getSlug())) {
-                product.setSlug(generateUniqueSlug(dto.getSlug()));
-            }
+            String baseSlug = generateSlugFromName(dto.getName());
+            product.setSlug(generateUniqueSlug(baseSlug, id));
+        } else if (!dto.getSlug().equals(product.getSlug())) {
+            product.setSlug(generateUniqueSlug(dto.getSlug(), id));
         }
 
         product.setDescription(dto.getDescription());
@@ -184,11 +205,11 @@ public class ProductServiceImpl implements ProductService {
 
         // ✅ CHỈ SET ẢNH KHI CÓ ẢNH MỚI
         if (dto.getImage() != null && !dto.getImage().isBlank()) {
-            if (product.getImagePublicId() != null) {
+            if (product.getImagePublicId() != null && !product.getImagePublicId().equals(dto.getImagePublicId())) {
                 try {
                     cloudinaryService.deleteImage(product.getImagePublicId());
                 } catch (Exception e) {
-                    System.err.println("Lỗi xóa ảnh cũ khi update: " + e.getMessage());
+                    System.err.println("Lỗi xóa ảnh cũ khi update product: " + e.getMessage());
                 }
             }
             product.setImage(dto.getImage());
@@ -220,27 +241,91 @@ public class ProductServiceImpl implements ProductService {
         productRepository.delete(product);
     }
 
-    // Helper: Generate Unique Slug
-    private String generateUniqueSlug(String nameOrSlug) {
-        if (nameOrSlug == null || nameOrSlug.isBlank()) {
-            nameOrSlug = "product";
-        }
-
-        // 1. Convert to simple slug
-        String baseSlug = nameOrSlug.trim().toLowerCase()
-                .replaceAll("[^a-z0-9\\s-]", "")
-                .replaceAll("\\s+", "-")
-                .replaceAll("-+", "-");
-
-        String uniqueSlug = baseSlug;
-        int count = 1;
-
-        // 2. Loop until finding a non-existing slug
-        while (productRepository.existsBySlug(uniqueSlug)) {
-            uniqueSlug = baseSlug + "-" + count;
-            count++;
-        }
-
-        return uniqueSlug;
+    @Override
+    @Transactional
+    public void toggleStatus(Integer id) {
+        if (id == null)
+            return;
+        productRepository.findById(id).ifPresent(product -> {
+            Integer status = product.getStatus();
+            if (status != null) {
+                product.setStatus(status == 1 ? 0 : 1);
+                productRepository.save(product);
+            }
+        });
     }
+
+    private String generateSlugFromName(String name) {
+        if (name == null || name.isBlank()) {
+            return "product";
+        }
+        return java.text.Normalizer.normalize(name, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .replaceAll("đ", "d")
+                .replaceAll("Đ", "d")
+                .toLowerCase()
+                .replaceAll("\\s+", "-")
+                .replaceAll("[^a-z0-9-]", "")
+                .replaceAll("-+", "-")
+                .replaceAll("^-+|-+$", "");
+    }
+
+    private String generateUniqueSlug(String baseSlug, Integer excludeId) {
+        String slug = baseSlug;
+        int counter = 1;
+
+        while (true) {
+            boolean exists = (excludeId != null)
+                    ? productRepository.existsBySlugAndIdNot(slug, excludeId)
+                    : productRepository.existsBySlug(slug);
+
+            if (!exists) {
+                return slug;
+            }
+
+            slug = baseSlug + "-" + counter;
+            counter++;
+        }
+    }
+
+    @Override
+    public List<CategoryHomeDto> getCategoriesHome() {
+        return categoryRepository.findByParentIsNull().stream()
+                .map(cat -> {
+                    // Fetch top 4 products for each parent category
+                    Pageable topFour = PageRequest.of(0, 4, org.springframework.data.domain.Sort.by("id").descending());
+                    List<ProductDto> products = productRepository.filter(
+                            List.of(cat.getId()), null, 1, null, null, null, topFour)
+                            .getContent()
+                            .stream()
+                            .map(ProductMapper::toDto)
+                            .toList();
+
+                    return CategoryHomeDto.builder()
+                            .id(cat.getId())
+                            .name(cat.getName())
+                            .slug(cat.getSlug())
+                            .products(products)
+                            .build();
+                })
+                .filter(dto -> !dto.getProducts().isEmpty())
+                .limit(3)
+                .toList();
+    }
+
+    @Override
+    public List<ProductDto> getLatestProducts(int limit) {
+        return productRepository.findLatestProducts(PageRequest.of(0, limit)).stream()
+                .map(ProductMapper::toDto)
+                .toList();
+    }
+
+    @Override
+    public List<ProductDto> getRelatedProducts(Integer categoryId, Integer productId, int limit) {
+        return productRepository.findRelatedProducts(categoryId, productId, PageRequest.of(0, limit))
+                .stream()
+                .map(ProductMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
 }

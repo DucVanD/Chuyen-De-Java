@@ -217,7 +217,7 @@ const ListOrder = () => {
                       <div className="flex items-center justify-center gap-3 text-lg">
                         <button
                           onClick={() =>
-                            navigate(`/admin/orderDetail/${order.id}`)
+                            navigate(`/admin/order/detail/${order.id}`)
                           }
                           className="text-indigo-500 hover:text-indigo-700"
                         >
@@ -225,7 +225,7 @@ const ListOrder = () => {
                         </button>
                         <button
                           onClick={() =>
-                            navigate(`/admin/editOrder/${order.id}`)
+                            navigate(`/admin/order/edit/${order.id}`)
                           }
                           className="text-blue-500 hover:text-blue-700"
                         >

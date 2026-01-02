@@ -107,6 +107,15 @@ const Dashboard = () => {
                   </li>
                   <li>
                     <Link
+                      to="/admin/pages"
+                      className="flex items-center text-[15px] px-4 py-2.5 rounded-md hover:bg-gray-700 font-medium"
+                    >
+                      <i className="fas fa-file-alt mr-3 text-indigo-400"></i>
+                      Trang đơn
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
                       to="/admin/topics"
                       className="flex items-center text-[15px] px-4 py-2.5 rounded-md hover:bg-gray-700 font-medium"
                     >

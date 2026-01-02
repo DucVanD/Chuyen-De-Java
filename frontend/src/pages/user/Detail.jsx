@@ -1,5 +1,4 @@
 import { Link, useParams } from "react-router-dom";
-import { imageURL } from "../../api/config";
 import {
   FaTruck,
   FaUndoAlt,
@@ -13,6 +12,7 @@ import {
 import { useState, useEffect } from "react";
 // Assuming apiProduct is defined elsewhere
 import apiProduct from "../../api/user/apiProduct"; // Keep if you need the real API
+import { imageURL, getImageUrl } from "../../api/config";
 import useAddToCart from "../../hooks/useAddToCart";
 import "react-toastify/dist/ReactToastify.css";
 import ProductItem from "./ProductItem";
@@ -32,24 +32,22 @@ const Detail = () => {
       setLoading(true);
       try {
         const res = await apiProduct.getProductBySlug(slug);
-        console.log("du lieu api", res); // xem console thật trong trình duyệt
+        console.log("du lieu api", res);
 
-        if (res.status && res.data) {
-          setProduct(res.data); // ✅ chính xác
+        if (res) {
+          setProduct(res);
 
-          // ✅ Gọi sản phẩm liên quan khi có category_id
-          if (res.data.category_id) {
-            const related = await apiProduct.getRelatedProducts(res.data.category_id);
-            if (related.status && related.data) {
-              setRelatedProducts(related.data);
-            }
+          // ✅ Gọi sản phẩm liên quan khi có categoryId
+          if (res.categoryId) {
+            const related = await apiProduct.getRelatedProducts(res.id, res.categoryId);
+            setRelatedProducts(related || []);
           }
         } else {
           setError("Không tìm thấy sản phẩm.");
         }
       } catch (err) {
         console.error(err);
-        setError("Lỗi khi lấy thông tin sản phẩm.");
+        setError("Sân phẩm không tồn tại hoặc đã bị gỡ bỏ.");
       } finally {
         setLoading(false);
       }
@@ -61,6 +59,9 @@ const Detail = () => {
 
 
 
+
+  // Tabs state
+  const [activeTab, setActiveTab] = useState("description"); // "description", "guide", "reviews"
 
   // console.log("Product Details:", product);
   // Quantity handlers
@@ -84,22 +85,59 @@ const Detail = () => {
     );
   }
 
-  // Helper for discount calculation
+  // Nội dung Hướng dẫn mua hàng
+  const GuideContent = () => (
+    <div className="space-y-4 text-gray-700">
+      <h3 className="text-xl font-bold text-gray-900 border-b pb-2">Hướng dẫn mua hàng tại Store</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <h4 className="font-bold text-green-700 mb-2">Bước 1: Tìm kiếm sản phẩm</h4>
+          <p className="text-sm">Sử dụng thanh tìm kiếm hoặc duyệt qua các danh mục sản phẩm để tìm món đồ bạn yêu thích.</p>
+        </div>
+        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <h4 className="font-bold text-green-700 mb-2">Bước 2: Thêm vào giỏ hàng</h4>
+          <p className="text-sm">Chọn số lượng và nhấn "Thêm vào giỏ". Bạn có thể tiếp tục mua sắm hoặc tiến hành thanh toán.</p>
+        </div>
+        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <h4 className="font-bold text-green-700 mb-2">Bước 3: Nhập thông tin thanh toán</h4>
+          <p className="text-sm">Cung cấp địa chỉ giao hàng và số điện thoại chính xác để chúng tôi phục vụ bạn tốt nhất.</p>
+        </div>
+        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <h4 className="font-bold text-green-700 mb-2">Bước 4: Xác nhận đơn hàng</h4>
+          <p className="text-sm">Chọn phương thức thanh toán và hoàn tất đặt hàng. Nhân viên sẽ gọi điện xác nhận trong 15 phút.</p>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Nội dung Đánh giá
+  const ReviewsContent = () => (
+    <div className="flex flex-col items-center justify-center py-10 text-center">
+      <div className="bg-gray-100 p-6 rounded-full mb-4">
+        <FaStar className="text-4xl text-gray-300" />
+      </div>
+      <h3 className="text-xl font-bold text-gray-800">Chưa có đánh giá nào</h3>
+      <p className="text-gray-500 mt-2">Hãy là người đầu tiên đánh giá sản phẩm này!</p>
+      <button className="mt-6 px-6 py-2 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition">
+        Viết đánh giá
+      </button>
+    </div>
+  );
 
   return (
     <>
       <div className="max-w-7xl mx-auto px-4 py-10">
         {/* Breadcrumb đơn giản */}
         <nav className="text-sm text-gray-500 mb-6">
-          <Link to="/" className="hover:text-green-600">
+          <Link to="/" className="hover:text-green-600 transition-colors">
             Trang chủ
           </Link>
-          <span className="mx-2">/</span>
-          <Link to="/collections/all" className="hover:text-green-600">
-            {product.category_name || "Danh mục"}
+          <span className="mx-2 text-gray-300">/</span>
+          <Link to="/collections/all" className="hover:text-green-600 transition-colors">
+            {product.categoryName || "Danh mục"}
           </Link>
-          <span className="mx-2">/</span>
-          <span className="text-gray-700 font-semibold">{product.name}</span>
+          <span className="mx-2 text-gray-300">/</span>
+          <span className="text-gray-900 font-bold">{product.name}</span>
         </nav>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
@@ -107,20 +145,20 @@ const Detail = () => {
           <div className="space-y-3">
             <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-white p-5">
               {/* Discount Tag */}
-              {product.discount_percent > 0 && (
-                <div className="absolute top-4 left-4 bg-red-600 text-white text-sm font-semibold px-3 py-1 rounded-full z-10">
-                  -{product.discount_percent}%
+              {product.discountPrice > 0 && product.salePrice > 0 && (
+                <div className="absolute top-4 left-4 bg-red-600 text-white text-sm font-bold px-3 py-1 rounded-full z-10 shadow-lg">
+                  -{Math.round(100 - (product.discountPrice / product.salePrice) * 100)}%
                 </div>
               )}
 
 
-              {/* Main Image - Adjusted to better fit the layout */}
-              <div className="flex justify-center items-center h-auto">
-                <div className="aspect-square w-[250px] sm:w-[300px] lg:w-[400px]">
+              {/* Main Image */}
+              <div className="flex justify-center items-center h-auto min-h-[300px]">
+                <div className="w-full max-w-[400px]">
                   <img
-                    src={`${imageURL}/product/${product.thumbnail}`}
+                    src={getImageUrl(product.image, 'product')}
                     alt={product.name}
-                    className="object-contain w-full h-full"
+                    className="object-contain w-full h-full hover:scale-105 transition-transform duration-300"
                   />
                 </div>
               </div>
@@ -139,7 +177,7 @@ const Detail = () => {
             <p className="text-base text-gray-600 mb-4">
               Thương hiệu:{" "}
               <span className="text-green-600 font-semibold">
-                {product.brand_name || "Đang cập nhật"}
+                {product.brandName || "Đang cập nhật"}
               </span>{" "}
               | Tình trạng:{" "}
               <span
@@ -149,7 +187,7 @@ const Detail = () => {
                 {product.qty > 0 ? "Còn hàng" : "Hết hàng"}
               </span>
               <span className="text-gray-500 text-sm ml-4">
-                | Mã SKU: Đang cập nhật
+                | Mã sản phẩm: #{product.id}
               </span>
             </p>
 
@@ -159,29 +197,29 @@ const Detail = () => {
             <div className="mb-4">
               <div className="flex items-baseline gap-3">
                 {/* Nếu có giảm giá */}
-                {product.price_sale > 0 && product.price_sale < product.price_root ? (
+                {product.discountPrice > 0 && product.discountPrice < product.salePrice ? (
                   <>
                     <span className="text-4xl font-bold text-red-600">
-                      {product.price_sale.toLocaleString("vi-VN")}₫
+                      {product.discountPrice.toLocaleString("vi-VN")}₫
                     </span>
                     <span className="text-xl text-gray-400 line-through">
-                      {product.price_root.toLocaleString("vi-VN")}₫
+                      {product.salePrice.toLocaleString("vi-VN")}₫
                     </span>
                   </>
                 ) : (
                   // Không có giảm giá
                   <span className="text-4xl font-bold text-red-600">
-                    {product.price_root.toLocaleString("vi-VN")}₫
+                    {product.salePrice ? product.salePrice.toLocaleString("vi-VN") : "Liên hệ"}₫
                   </span>
                 )}
               </div>
 
               {/* Phần "tiết kiệm" */}
-              {product.price_sale > 0 && product.price_sale < product.price_root && (
+              {product.discountPrice > 0 && product.discountPrice < product.salePrice && (
                 <p className="text-sm text-gray-600 mt-1">
                   Tiết kiệm{" "}
                   <span className="font-bold text-red-600">
-                    {(product.price_root - product.price_sale).toLocaleString("vi-VN")}₫
+                    {(product.salePrice - product.discountPrice).toLocaleString("vi-VN")}₫
                   </span>{" "}
                   so với giá thị trường
                 </p>
@@ -198,13 +236,12 @@ const Detail = () => {
 
             {/* Usage/Instruction Box (New section from image) */}
             <div className="bg-blue-50 border border-blue-200 text-blue-800 p-4 rounded-lg text-sm mb-6">
-              <p className="font-semibold mb-2">Mô tả:</p>
-              <ul className="list-disc ml-5 space-y-1">
-                <li>{product.description}.</li>
-                
-              </ul>
-              <button className="text-green-600 text-sm mt-3 flex items-center hover:text-green-700">
-                <i className="fa-solid fa-store mr-2"></i>
+              <p className="font-semibold mb-2">Thông tin vắn tắt:</p>
+              <div className="text-gray-700">
+                {product.description || "Đang cập nhật mô tả..."}
+              </div>
+              <button className="text-green-600 font-bold text-sm mt-3 flex items-center hover:text-green-700 transition-colors">
+                <FaStar className="mr-2" />
                 Tìm cửa hàng gần bạn nhất
               </button>
             </div>
@@ -239,15 +276,15 @@ const Detail = () => {
 
               {/* Nút thêm giỏ hàng */}
               <button
-                onClick={() => handleAddToCart(product, quantity)} // ✅ truyền quantity
-                disabled={product.qty === 0}
-                className={`flex-grow text-lg font-semibold px-6 py-3 rounded-lg shadow-md transition ${product.qty === 0
+                onClick={() => handleAddToCart(product, quantity)}
+                disabled={!product.qty || product.qty <= 0}
+                className={`flex-grow text-lg font-extrabold px-6 py-3 rounded-lg shadow-lg transition-all duration-300 transform active:scale-95 ${!product.qty || product.qty <= 0
                   ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-green-600 text-white hover:bg-green-700"
+                  : "bg-green-600 text-white hover:bg-green-700 hover:shadow-green-200"
                   }`}
               >
                 <i className="fa-solid fa-cart-shopping mr-2"></i>
-                {product.qty === 0 ? "Hết hàng" : "THÊM VÀO GIỎ"}
+                {!product.qty || product.qty <= 0 ? "HẾT HÀNG" : "THÊM VÀO GIỎ"}
               </button>
 
               {/* Nút yêu thích + chia sẻ */}
@@ -334,27 +371,53 @@ const Detail = () => {
 
         {/* Tabs Mô tả / Hướng dẫn / Đánh giá */}
         <div className="border-b flex gap-8 mb-6 mt-12">
-          <button className="pb-3 border-b-3 border-green-600 font-semibold text-green-600 text-lg">
+          <button
+            onClick={() => setActiveTab("description")}
+            className={`pb-3 font-semibold text-lg transition-all duration-200 ${activeTab === "description"
+              ? "border-b-3 border-green-600 text-green-600"
+              : "text-gray-500 hover:text-green-600"
+              }`}
+          >
             Mô tả sản phẩm
           </button>
-          <button className="pb-3 hover:text-green-600 text-gray-700 text-lg">
+          <button
+            onClick={() => setActiveTab("guide")}
+            className={`pb-3 font-semibold text-lg transition-all duration-200 ${activeTab === "guide"
+              ? "border-b-3 border-green-600 text-green-600"
+              : "text-gray-500 hover:text-green-600"
+              }`}
+          >
             Hướng dẫn mua hàng
           </button>
-          <button className="pb-3 hover:text-green-600 text-gray-700 text-lg">
+          <button
+            onClick={() => setActiveTab("reviews")}
+            className={`pb-3 font-semibold text-lg transition-all duration-200 ${activeTab === "reviews"
+              ? "border-b-3 border-green-600 text-green-600"
+              : "text-gray-500 hover:text-green-600"
+              }`}
+          >
             Đánh giá (0)
           </button>
         </div>
 
-        {/* Nội dung mô tả */}
-        <div className="text-gray-700 leading-relaxed">
-          <div dangerouslySetInnerHTML={{ __html: product.detail }} />
+        {/* Nội dung Tabs */}
+        <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100 min-h-[300px] animate-fadeIn">
+          {activeTab === "description" && (
+            <div>
+              {product.detail ? (
+                <div
+                  className="prose prose-green max-w-none text-gray-700 leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: product.detail }}
+                />
+              ) : (
+                <p className="italic text-gray-400">Chưa có thông tin chi tiết cho sản phẩm này.</p>
+              )}
+            </div>
+          )}
 
-          <ul className="list-disc pl-6 mt-4 space-y-1">
-            <li>Xuất xứ: Đức (Thương hiệu Rabenhorst)</li>
-            <li>Đóng gói: Chai thủy tinh 750ml</li>
-            <li>Bảo quản: Nơi khô ráo, thoáng mát</li>
-            <li>Hạn sử dụng: In trên bao bì</li>
-          </ul>
+          {activeTab === "guide" && <GuideContent />}
+
+          {activeTab === "reviews" && <ReviewsContent />}
         </div>
 
         {/* Sản phẩm liên quan - Using original component's related products */}

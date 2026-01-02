@@ -28,5 +28,13 @@ public class CategoryController {
     public CategoryDto getById(@PathVariable Integer id) {
         return categoryService.getById(id);
     }
-}
 
+    @GetMapping("/parents-with-children")
+    public java.util.Map<String, Object> getParentsWithChildren() {
+        java.util.List<CategoryDto> data = categoryService.getParentsWithChildren();
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("status", true);
+        response.put("data", data);
+        return response;
+    }
+}

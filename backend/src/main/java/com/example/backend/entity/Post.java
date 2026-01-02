@@ -21,7 +21,7 @@ public class Post {
     private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "topic_id", nullable = false)
+    @JoinColumn(name = "topic_id", nullable = true)
     private Topic topic;
 
     @Column(nullable = false)
@@ -31,6 +31,9 @@ public class Post {
     private String slug;
 
     private String image;
+
+    @Column(name = "image_public_id")
+    private String imagePublicId;
 
     @Column(length = 500)
     private String description; // Mô tả ngắn (Sapo)

@@ -14,13 +14,12 @@ const Products = () => {
 
     // === State cho việc lọc và phân trang ===
     const [filters, setFilters] = useState({
-        name: "", // Chứa từ khóa tìm kiếm
-        category_ids: [],
-        brand_ids: [],
-        min_price: "",
-        max_price: "",
-        sort_by: "created_at",
-        sort_order: "desc",
+        name: "",
+        categoryId: [],
+        brandId: [],
+        minPrice: "",
+        maxPrice: "",
+        sortBy: "id_desc",
     });
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
@@ -50,9 +49,12 @@ const Products = () => {
                     apiCategory.getAll(),
                     apiBrand.getAll(),
                 ]);
-                const fetchedCategories = catRes.data.data || [];
+                // Backend returns List directly, api service returns res.data
+                const fetchedCategories = Array.isArray(catRes) ? catRes : (catRes?.data || []);
+                const fetchedBrands = Array.isArray(brandRes) ? brandRes : (brandRes?.data || []);
+
                 setCategories(fetchedCategories);
-                setBrands(brandRes.data.data || []);
+                setBrands(fetchedBrands);
 
                 let initialCategoryIds = [];
                 if (categorySlug) {
@@ -63,12 +65,11 @@ const Products = () => {
                 // Reset và cài đặt filters ban đầu, bao gồm cả keyword
                 setFilters({
                     name: keyword || "",
-                    category_ids: initialCategoryIds,
-                    brand_ids: [],
-                    min_price: "",
-                    max_price: "",
-                    sort_by: "created_at",
-                    sort_order: "desc",
+                    categoryId: initialCategoryIds,
+                    brandId: [],
+                    minPrice: "",
+                    maxPrice: "",
+                    sortBy: "id_desc",
                 });
 
                 const pageParam = parseInt(searchParams.get("page")) || 1;
@@ -96,41 +97,66 @@ const Products = () => {
 
                 // ✅ LOGIC TÌM KIẾM THÔNG MINH:
                 // Nếu có từ khóa tìm kiếm (filters.name) và chưa có filter danh mục nào được chọn thủ công
-                if (filters.name && filters.category_ids.length === 0) {
-                    // Tìm xem từ khóa có khớp với tên của danh mục nào không (không phân biệt hoa thường)
+                if (filters.name && filters.categoryId.length === 0) {
                     const matchedCategoryByName = categories.find(
-                        cat => cat.name.toLowerCase() === filters.name.toLowerCase()
+                        cat => cat.name.toLowerCase().includes(filters.name.toLowerCase())
                     );
 
-                    // Nếu tìm thấy, chuyển đổi từ tìm kiếm theo tên SANG tìm kiếm theo ID danh mục
                     if (matchedCategoryByName) {
                         effectiveFilters = {
                             ...effectiveFilters,
-                            category_ids: [matchedCategoryByName.id], // Đặt ID danh mục tìm thấy
-                            name: "", // Xóa từ khóa tìm kiếm đi để tránh back-end tìm cả hai
+                            categoryId: [matchedCategoryByName.id],
+                            name: "",
                         };
                     }
                 }
 
+
                 let resData;
                 const isFilterOrSortActive =
                     effectiveFilters.name ||
-                    effectiveFilters.category_ids.length > 0 ||
-                    effectiveFilters.brand_ids.length > 0 ||
-                    effectiveFilters.min_price ||
-                    effectiveFilters.max_price ||
-                    effectiveFilters.sort_by !== 'created_at' ||
-                    effectiveFilters.sort_order !== 'desc';
+                    effectiveFilters.categoryId.length > 0 ||
+                    effectiveFilters.brandId.length > 0 ||
+                    effectiveFilters.minPrice ||
+                    effectiveFilters.maxPrice ||
+                    effectiveFilters.sortBy !== 'createdAt' ||
+                    effectiveFilters.sortOrder !== 'desc';
 
+                let res;
                 if (isFilterOrSortActive) {
-                    // Luôn gọi API filter với bộ lọc đã được xử lý thông minh
-                    resData = await apiProduct.filter({ ...effectiveFilters, page });
-                    setProducts(resData.data.data || []);
-                    setTotalPages(resData.data.last_page || 1);
+                    // Xử lý logic categoryId: backend có thể chỉ nhận 1 ID hoặc mảng tùy controller
+                    // Ở đây tôi lấy cái đầu tiên vì controller backend chỉ nhận (Integer categoryId)
+                    // Lọc bỏ params rỗng để tránh Backend lỗi BigDecimal
+                    // Lọc bỏ params rỗng để tránh Backend lỗi BigDecimal
+                    const cleanFilters = Object.fromEntries(
+                        Object.entries(effectiveFilters).filter(([_, v]) => v !== "" && v !== null && v !== undefined)
+                    );
+
+                    const params = {
+                        ...cleanFilters,
+                        // Truyền nguyên mảng để hỗ trợ lọc nhiều option
+                        categoryId: cleanFilters.categoryId?.length > 0 ? cleanFilters.categoryId : undefined,
+                        brandId: cleanFilters.brandId?.length > 0 ? cleanFilters.brandId : undefined,
+                        page
+                    };
+                    res = await apiProduct.filter(params);
                 } else {
-                    resData = await apiProduct.getAll(page);
-                    setProducts(resData.data.data || []);
-                    setTotalPages(resData.data.last_page || 1);
+                    res = await apiProduct.getAll(page);
+                }
+
+                // Backend return Page object hoặc List
+                // Nếu là Page object (từ AdminProductController hoặc tương tự) thì có content/data
+                // Nếu là List trực tiếp (từ ProductController user side) thì cần check
+                if (res && res.content) {
+                    setProducts(res.content);
+                    setTotalPages(res.totalPages || 1);
+                } else if (Array.isArray(res)) {
+                    setProducts(res);
+                    setTotalPages(1); // List không phân trang
+                } else if (res && res.data) {
+                    // Dự phòng cho cấu trúc bọc data
+                    setProducts(res.data.content || res.data || []);
+                    setTotalPages(res.data.totalPages || 1);
                 }
             } catch (error) {
                 console.error("Lỗi khi lấy sản phẩm:", error);
@@ -180,19 +206,15 @@ const Products = () => {
             "Trên 500.000đ": { min: "500000", max: "999999999" },
         };
         const { min, max } = map[range];
-        if (filters.min_price === min && filters.max_price === max) {
-            updateFiltersAndResetPage({ min_price: "", max_price: "" });
+        if (filters.minPrice === min && filters.maxPrice === max) {
+            updateFiltersAndResetPage({ minPrice: "", maxPrice: "" });
         } else {
-            updateFiltersAndResetPage({ min_price: min, max_price: max });
+            updateFiltersAndResetPage({ minPrice: min, maxPrice: max });
         }
     };
     const handleSortChange = (e) => {
         const value = e.target.value;
-        let newSort = {};
-        if (value === "price_asc") newSort = { sort_by: "price_sale", sort_order: "asc" };
-        else if (value === "price_desc") newSort = { sort_by: "price_sale", sort_order: "desc" };
-        else newSort = { sort_by: "created_at", sort_order: "desc" };
-        updateFiltersAndResetPage(newSort);
+        updateFiltersAndResetPage({ sortBy: value });
     };
 
 
@@ -235,23 +257,23 @@ const Products = () => {
 
                     <ul className="space-y-2 max-h-40 overflow-y-auto scrollbar-hide">
 
-                        {categories.filter(c => c.parent_id !== 0).map(c => (
-
-                            <label key={c.id} className="flex gap-1 hover:text-green-600 cursor-pointer text-sm">
-
-                                <input type="checkbox" className="accent-green-600"
-
-                                    onChange={() => handleFilterChange("category_ids", c.id)}
-
-                                    checked={filters.category_ids.includes(c.id)}
-
-                                />
-
-                                {c.name}
-
-                            </label>
-
-                        ))}
+                        {categories.length > 0 ? (
+                            categories
+                                .filter(c => c.parentId !== null) // Chỉ hiển thị danh mục con
+                                .map(c => (
+                                    <label key={c.id} className="flex items-center gap-2 hover:text-green-600 cursor-pointer text-sm py-1 transition-colors">
+                                        <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                                            onChange={() => handleFilterChange("categoryId", c.id)}
+                                            checked={filters.categoryId.includes(c.id)}
+                                        />
+                                        <span className={filters.categoryId.includes(c.id) ? "font-bold text-green-700" : ""}>
+                                            {c.name}
+                                        </span>
+                                    </label>
+                                ))
+                        ) : (
+                            <li className="text-gray-400 text-xs italic">Không có danh mục</li>
+                        )}
 
                     </ul>
 
@@ -283,16 +305,14 @@ const Products = () => {
 
                                 return (
 
-                                    <label key={i}>
-
-                                        <input type="checkbox" name="price" className="accent-green-600 mr-2 "
-
+                                    <label key={i} className="flex items-center gap-2 cursor-pointer hover:text-green-600 py-1 transition-colors">
+                                        <input type="checkbox" name="price" className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
                                             onChange={() => handlePriceFilter(p)}
-
-                                            checked={filters.min_price === min && filters.max_price === max}
-
-                                        /> {p}
-
+                                            checked={filters.minPrice === min && filters.maxPrice === max}
+                                        />
+                                        <span className={filters.minPrice === min && filters.maxPrice === max ? "font-bold text-green-700" : ""}>
+                                            {p}
+                                        </span>
                                     </label>
 
                                 )
@@ -305,21 +325,21 @@ const Products = () => {
 
                         <div className="flex flex-col gap-2 mt-2 text-sm">
 
-                            {brands.map(b => (
-
-                                <label key={b.id}>
-
-                                    <input type="checkbox" className="accent-green-600 mr-2"
-
-                                        onChange={() => handleFilterChange("brand_ids", b.id)}
-
-                                        checked={filters.brand_ids.includes(b.id)}
-
-                                    /> {b.name}
-
-                                </label>
-
-                            ))}
+                            {brands.length > 0 ? (
+                                brands.map(b => (
+                                    <label key={b.id} className="flex items-center gap-2 cursor-pointer hover:text-green-600 py-1 transition-colors">
+                                        <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                                            onChange={() => handleFilterChange("brandId", b.id)}
+                                            checked={filters.brandId.includes(b.id)}
+                                        />
+                                        <span className={filters.brandId.includes(b.id) ? "font-bold text-green-700" : ""}>
+                                            {b.name}
+                                        </span>
+                                    </label>
+                                ))
+                            ) : (
+                                <p className="text-gray-400 text-xs italic">Không có thương hiệu</p>
+                            )}
 
                         </div>
 
@@ -347,19 +367,11 @@ const Products = () => {
 
                                 onChange={handleSortChange}
 
-                                value={
-
-                                    filters.sort_by === 'price_sale' && filters.sort_order === 'asc' ? 'price_asc'
-
-                                        : filters.sort_by === 'price_sale' && filters.sort_order === 'desc' ? 'price_desc'
-
-                                            : 'created_at'
-
-                                }
+                                value={filters.sortBy}
 
                             >
 
-                                <option value="created_at">Mới nhất</option>
+                                <option value="id_desc">Mới nhất</option>
 
                                 <option value="price_asc">Giá tăng dần</option>
 
@@ -412,8 +424,8 @@ const Products = () => {
                                             key={p}
                                             onClick={() => handleChangePage(p)}
                                             className={`px-3 py-1 rounded-lg ${page === p
-                                                    ? "bg-green-600 text-white"
-                                                    : "bg-gray-200 hover:bg-green-100"
+                                                ? "bg-green-600 text-white"
+                                                : "bg-gray-200 hover:bg-green-100"
                                                 }`}
                                         >
                                             {p}
@@ -427,8 +439,8 @@ const Products = () => {
                                             <button
                                                 onClick={() => handleChangePage(totalPages)}
                                                 className={`px-3 py-1 rounded-lg ${page === totalPages
-                                                        ? "bg-green-600 text-white"
-                                                        : "bg-gray-200 hover:bg-green-100"
+                                                    ? "bg-green-600 text-white"
+                                                    : "bg-gray-200 hover:bg-green-100"
                                                     }`}
                                             >
                                                 {totalPages}

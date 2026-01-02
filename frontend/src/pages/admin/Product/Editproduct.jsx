@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaArrowLeft, FaSave, FaEdit, FaCamera, FaTag, FaLayerGroup, FaPercentage, FaBoxOpen } from "react-icons/fa";
+import { Editor } from "@tinymce/tinymce-react";
 
 import apiProductAdmin from "../../../api/admin/apiProductAdmin";
 import apiCategoryAdmin from "../../../api/admin/apiCategoryAdmin";
@@ -34,7 +35,8 @@ const EditProduct = () => {
     discountPrice: "",
     status: 1,
     qty: 0,
-    lockedQty: 0
+    lockedQty: 0,
+    costPrice: 0 // Khởi tạo giá nhập trong state
   });
 
   /* ================= FETCH DATA ================= */
@@ -113,6 +115,10 @@ const EditProduct = () => {
     }
   };
 
+  const handleEditorChange = (content) => {
+    setForm((prev) => ({ ...prev, detail: content }));
+  };
+
   const handleUploadImage = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -147,7 +153,20 @@ const EditProduct = () => {
     // Validate
     if (!form.name || form.name.length < 3) return toast.error("Tên sản phẩm phải từ 3 ký tự trở lên");
     if (!form.categoryId || !form.brandId) return toast.error("Vui lòng điền đủ thông tin bắt buộc");
-    if (isDiscounted && Number(form.discountPrice) >= Number(form.salePrice)) {
+
+    const sPrice = Number(form.salePrice);
+    const dPrice = Number(form.discountPrice);
+    const cPrice = Number(form.costPrice);
+
+    // 1. Kiểm tra Giá niêm yết vs Giá nhập (nếu có giá nhập)
+    if (cPrice > 0 && sPrice < cPrice) {
+      console.warn("Validation failed: SalePrice < CostPrice", { sPrice, cPrice });
+      return toast.error(`Giá niêm yết (${sPrice.toLocaleString()}đ) không được thấp hơn giá nhập (${cPrice.toLocaleString()}đ)`);
+    }
+
+    // 2. Kiểm tra Giá khuyến mại vs Giá niêm yết
+    if (isDiscounted && dPrice >= sPrice) {
+      console.warn("Validation failed: DiscountPrice >= SalePrice", { dPrice, sPrice });
       return toast.error("Giá khuyến mại phải nhỏ hơn giá niêm yết");
     }
 
@@ -252,12 +271,38 @@ const EditProduct = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Chi tiết sản phẩm</label>
-                  <textarea
-                    name="detail"
+                  <Editor
+                    apiKey="08g2njx5rtkfad5tsq5p91c0bos9siwvip1tcsinbsduna70"
                     value={form.detail}
-                    onChange={handleChange}
-                    rows={6}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                    init={{
+                      height: 400,
+                      menubar: true,
+                      plugins: [
+                        "advlist",
+                        "autolink",
+                        "lists",
+                        "link",
+                        "image",
+                        "charmap",
+                        "preview",
+                        "anchor",
+                        "searchreplace",
+                        "visualblocks",
+                        "code",
+                        "fullscreen",
+                        "insertdatetime",
+                        "media",
+                        "table",
+                        "help",
+                        "wordcount",
+                      ],
+                      toolbar:
+                        "undo redo | formatselect | bold italic underline | " +
+                        "alignleft aligncenter alignright | bullist numlist outdent indent | link image media | code fullscreen",
+                      content_style:
+                        "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
+                    }}
+                    onEditorChange={handleEditorChange}
                   />
                 </div>
               </div>
@@ -280,9 +325,15 @@ const EditProduct = () => {
                     name="salePrice"
                     value={form.salePrice}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 font-semibold text-gray-800"
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 font-semibold text-gray-800 ${form.costPrice > 0 && Number(form.salePrice) < form.costPrice ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                      }`}
                     required
                   />
+                  {form.costPrice > 0 && Number(form.salePrice) < form.costPrice && (
+                    <p className="text-xs text-red-600 mt-1 font-medium">
+                      ⚠️ Giá bán đang thấp hơn giá nhập ({form.costPrice.toLocaleString()}đ)
+                    </p>
+                  )}
                 </div>
 
                 {/* Checkbox Toggle */}

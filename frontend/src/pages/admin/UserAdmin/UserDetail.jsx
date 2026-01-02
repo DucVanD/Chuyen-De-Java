@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import apiUser from "../../../api/user/apiUser";
+import { toast } from "react-toastify";
+import apiUserAdmin from "../../../api/admin/apiUserAdmin";
 import { FaEdit, FaTrash, FaArrowLeft } from "react-icons/fa";
 import { imageURL } from "../../../api/config";
 
@@ -16,14 +17,14 @@ const UserDetail = () => {
   const fetchUser = async (page = 1) => {
     try {
       setLoading(true);
-      const res = await apiUser.getUserIdWithParams(id, `page=${page}`);
-      if (res.status) {
-        setUser(res.data);
-        setOrders(res.data.orders || []);
-        setPagination(res.data.pagination || { current_page: 1, last_page: 1 });
-      }
+      const data = await apiUserAdmin.getById(id);
+      setUser(data);
+      // Assuming orders might be a separate call or not returned in this version
+      setOrders(data.orders || []);
+      setPagination(data.pagination || { current_page: 1, last_page: 1 });
     } catch (err) {
       console.error("Lỗi tải user:", err);
+      toast.error("Lỗi tải thông tin người dùng");
     } finally {
       setLoading(false);
     }
@@ -63,13 +64,20 @@ const UserDetail = () => {
         <h1 className="text-2xl font-bold text-gray-800">Chi tiết thành viên</h1>
         <div className="space-x-2">
           <Link
-            to={`/admin/user/edit/${user.id}`}
+            to={`/admin/user/editUser/${user.id}`}
             className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm inline-flex items-center"
           >
             <FaEdit className="mr-1" /> Sửa
           </Link>
           <button
-            onClick={() => alert("Xóa user (chưa xử lý API)")}
+            onClick={() => {
+              if (window.confirm("Xóa người dùng?")) {
+                apiUserAdmin.delete(user.id).then(() => {
+                  toast.success("Xóa thành công");
+                  navigate("/admin/users");
+                });
+              }
+            }}
             className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm inline-flex items-center"
           >
             <FaTrash className="mr-1" /> Xóa

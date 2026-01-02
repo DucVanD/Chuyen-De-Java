@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaCamera, FaArrowLeft, FaSave } from "react-icons/fa";
-import apiUser from "../../../api/user/apiUser";
+import apiUserAdmin from "../../../api/admin/apiUserAdmin";
 import apiUpload from "../../../api/apiUpload";
 
 const EditUser = () => {
@@ -18,12 +18,13 @@ const EditUser = () => {
     role: "CUSTOMER",
     status: 1,
     avatar: "",
+    avatarPublicId: "",
   });
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const data = await apiUser.getById(id);
+        const data = await apiUserAdmin.getById(id);
         setForm({
           name: data.name,
           phone: data.phone,
@@ -31,6 +32,7 @@ const EditUser = () => {
           role: data.role,
           status: data.status,
           avatar: data.avatar || "",
+          avatarPublicId: data.avatarPublicId || "",
         });
       } catch {
         toast.error("Không tìm thấy người dùng");
@@ -50,8 +52,13 @@ const EditUser = () => {
 
     setUploading(true);
     try {
-      const avatarUrl = await apiUpload.uploadUserAvatar(file);
-      setForm((prev) => ({ ...prev, avatar: avatarUrl }));
+      const res = await apiUpload.uploadUserAvatar(file);
+      // res = { url: "...", publicId: "..." }
+      setForm((prev) => ({
+        ...prev,
+        avatar: res.url,
+        avatarPublicId: res.publicId
+      }));
       toast.success("✅ Upload avatar mới thành công");
     } catch {
       toast.error("❌ Upload avatar thất bại");
@@ -63,7 +70,7 @@ const EditUser = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await apiUser.update(id, form);
+      await apiUserAdmin.update(id, form);
       toast.success("Cập nhật thành công");
       const from = location.state?.from || "/admin/users";
       navigate(from);
@@ -79,8 +86,8 @@ const EditUser = () => {
         <h2 className="text-2xl font-bold text-gray-800">Cập nhật thông tin</h2>
         <button
           onClick={() => {
-             const from = location.state?.from || "/admin/users";
-             navigate(from);
+            const from = location.state?.from || "/admin/users";
+            navigate(from);
           }}
           className="text-gray-500 hover:text-gray-700 flex items-center gap-2 text-sm font-medium"
         >
@@ -168,11 +175,10 @@ const EditUser = () => {
               name="status"
               value={form.status}
               onChange={handleChange}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 outline-none font-medium ${
-                Number(form.status) === 1
-                  ? "bg-green-50 text-green-700 border-green-200 focus:ring-green-500"
-                  : "bg-red-50 text-red-700 border-red-200 focus:ring-red-500"
-              }`}
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 outline-none font-medium ${Number(form.status) === 1
+                ? "bg-green-50 text-green-700 border-green-200 focus:ring-green-500"
+                : "bg-red-50 text-red-700 border-red-200 focus:ring-red-500"
+                }`}
             >
               <option value={1}>Hoạt động</option>
               <option value={0}>Khóa</option>
@@ -182,11 +188,11 @@ const EditUser = () => {
 
         {/* Action Buttons */}
         <div className="pt-4 flex items-center justify-end gap-4">
-           <button
+          <button
             type="button"
             onClick={() => {
-                const from = location.state?.from || "/admin/users";
-                navigate(from);
+              const from = location.state?.from || "/admin/users";
+              navigate(from);
             }}
             className="px-6 py-2 rounded-lg bg-gray-100 text-gray-700 font-medium hover:bg-gray-200 transition-colors"
           >

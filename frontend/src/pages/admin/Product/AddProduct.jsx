@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaArrowLeft, FaSave, FaBoxOpen, FaCamera, FaPercentage, FaTag, FaLayerGroup } from "react-icons/fa";
+import { Editor } from "@tinymce/tinymce-react";
 
 import apiProductAdmin from "../../../api/admin/apiProductAdmin";
 import apiCategoryAdmin from "../../../api/admin/apiCategoryAdmin";
@@ -87,6 +88,11 @@ const AddProduct = () => {
     }
   };
 
+  // Handle Editor Change
+  const handleEditorChange = (content) => {
+    setForm((prev) => ({ ...prev, detail: content }));
+  };
+
   // Upload Ảnh
   const handleUploadImage = async (e) => {
     const file = e.target.files[0];
@@ -123,8 +129,17 @@ const AddProduct = () => {
     if (!form.name || form.name.length < 3) return toast.error("Tên sản phẩm phải từ 3 ký tự trở lên");
     if (!form.categoryId || !form.brandId) return toast.error("Vui lòng chọn Danh mục & Thương hiệu");
     if (!form.image) return toast.error("Vui lòng tải ảnh sản phẩm");
-    if (isDiscounted && Number(form.discountPrice) >= Number(form.salePrice)) {
-      return toast.error("Giá khuyến mại phải nhỏ hơn giá gốc");
+
+    const sPrice = Number(form.salePrice);
+    const dPrice = Number(form.discountPrice);
+
+    if (isDiscounted && dPrice >= sPrice) {
+      console.warn("Validation failed: DiscountPrice >= SalePrice", { dPrice, sPrice });
+      return toast.error("Giá khuyến mại phải nhỏ hơn giá niêm yết");
+    }
+
+    if (sPrice <= 0) {
+      return toast.error("Giá niêm yết phải lớn hơn 0");
     }
 
     setLoading(true);
@@ -218,13 +233,38 @@ const AddProduct = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Chi tiết sản phẩm</label>
-                  <textarea
-                    name="detail"
+                  <Editor
+                    apiKey="08g2njx5rtkfad5tsq5p91c0bos9siwvip1tcsinbsduna70"
                     value={form.detail}
-                    onChange={handleChange}
-                    rows={6}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                    placeholder="Thông số kỹ thuật, bài viết chi tiết..."
+                    init={{
+                      height: 400,
+                      menubar: true,
+                      plugins: [
+                        "advlist",
+                        "autolink",
+                        "lists",
+                        "link",
+                        "image",
+                        "charmap",
+                        "preview",
+                        "anchor",
+                        "searchreplace",
+                        "visualblocks",
+                        "code",
+                        "fullscreen",
+                        "insertdatetime",
+                        "media",
+                        "table",
+                        "help",
+                        "wordcount",
+                      ],
+                      toolbar:
+                        "undo redo | formatselect | bold italic underline | " +
+                        "alignleft aligncenter alignright | bullist numlist outdent indent | link image media | code fullscreen",
+                      content_style:
+                        "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
+                    }}
+                    onEditorChange={handleEditorChange}
                   />
                 </div>
               </div>

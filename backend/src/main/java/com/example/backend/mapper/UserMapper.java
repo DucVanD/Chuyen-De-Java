@@ -7,7 +7,8 @@ public class UserMapper {
 
     // Entity → DTO
     public static UserDto toDto(User user) {
-        if (user == null) return null;
+        if (user == null)
+            return null;
 
         return UserDto.builder()
                 .id(user.getId())
@@ -16,6 +17,7 @@ public class UserMapper {
                 .phone(user.getPhone())
                 .address(user.getAddress())
                 .avatar(user.getAvatar())
+                .avatarPublicId(user.getAvatarPublicId())
                 .role(user.getRole())
                 .status(user.getStatus())
                 .emailVerifiedAt(user.getEmailVerifiedAt())
@@ -27,7 +29,8 @@ public class UserMapper {
     // DTO → Entity (CREATE)
     // password xử lý riêng (encode)
     public static User toEntity(UserDto dto, String encodedPassword) {
-        if (dto == null) return null;
+        if (dto == null)
+            return null;
 
         return User.builder()
                 .name(dto.getName())
@@ -35,6 +38,7 @@ public class UserMapper {
                 .phone(dto.getPhone())
                 .address(dto.getAddress())
                 .avatar(dto.getAvatar())
+                .avatarPublicId(dto.getAvatarPublicId())
                 .role(dto.getRole())
                 .status(dto.getStatus())
                 .password(encodedPassword)

@@ -82,8 +82,8 @@ public class BrandServiceImpl implements BrandService {
 
         // Image Handling
         if (dto.getImage() != null && !dto.getImage().isBlank()) {
-            // Delete old image if exists
-            if (brand.getImagePublicId() != null) {
+            // Chỉ xóa ảnh cũ nếu ID ảnh mới khác ID ảnh cũ
+            if (brand.getImagePublicId() != null && !brand.getImagePublicId().equals(dto.getImagePublicId())) {
                 try {
                     cloudinaryService.deleteImage(brand.getImagePublicId());
                 } catch (Exception e) {

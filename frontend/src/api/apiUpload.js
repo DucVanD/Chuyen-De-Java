@@ -36,6 +36,15 @@ const apiUpload = {
     const res = await axiosInstance.post("/upload/user", formData);
     axiosInstance.enableJson();
     return res.data;
+  },
+
+  uploadPostImage: async (file) => {
+    axiosInstance.enableUploadFile();
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await axiosInstance.post("/upload/post", formData);
+    axiosInstance.enableJson();
+    return res.data;
   }
 
 };

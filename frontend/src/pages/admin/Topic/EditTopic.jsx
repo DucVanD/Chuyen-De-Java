@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import apiTopic from "../../../api/user/apiTopic";
+import apiTopicAdmin from "../../../api/admin/apiTopicAdmin";
 
 const EditTopic = () => {
   const navigate = useNavigate();
@@ -10,7 +10,7 @@ const EditTopic = () => {
     name: "",
     description: "",
     status: 1,
-
+    slug: "",
   });
 
   const [loading, setLoading] = useState(true);
@@ -19,21 +19,18 @@ const EditTopic = () => {
   useEffect(() => {
     const fetchTopic = async () => {
       try {
-        const res = await apiTopic.getTopicById(id);
-        if (res.status) {
-            console.log(res.data);
-          setTopic(res.data.data);
-        }
+        const res = await apiTopicAdmin.getById(id);
+        console.log("Topic data:", res);
+        setTopic(res); // Backend returns TopicDto directly
       } catch (error) {
         console.error("Lỗi khi lấy dữ liệu chủ đề:", error);
+        toast.error("Không thể tải thông tin chủ đề!");
       } finally {
         setLoading(false);
       }
     };
     fetchTopic();
   }, [id]);
-
-
 
   // ✅ Xử lý thay đổi input
   const handleChange = (e) => {
@@ -45,14 +42,10 @@ const EditTopic = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await apiTopic.editTopic(id, topic);
-      if (res.status) {
-        alert("Cập nhật chủ đề thành công!");
-        const savedPage = localStorage.getItem("currentTopicPage") || 1;
-        navigate(`/admin/topics/${savedPage}`);
-      } else {
-        alert("Cập nhật thất bại!");
-      }
+      await apiTopicAdmin.update(id, topic);
+      alert("Cập nhật chủ đề thành công!");
+      const savedPage = localStorage.getItem("currentTopicPage") || 1;
+      navigate(`/admin/topics/${savedPage}`);
     } catch (error) {
       console.error("Lỗi khi cập nhật chủ đề:", error);
       alert("Không thể cập nhật chủ đề.");
@@ -136,7 +129,7 @@ const EditTopic = () => {
                 </select>
               </div>
 
-              
+
 
               <button
                 type="submit"

@@ -4,7 +4,7 @@ import com.example.backend.dto.CategoryDto;
 import com.example.backend.entity.Category;
 
 public class CategoryMapper {
-    public static CategoryDto todto(Category category) {
+    public static CategoryDto toDto(Category category) {
         if (category == null)
             return null;
         return CategoryDto.builder()
@@ -20,6 +20,9 @@ public class CategoryMapper {
                 .deletedAt(category.getDeletedAt())
                 .parentId(category.getParent() != null ? category.getParent().getId() : null)
                 .productCount(category.getProductCount() != null ? category.getProductCount() : 0L)
+                .children(category.getChildren() != null
+                        ? category.getChildren().stream().map(CategoryMapper::toDto).toList()
+                        : null)
                 .build();
     }
 

@@ -25,6 +25,7 @@ const Userroute = [
   { path: "/registered", component: Registered },
   { path: "/posts/:page?", component: Posts },
   { path: "/post/:slug", component: PostDetail },
+  { path: "/page/:slug", component: PostDetail },
 
   { path: "/contact", component: Contact },
   { path: "/about", component: About },

@@ -12,8 +12,9 @@ import { MdArrowBackIos, MdArrowForwardIos } from "react-icons/md";
 import apiCategory from "../../api/user/apiCategory";
 import apiProduct from "../../api/user/apiProduct";
 import apiBrand from "../../api/user/apiBrand";
+import apiPost from "../../api/user/apiPost";
 import ProductItem from "./ProductItem";
-import { imageURL } from "../../api/config";
+import { imageURL, getImageUrl } from "../../api/config";
 import { useNavigate } from "react-router-dom";
 import useAddToCart from "../../hooks/useAddToCart";
 import "react-toastify/dist/ReactToastify.css";
@@ -49,23 +50,6 @@ const Home = () => {
   const [saleProducts, setProductSale] = useState([]);
   const navigate = useNavigate();
   const handleAddToCart = useAddToCart();
-  // useEffect(() => {
-  //   apiProduct
-  //     .getNewest()
-  //     .then((res) => setProductNew(res.data || []))
-  //     .catch((err) => console.error("Lỗi khi lấy sản phẩm mới:", err));
-  // }, []);
-
-  // useEffect(() => {
-  //   apiCategory
-  //     .getAll()
-  //     .then((res) => setcategorys(res.data.data || []))
-  //     .catch((err) => console.error("Lỗi khi lấy danh muc:", err));
-  // }, []);
-
-  // useEffect(() => {
-  //   apiProduct.getSaleDiscount().then((res) => setProductSale(res.data || []));
-  // }, []);
 
   const [countdown, setCountdown] = useState({
     days: 5,
@@ -75,7 +59,6 @@ const Home = () => {
   });
 
   useEffect(() => {
-    // Thời gian kết thúc (99 ngày + 2 giờ + 33 phút + 35 giây từ lúc load trang)
     const end = new Date(
       Date.now() +
       5 * 24 * 3600 * 1000 +
@@ -100,38 +83,57 @@ const Home = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-
-
   }, []);
 
   const [producsCat, setProductsCat] = useState([]);
-
-  // useEffect(() => {
-  //   const fetchProductsByCategory = async () => {
-  //     try {
-  //       const res = await apiProduct.categoryhome();
-  //       console.log("Data từ API:", res.data);
-  //       setProductsCat(res.data || []);
-  //     } catch (err) {
-  //       console.error("Lỗi khi lấy sản phẩm theo danh mục:", err);
-  //     }
-  //   };
-
-  //   fetchProductsByCategory();
-  // }, []); // ⚠️ RẤT QUAN TRỌNG: [] để chỉ chạy 1 lần
-
   const [Brands, setBrands] = useState([]);
-  // useEffect(() => {
-  //   const fetchBrands = async () => {
-  //     try {
-  //       const res = await apiBrand.getAll();
-  //       setBrands(res.data.data || []);
-  //     } catch (err) {
-  //       console.error("Lỗi khi lấy thương hiệu:", err);
-  //     }
-  //   };
-  //   fetchBrands();
-  // }, []);
+  const [latestPosts, setLatestPosts] = useState([]);
+
+  // Data mẫu cho Đánh giá (Testimonials)
+  const testimonials = [
+    {
+      id: 1,
+      name: "Đặng Chinh Đức",
+      role: "Đầu bếp",
+      content: "Đặt hàng buổi sáng, hẹn chiều giao để đi công trình. Vừa ăn trưa xong, hàng giao luôn tới công trình. Rất nhanh chóng, tiện lợi cho công việc.",
+      avatar: "https://vnn-imgs-a1.akamaized.net/live_image/2021/08/21/image-20210821213000-1.jpg",
+    },
+    {
+      id: 2,
+      name: "Nguyễn Văn A",
+      role: "Khách hàng thân thiết",
+      content: "Sản phẩm tươi ngon, đóng gói cẩn thận. Tôi rất hài lòng với chất lượng dịch vụ của cửa hàng. Sẽ tiếp tục ủng hộ lâu dài.",
+      avatar: "https://i.pinimg.com/736x/8b/16/7a/8b167af653c2399dd93b952a48740620.jpg",
+    },
+  ];
+  const [activeTestimonial, setActiveTestimonial] = useState(0);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [latestRes, catRes, discountRes, brandRes, homeCatsRes, postsRes] = await Promise.all([
+          apiProduct.getLatest(8),
+          apiCategory.getAll(),
+          apiProduct.getLatestDiscount(8),
+          apiBrand.getAll(),
+          apiProduct.getHomeCategories(),
+          apiPost.getNewest()
+        ]);
+
+        setProductNew(latestRes || []);
+        setcategorys(catRes.data || catRes || []);
+        setProductSale(discountRes.content || discountRes || []);
+        setBrands(brandRes.data || brandRes || []);
+        setProductsCat(homeCatsRes || []);
+        setLatestPosts(postsRes || []);
+
+      } catch (err) {
+        console.error("Lỗi khi tải dữ liệu trang chủ:", err);
+      }
+    };
+
+    fetchData();
+  }, []);
 
 
 
@@ -220,7 +222,7 @@ const Home = () => {
               style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
               {categorys
-                .filter((category) => category.parent_id !== 0)
+                .filter((category) => category.parentId !== null)
                 .map((category) => (
                   <div
                     key={category.id}
@@ -236,7 +238,7 @@ const Home = () => {
                     {/* Ảnh danh mục */}
                     <div className="w-full h-28 sm:h-32 flex items-center justify-center">
                       <img
-                        src={`${imageURL}/category/${category.image}`}
+                        src={getImageUrl(category.image, 'category')}
                         alt={category.name}
                         className="h-full w-full object-contain transition-transform duration-500 hover:scale-110"
                       />
@@ -457,10 +459,12 @@ const Home = () => {
             <div className="p-4 md:hidden bg-white">
               <div className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-2">
                 {saleProducts.slice(0, 6).map((p) => {
-                  const percent = p.discount_percent || 0;
-                  const soldPercent = p.stock
-                    ? Math.round((p.sold / p.stock) * 100)
+                  const discountPercent = (p.salePrice && p.discountPrice && p.discountPrice < p.salePrice)
+                    ? Math.round(((p.salePrice - p.discountPrice) / p.salePrice) * 100)
                     : 0;
+                  const soldCount = p.sold || 0;
+                  const stockCount = p.qty || 0;
+                  const soldPercent = stockCount > 0 ? Math.round((soldCount / stockCount) * 100) : 0;
 
                   return (
                     <div
@@ -468,7 +472,7 @@ const Home = () => {
                       className="flex-shrink-0 w-[78%] sm:w-[48%] bg-white rounded-2xl border border-gray-200 shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300 relative"
                     >
                       {/* Badge giảm giá */}
-                      {percent > 0 && (
+                      {discountPercent > 0 && (
                         <div
                           className="absolute top-2 left-2 text-white text-xs font-bold px-2 py-0.5 shadow-md animate-pulse badge-shake"
                           style={{
@@ -480,13 +484,13 @@ const Home = () => {
                             borderBottomRightRadius: "12px",
                           }}
                         >
-                          -{percent}%
+                          -{discountPercent}%
                         </div>
                       )}
 
                       <Link to={`/product/${p.slug}`} className="block p-3">
                         <img
-                          src={`${imageURL}/product/${p.thumbnail}`}
+                          src={getImageUrl(p.image, 'product')}
                           alt={p.name}
                           className="w-full h-28 object-contain mx-auto"
                         />
@@ -500,17 +504,25 @@ const Home = () => {
                           {p.name}
                         </Link>
                         <p className="text-[11px] text-gray-500 mt-1">
-                          Đã bán {p.sold}/{p.stock}{" "}
+                          Đã bán {soldCount}/{stockCount}{" "}
                           <span className="text-green-600 font-semibold">
                             {soldPercent}%
                           </span>
                         </p>
-                        <p className="text-gray-400 line-through text-[11px]">
-                          {p.price_root.toLocaleString()}₫
-                        </p>
-                        <p className="text-red-600 font-bold text-[13px]">
-                          {p.price_sale.toLocaleString()}₫
-                        </p>
+                        {p.discountPrice && p.discountPrice < p.salePrice ? (
+                          <>
+                            <p className="text-gray-400 line-through text-[11px]">
+                              {p.salePrice?.toLocaleString()}₫
+                            </p>
+                            <p className="text-red-600 font-bold text-[13px]">
+                              {p.discountPrice?.toLocaleString()}₫
+                            </p>
+                          </>
+                        ) : (
+                          <p className="text-red-600 font-bold text-[13px]">
+                            {p.salePrice?.toLocaleString()}₫
+                          </p>
+                        )}
 
                         {/* Progress */}
                         <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
@@ -543,10 +555,12 @@ const Home = () => {
             {/* ===== LAPTOP layout ===== */}
             <div className="hidden md:grid grid-cols-3 lg:grid-cols-4 gap-6 p-6 bg-white">
               {saleProducts.slice(0, 8).map((p) => {
-                const percent = p.discount_percent || 0;
-                const soldPercent = p.stock
-                  ? Math.round((p.sold / p.stock) * 100)
+                const discountPercent = (p.salePrice && p.discountPrice && p.discountPrice < p.salePrice)
+                  ? Math.round(((p.salePrice - p.discountPrice) / p.salePrice) * 100)
                   : 0;
+                const soldCount = p.sold || 0;
+                const stockCount = p.qty || 0;
+                const soldPercent = stockCount > 0 ? Math.round((soldCount / stockCount) * 100) : 0;
 
                 return (
                   <div
@@ -554,7 +568,7 @@ const Home = () => {
                     className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 relative flex gap-2"
                   >
                     {/* Badge giảm giá */}
-                    {percent > 0 && (
+                    {discountPercent > 0 && (
                       <div
                         className="absolute top-2 left-2 text-white text-xs font-bold px-2 py-0.5 shadow-md animate-pulse badge-shake"
                         style={{
@@ -566,14 +580,14 @@ const Home = () => {
                           borderBottomRightRadius: "12px",
                         }}
                       >
-                        -{percent}%
+                        -{discountPercent}%
                       </div>
                     )}
 
                     <div className="basis-5/12">
                       <Link to={`/product/${p.slug}`}>
                         <img
-                          src={`${imageURL}/product/${p.thumbnail}`}
+                          src={getImageUrl(p.image, 'product')}
                           alt={p.name}
                           className="w-full h-32 object-contain"
                         />
@@ -588,17 +602,25 @@ const Home = () => {
                         {p.name}
                       </Link>
                       <p className="text-xs text-gray-500 mt-1">
-                        Đã bán: {p.sold}/{p.stock}{" "}
+                        Đã bán: {soldCount}/{stockCount}{" "}
                         <span className="text-green-600 font-semibold">
                           {soldPercent}%
                         </span>
                       </p>
-                      <p className="text-gray-400 line-through text-xs">
-                        {p.price_root.toLocaleString()}₫
-                      </p>
-                      <p className="text-red-600 font-bold text-sm">
-                        {p.price_sale.toLocaleString()}₫
-                      </p>
+                      {p.discountPrice && p.discountPrice < p.salePrice ? (
+                        <>
+                          <p className="text-gray-400 line-through text-xs">
+                            {p.salePrice?.toLocaleString()}₫
+                          </p>
+                          <p className="text-red-600 font-bold text-sm">
+                            {p.discountPrice?.toLocaleString()}₫
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-red-600 font-bold text-sm">
+                          {p.salePrice?.toLocaleString()}₫
+                        </p>
+                      )}
 
                       {/* Progress */}
                       <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
@@ -749,16 +771,16 @@ const Home = () => {
                     <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 relative">
                       <Link to={`/product/${p.slug}`}>
                         <img
-                          src={`${imageURL}/product/${p.thumbnail}`}
+                          src={getImageUrl(p.image, 'product')}
                           alt={p.name}
                           className="object-contain w-full h-full rounded-lg"
                         />
                       </Link>
 
                       {/* Badge giảm giá */}
-                      {p.discount_percent > 0 && (
+                      {p.salePrice && p.discountPrice && p.discountPrice < p.salePrice && (
                         <div className="absolute top-1 left-1 bg-gradient-to-r from-rose-500 to-pink-500 text-white text-[11px] sm:text-xs font-bold px-1.5 py-0.5 rounded-tr-lg rounded-bl-lg shadow animate-pulse">
-                          -{p.discount_percent}%
+                          -{Math.round(((p.salePrice - p.discountPrice) / p.salePrice) * 100)}%
                         </div>
                       )}
                     </div>
@@ -774,18 +796,18 @@ const Home = () => {
 
                       {/* Giá hiển thị logic giống phần khuyến mãi */}
                       <div className="flex items-center gap-2 mt-1 text-sm sm:text-base">
-                        {p.price_sale > 0 ? (
+                        {p.discountPrice && p.discountPrice < p.salePrice ? (
                           <>
                             <span className="text-red-600 font-bold">
-                              {p.price_sale.toLocaleString()}₫
+                              {p.discountPrice.toLocaleString()}₫
                             </span>
                             <span className="text-gray-400 line-through text-xs sm:text-sm">
-                              {p.price_root.toLocaleString()}₫
+                              {p.salePrice.toLocaleString()}₫
                             </span>
                           </>
                         ) : (
                           <span className="text-red-600 font-bold">
-                            {p.price_root.toLocaleString()}₫
+                            {p.salePrice?.toLocaleString()}₫
                           </span>
                         )}
                       </div>
@@ -798,7 +820,124 @@ const Home = () => {
         </section>
 
 
+        {/* 📰 Tin tức & Đánh giá */}
+        <section className="mt-12 px-2 sm:px-0">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
+            {/* Tin tức mới nhất (9/12) */}
+            <div className="lg:col-span-9 bg-gray-50 rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-800">Tin tức mới nhất</h3>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => document.getElementById('news-scroll').scrollBy({ left: -300, behavior: 'smooth' })}
+                    className="w-8 h-8 rounded-full bg-white shadow-sm border border-gray-200 flex items-center justify-center hover:bg-emerald-50 hover:border-emerald-200 transition"
+                  >
+                    <MdArrowBackIos className="translate-x-1 text-gray-600 text-sm" />
+                  </button>
+                  <button
+                    onClick={() => document.getElementById('news-scroll').scrollBy({ left: 300, behavior: 'smooth' })}
+                    className="w-8 h-8 rounded-full bg-white shadow-sm border border-gray-200 flex items-center justify-center hover:bg-emerald-50 hover:border-emerald-200 transition"
+                  >
+                    <MdArrowForwardIos className="text-gray-600 text-sm" />
+                  </button>
+                </div>
+              </div>
+
+              <div
+                id="news-scroll"
+                className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
+                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+              >
+                {latestPosts.length > 0 ? (
+                  latestPosts.slice(0, 6).map((post) => {
+                    const date = new Date(post.createdAt);
+                    const day = date.getDate();
+                    const monthYear = `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+
+                    return (
+                      <div key={post.id} className="min-w-[280px] sm:min-w-[320px] bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition group">
+                        <div className="relative h-44 overflow-hidden">
+                          <img
+                            src={getImageUrl(post.image, 'post')}
+                            alt={post.title}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          />
+                          <div className="absolute top-2 left-2 bg-emerald-600 text-white rounded-lg p-1 px-2 text-center shadow-lg">
+                            <div className="text-sm font-bold leading-none">{day}</div>
+                            <div className="text-[10px] opacity-80">{monthYear}</div>
+                          </div>
+                        </div>
+                        <div className="p-4 flex flex-col gap-2">
+                          <Link to={`/post/${post.slug}`} className="font-bold text-gray-800 hover:text-emerald-600 line-clamp-2 transition-colors min-h-[3rem]">
+                            {post.title}
+                          </Link>
+                          <p className="text-sm text-gray-500 line-clamp-2">
+                            {post.description}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="w-full py-10 text-center text-gray-400">Đang cập nhật tin tức...</div>
+                )}
+              </div>
+
+              <div className="text-center mt-4">
+                <Link to="/posts" className="inline-block py-2 px-8 rounded-full border border-emerald-600 text-emerald-600 text-sm font-semibold hover:bg-emerald-600 hover:text-white transition shadow-sm">
+                  Xem tất cả
+                </Link>
+              </div>
+            </div>
+
+            {/* Đánh giá (3/12) */}
+            <div className="lg:col-span-3 bg-gray-50 rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 flex flex-col">
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-6">Đánh giá</h3>
+
+              <div className="flex-1 bg-white rounded-2xl p-6 shadow-inner relative overflow-hidden flex flex-col items-center text-center">
+                <div className="relative mb-4">
+                  <div className="w-20 h-20 rounded-full border-4 border-emerald-100 overflow-hidden shadow-md">
+                    <img
+                      src={testimonials[activeTestimonial].avatar}
+                      alt={testimonials[activeTestimonial].name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 bg-yellow-400 w-6 h-6 rounded-full flex items-center justify-center text-white text-xs shadow-sm">
+                    "
+                  </div>
+                </div>
+
+                <blockquote className="text-sm text-gray-600 italic mb-6 leading-relaxed">
+                  "{testimonials[activeTestimonial].content}"
+                </blockquote>
+
+                <div className="mt-auto">
+                  <div className="font-bold text-emerald-700">{testimonials[activeTestimonial].name}</div>
+                  <div className="text-xs text-gray-400 uppercase tracking-widest mt-1">
+                    <span className="inline-block w-8 h-[1px] bg-yellow-400 align-middle mr-2"></span>
+                    {testimonials[activeTestimonial].role}
+                  </div>
+                </div>
+
+                <div className="flex gap-2 mt-6">
+                  {testimonials.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setActiveTestimonial(i)}
+                      className={`h-1.5 rounded-full transition-all duration-300 ${activeTestimonial === i ? 'w-6 bg-emerald-600' : 'w-2 bg-gray-200 hover:bg-emerald-300'}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+
+        {/* // Thương hiệu đối tác */}
         <section className="mt-12 px-2 sm:px-0">
           <div className="rounded-2xl border border-green-200  shadow-lg p-4 sm:p-6">
             {/* Header */}
@@ -824,7 +963,7 @@ const Home = () => {
                   >
                     {brand.image ? (
                       <img
-                        src={`${imageURL}/brand/${brand.image}`}
+                        src={getImageUrl(brand.image, 'brand')}
                         alt={brand.name}
                         className="w-14 h-14 sm:w-16 sm:h-16 object-contain grayscale hover:grayscale-0 transition duration-300"
                       />

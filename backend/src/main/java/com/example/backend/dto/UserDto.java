@@ -18,6 +18,7 @@ public class UserDto {
     private String phone;
     private String address;
     private String avatar;
+    private String avatarPublicId;
 
     private Role role;
     private Integer status;

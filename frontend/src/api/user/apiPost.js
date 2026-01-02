@@ -8,14 +8,15 @@ const apiPost = {
   },
 
 
-  getAllPageuser: async (page = 1) => {
-    const res = await axiosInstance.get(`/post/all?page=${page}`);
+  getAllPageuser: async (page = 1, topicId = null) => {
+    let url = `/post/all?page=${page - 1}`;
+    if (topicId) url += `&topicId=${topicId}`;
+    const res = await axiosInstance.get(url);
     return res.data;
   },
 
-
   getPostBySlug: async (slug) => {
-    const res = await axiosInstance.get(`/product/slug/${slug}`);
+    const res = await axiosInstance.get(`/post/slug/${slug}`);
     return res.data;
   },
 

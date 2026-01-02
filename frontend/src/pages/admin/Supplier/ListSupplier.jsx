@@ -51,7 +51,7 @@ const ListSupplier = () => {
     <div className="bg-white rounded-lg shadow-md overflow-hidden min-h-[500px]">
       <div className="p-6 flex justify-between items-center border-b">
         <h3 className="text-2xl font-semibold text-gray-800">Quản lý Nhà cung cấp</h3>
-        <Link to="/admin/supplier/create" className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded flex items-center shadow-sm transition-all">
+        <Link to="/admin/supplier/add" className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded flex items-center shadow-sm transition-all">
           <FaPlus className="mr-2" /> Thêm mới
         </Link>
       </div>

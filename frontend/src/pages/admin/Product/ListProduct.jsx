@@ -56,8 +56,8 @@ const ListProduct = () => {
 
       // --- THÊM DÒNG NÀY ---
       // Lọc: Chỉ giữ lại danh mục nào có parent là null (hoặc parentId tuỳ vào API của bạn)
-      const rootCategories = cats.filter(c =>  c.parentId != null);
-      
+      const rootCategories = cats.filter(c => c.parentId != null);
+
       setCategories(rootCategories);
       // ---------------------
 
@@ -155,11 +155,10 @@ const ListProduct = () => {
     }
   };
 
-  const handleToggleStatus = async (product) => {
+  const handleToggleStatus = async (id) => {
     try {
-      const newStatus = product.status === 1 ? 0 : 1;
-      await apiProductAdmin.update(product.id, { ...product, status: newStatus });
-      toast.success(newStatus === 1 ? "Đã hiển thị sản phẩm" : "Đã ẩn sản phẩm");
+      await apiProductAdmin.toggleStatus(id);
+      toast.success("Cập nhật trạng thái thành công");
       loadProducts();
     } catch {
       toast.error("Lỗi cập nhật trạng thái");
@@ -181,7 +180,7 @@ const ListProduct = () => {
         {/* Chỉ ADMIN mới được thêm */}
         {isAdmin && (
           <Link
-            to="/admin/addProduct"
+            to="/admin/product/add"
             className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center shadow-sm transition-all"
           >
             <FaPlus className="mr-2" /> Thêm sản phẩm
@@ -370,7 +369,7 @@ const ListProduct = () => {
                           {isAdmin ? (
                             <>
                               <button
-                                onClick={() => handleToggleStatus(p)}
+                                onClick={() => handleToggleStatus(p.id)}
                                 className="text-green-600 hover:text-green-800 transition-colors"
                                 title={p.status === 1 ? "Ấn để ẩn" : "Ấn để hiện"}
                               >
@@ -378,7 +377,7 @@ const ListProduct = () => {
                               </button>
 
                               <Link
-                                to={`/admin/editProduct/${p.id}`}
+                                to={`/admin/product/edit/${p.id}`}
                                 className="text-blue-600 hover:text-blue-800 transition-colors"
                                 title="Chỉnh sửa"
                               >

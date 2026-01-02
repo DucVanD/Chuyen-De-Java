@@ -45,6 +45,12 @@ public class AdminProductController {
         return ResponseEntity.ok(productService.getById(id));
     }
 
+    @GetMapping("slug/{slug}")
+    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    public ResponseEntity<ProductDto> getBySlug(@PathVariable String slug) {
+        return ResponseEntity.ok(productService.getBySlug(slug));
+    }
+
     @GetMapping("/search")
     @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
     public ResponseEntity<Page<ProductDto>> search(
@@ -57,16 +63,18 @@ public class AdminProductController {
     @GetMapping("/filter")
     @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
     public ResponseEntity<Page<ProductDto>> filter(
-            @RequestParam(required = false) Integer categoryId,
-            @RequestParam(required = false) Integer brandId,
+            @RequestParam(required = false) List<Integer> categoryId,
+            @RequestParam(required = false) List<Integer> brandId,
             @RequestParam(required = false) Integer status,
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(required = false) Boolean hasPromotion,
+            @RequestParam(required = false) String sortBy,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity
-                .ok(productService.filter(categoryId, brandId, status, minPrice, maxPrice, hasPromotion, page, size));
+                .ok(productService.filter(categoryId, brandId, status, minPrice, maxPrice, hasPromotion, sortBy, page,
+                        size));
     }
 
     // ==================
@@ -102,5 +110,12 @@ public class AdminProductController {
             response.put("message", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
+    }
+
+    @GetMapping("/toggle-status/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> toggleStatus(@PathVariable Integer id) {
+        productService.toggleStatus(id);
+        return ResponseEntity.ok().build();
     }
 }

@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { FaCamera, FaTimes, FaSave } from "react-icons/fa";
-import apiUser from "../../../api/apiUser";
+import apiUserAdmin from "../../../api/admin/apiUserAdmin";
 import apiUpload from "../../../api/apiUpload";
 
 const UserModal = ({ isOpen, onClose, onSuccess, userToEdit }) => {
   const [uploading, setUploading] = useState(false);
   const [password, setPassword] = useState("");
-  
+
   // State form
   const [form, setForm] = useState({
     name: "",
@@ -17,6 +17,7 @@ const UserModal = ({ isOpen, onClose, onSuccess, userToEdit }) => {
     role: "CUSTOMER",
     status: 1,
     avatar: "",
+    avatarPublicId: "",
   });
 
   // Reset form khi mở Modal
@@ -32,6 +33,7 @@ const UserModal = ({ isOpen, onClose, onSuccess, userToEdit }) => {
           role: userToEdit.role,
           status: userToEdit.status,
           avatar: userToEdit.avatar || "",
+          avatarPublicId: userToEdit.avatarPublicId || "",
         });
         setPassword(""); // Edit thì reset pass (nếu nhập mới đổi)
       } else {
@@ -44,6 +46,7 @@ const UserModal = ({ isOpen, onClose, onSuccess, userToEdit }) => {
           role: "CUSTOMER",
           status: 1,
           avatar: "",
+          avatarPublicId: "",
         });
         setPassword("");
       }
@@ -60,8 +63,12 @@ const UserModal = ({ isOpen, onClose, onSuccess, userToEdit }) => {
 
     setUploading(true);
     try {
-      const avatarUrl = await apiUpload.uploadUserAvatar(file);
-      setForm((prev) => ({ ...prev, avatar: avatarUrl }));
+      const res = await apiUpload.uploadUserAvatar(file);
+      setForm((prev) => ({
+        ...prev,
+        avatar: res.url,
+        avatarPublicId: res.publicId
+      }));
       toast.success("✅ Upload avatar thành công");
     } catch {
       toast.error("❌ Upload avatar thất bại");
@@ -83,16 +90,16 @@ const UserModal = ({ isOpen, onClose, onSuccess, userToEdit }) => {
         // --- API UPDATE ---
         // Nếu có nhập password thì gửi kèm, không thì thôi (tùy backend xử lý)
         const updateData = { ...form };
-        if (password) updateData.password = password; 
-        
-        await apiUser.update(userToEdit.id, updateData);
+        if (password) updateData.password = password;
+
+        await apiUserAdmin.update(userToEdit.id, updateData);
         toast.success("Cập nhật thành công!");
       } else {
         // --- API CREATE ---
-        await apiUser.create(form, password);
+        await apiUserAdmin.create(form, password);
         toast.success("Thêm mới thành công!");
       }
-      
+
       onSuccess(); // Load lại list ở cha
       onClose();   // Đóng modal
     } catch (err) {
@@ -105,7 +112,7 @@ const UserModal = ({ isOpen, onClose, onSuccess, userToEdit }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4 animate-fadeIn">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
-        
+
         {/* Header Modal */}
         <div className="flex justify-between items-center p-5 border-b bg-gray-50">
           <h2 className="text-xl font-bold text-gray-800">
@@ -119,7 +126,7 @@ const UserModal = ({ isOpen, onClose, onSuccess, userToEdit }) => {
         {/* Body (Scrollable) */}
         <div className="p-6 overflow-y-auto custom-scrollbar">
           <form onSubmit={handleSubmit} className="space-y-6">
-            
+
             {/* Avatar Section */}
             <div className="flex flex-col items-center">
               <div className="relative group">
@@ -149,12 +156,12 @@ const UserModal = ({ isOpen, onClose, onSuccess, userToEdit }) => {
 
               <div>
                 <label className="label-text">Email <span className="text-red-500">*</span></label>
-                <input 
-                  name="email" 
-                  type="email" 
-                  value={form.email} 
-                  onChange={handleChange} 
-                  required 
+                <input
+                  name="email"
+                  type="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  required
                   className="input-field disabled:bg-gray-100 disabled:text-gray-500"
                   disabled={!!userToEdit} // Thường không cho sửa email
                   placeholder="email@example.com"
@@ -173,15 +180,15 @@ const UserModal = ({ isOpen, onClose, onSuccess, userToEdit }) => {
 
               <div>
                 <label className="label-text">
-                  {userToEdit ? "Mật khẩu mới (Để trống nếu không đổi)" : "Mật khẩu"} 
+                  {userToEdit ? "Mật khẩu mới (Để trống nếu không đổi)" : "Mật khẩu"}
                   {!userToEdit && <span className="text-red-500">*</span>}
                 </label>
-                <input 
-                  type="password" 
-                  value={password} 
-                  onChange={(e) => setPassword(e.target.value)} 
-                  className="input-field" 
-                  placeholder="••••••" 
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="input-field"
+                  placeholder="••••••"
                 />
               </div>
 
@@ -196,10 +203,10 @@ const UserModal = ({ isOpen, onClose, onSuccess, userToEdit }) => {
 
               <div>
                 <label className="label-text">Trạng thái</label>
-                <select 
-                  name="status" 
-                  value={form.status} 
-                  onChange={handleChange} 
+                <select
+                  name="status"
+                  value={form.status}
+                  onChange={handleChange}
                   className={`input-field font-medium ${Number(form.status) === 1 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}
                 >
                   <option value={1}>Hoạt động</option>
@@ -213,8 +220,8 @@ const UserModal = ({ isOpen, onClose, onSuccess, userToEdit }) => {
               <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-lg text-gray-700 bg-gray-100 hover:bg-gray-200 font-medium transition-colors">
                 Hủy bỏ
               </button>
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={uploading}
                 className="px-5 py-2.5 rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 font-medium shadow-lg shadow-indigo-200 flex items-center gap-2 transition-all"
               >
@@ -224,7 +231,7 @@ const UserModal = ({ isOpen, onClose, onSuccess, userToEdit }) => {
           </form>
         </div>
       </div>
-      
+
       {/* Style CSS nội bộ cho gọn */}
       <style>{`
         .label-text { display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.25rem; }

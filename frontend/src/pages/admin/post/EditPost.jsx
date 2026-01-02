@@ -1,19 +1,23 @@
 // src/pages/admin/posts/EditPost.jsx
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import { FaArrowLeft, FaSave } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { Editor } from "@tinymce/tinymce-react";
-import apiPost from "../../../api/user/apiPost";
-import apiTopic from "../../../api/user/apiTopic";
-import { imageURL } from "../../../api/config";
+import apiPostAdmin from "../../../api/admin/apiPostAdmin";
+import apiTopicAdmin from "../../../api/admin/apiTopicAdmin";
+import apiUpload from "../../../api/apiUpload";
+import { getImageUrl } from "../../../api/config";
+import { toast } from "react-toastify";
 
 const EditPost = () => {
-  const navigate = useNavigate();
   const { id } = useParams();
+  const navigate = useNavigate();
+  const title = "Chỉnh sửa bài viết";
+
   const savedPage = localStorage.getItem("currentPostPage") || 1;
 
   const [topics, setTopics] = useState([]);
-  const [thumbnail, setThumbnail] = useState(null);
+  const [image, setImage] = useState(null);
   const [thumbPreview, setThumbPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -22,31 +26,32 @@ const EditPost = () => {
     title: "",
     slug: "",
     description: "",
-    detail: "",
-    type: "post",
-    topic_id: "",
+    content: "",
+    postType: "POST", // Changed from postType to "POST"
+    topicId: "",
     status: 1,
+    image: "",
+    imagePublicId: "", // Added imagePublicId
   });
 
   // === Load topics ===
   useEffect(() => {
     (async () => {
       try {
-        const res = await apiTopic.getAll();
-        setTopics(res.data || []);
+        const res = await apiTopicAdmin.getAll();
+        setTopics(res || []);
       } catch (err) {
         console.error("Lỗi khi load topic:", err);
       }
     })();
   }, []);
 
-  console.log("Topics:", topics);
   // === Load bài viết cần sửa ===
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        const res = await apiPost.getPostId(id);
-        const post = res.data?.data || res.data;
+        const res = await apiPostAdmin.getById(id);
+        const post = res;
 
         if (!post) {
           alert("Không tìm thấy bài viết");
@@ -57,14 +62,16 @@ const EditPost = () => {
           title: post.title || "",
           slug: post.slug || "",
           description: post.description || "",
-          detail: post.detail || "",
-          type: post.type || "post",
-          topic_id: post.topic_id || "",
-          status: post.status || 1,
+          content: post.content || "",
+          postType: post.postType || "POST", // Ensure postType is set
+          topicId: post.topicId || "",
+          status: post.status ?? 1,
+          image: post.image || "", // Keep existing image URL
+          imagePublicId: post.imagePublicId || "", // Load existing imagePublicId
         });
 
-        if (post.thumbnail) {
-          setThumbPreview(`${imageURL}/post/${post.thumbnail}`);
+        if (post.image) {
+          setThumbPreview(getImageUrl(post.image, "post"));
         }
       } catch (err) {
         console.error("Lỗi khi tải bài viết:", err);
@@ -75,15 +82,6 @@ const EditPost = () => {
     fetchPost();
   }, [id, navigate]);
 
-  // Cleanup preview khi đổi ảnh
-  useEffect(() => {
-    return () => {
-      if (thumbPreview && thumbPreview.startsWith("blob:")) {
-        URL.revokeObjectURL(thumbPreview);
-      }
-    };
-  }, [thumbPreview]);
-
   // === Handle form change ===
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -93,13 +91,13 @@ const EditPost = () => {
   // === Handle chọn file ===
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    setThumbnail(file || null);
+    setImage(file || null);
     setThumbPreview(file ? URL.createObjectURL(file) : thumbPreview);
   };
 
   // === Handle editor TinyMCE ===
   const handleEditorChange = (content) => {
-    setFormData((prev) => ({ ...prev, detail: content }));
+    setFormData((prev) => ({ ...prev, content: content }));
   };
 
   // === Gửi form ===
@@ -109,43 +107,48 @@ const EditPost = () => {
     setErrors({});
 
     try {
-      const data = new FormData();
-      Object.keys(formData).forEach((key) => {
-        data.append(key, formData[key] ?? "");
-      });
+      let finalImageUrl = formData.image; // Giữ ảnh cũ mặc định
+      let finalImagePublicId = formData.imagePublicId; // Giữ publicId cũ mặc định
 
-      if (thumbnail) data.append("thumbnail", thumbnail);
+      if (image) {
+        // Use apiUpload.uploadPostImage for new image upload
+        const uploadRes = await apiUpload.uploadPostImage(image);
+        finalImageUrl = uploadRes.url;
+        finalImagePublicId = uploadRes.publicId;
+      }
 
-      const res = await apiPost.EditPost(id, data);
-      alert(res.message || "Cập nhật bài viết thành công");
-      navigate(`/admin/posts`);
+      const postToUpdate = {
+        ...formData,
+        image: finalImageUrl,
+        imagePublicId: finalImagePublicId, // Include imagePublicId in update
+        postType: "POST", // Ensure correct postType is sent
+      };
+
+      await apiPostAdmin.update(id, postToUpdate);
+      alert("Cập nhật bài viết thành công!"); // Changed toast.success to alert
+      navigate("/admin/posts");
     } catch (error) {
       console.error("Lỗi khi cập nhật bài viết:", error);
-      if (error.response?.data?.errors) setErrors(error.response.data.errors);
-      alert(
-        error.response?.data?.message ||
-          `Lỗi server (status ${error.response?.status || "?"})`
-      );
+      toast.error("Lỗi khi cập nhật bài viết");
     } finally {
       setLoading(false);
     }
   };
-
   return (
     <section className="max-w-7xl mx-auto">
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         {/* Header */}
         <div className="p-6 flex flex-col sm:flex-row justify-between items-center border-b border-gray-200">
           <h3 className="text-2xl font-semibold text-gray-800 mb-3 sm:mb-0">
-            Chỉnh sửa bài viết
+            {title}
           </h3>
           <div>
-            <Link
-              to={`/admin/posts/${savedPage}`}
+            <button
+              onClick={() => navigate("/admin/posts")}
               className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded inline-flex items-center transition duration-200"
             >
               <FaArrowLeft className="mr-2" /> Về danh sách
-            </Link>
+            </button>
           </div>
         </div>
 
@@ -218,7 +221,7 @@ const EditPost = () => {
 
                   <Editor
                     apiKey="08g2njx5rtkfad5tsq5p91c0bos9siwvip1tcsinbsduna70"
-                    value={formData.detail}
+                    value={formData.content} // Changed from formData.detail to formData.content
                     init={{
                       height: 400,
                       menubar: true,
@@ -265,10 +268,11 @@ const EditPost = () => {
                       Chủ đề
                     </label>
                     <select
-                      name="topic_id"
-                      value={formData.topic_id}
+                      name="topicId"
+                      value={formData.topicId}
                       onChange={handleChange}
-                      className="w-full p-2.5 border border-gray-300 rounded-md"
+                      className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                      required
                     >
                       <option value="">Chọn chủ đề</option>
                       {topics.map((t) => (
@@ -279,20 +283,7 @@ const EditPost = () => {
                     </select>
                   </div>
 
-                  <div className="mb-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Loại bài viết
-                    </label>
-                    <select
-                      name="type"
-                      value={formData.type}
-                      onChange={handleChange}
-                      className="w-full p-2.5 border border-gray-300 rounded-md"
-                    >
-                      <option value="post">Bài viết</option>
-                      <option value="page">Trang</option>
-                    </select>
-                  </div>
+                  {/* postType is hardcoded to POST in submission logic */}
                 </div>
 
                 {/* Image & Status */}
@@ -313,7 +304,7 @@ const EditPost = () => {
 
                   <input
                     type="file"
-                    name="thumbnail"
+                    name="image"
                     onChange={handleFileChange}
                     className="w-full p-2 border border-gray-300 rounded-md mb-4"
                   />

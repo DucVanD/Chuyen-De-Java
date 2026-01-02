@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import apiTopic from "../../../api/user/apiTopic";
+import apiTopicAdmin from "../../../api/admin/apiTopicAdmin";
 
 const AddTopic = () => {
   const navigate = useNavigate();
@@ -9,6 +9,7 @@ const AddTopic = () => {
     name: "",
     description: "",
     status: 1,
+    slug: "", // Added slug if needed or backend handles it
   });
 
   // ✅ Xử lý thay đổi input
@@ -21,13 +22,10 @@ const AddTopic = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await apiTopic.addTopic(topic);
-      if (res.status) {
-        alert("Thêm chủ đề thành công!");
-        navigate("/admin/topics/1");
-      } else {
-        alert("Thêm thất bại!");
-      }
+      // Backend expects TopicDto
+      await apiTopicAdmin.create(topic);
+      alert("Thêm chủ đề thành công!");
+      navigate("/admin/topics/1");
     } catch (error) {
       console.error("Lỗi khi thêm chủ đề:", error);
       alert("Không thể thêm chủ đề.");

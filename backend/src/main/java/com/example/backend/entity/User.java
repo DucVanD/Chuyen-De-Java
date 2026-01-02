@@ -34,13 +34,16 @@ public class User {
     @Column(nullable = false)
     private String password; // Lưu hash password (BCrypt)
 
-    @Column(unique = true, length = 20 ,nullable = false)
+    @Column(unique = true, length = 20, nullable = false)
     private String phone;
 
     @Column(length = 255)
     private String address;
 
     private String avatar;
+
+    @Column(name = "avatar_public_id")
+    private String avatarPublicId;
 
     @Enumerated(EnumType.STRING) // Lưu "ADMIN" vào database (dạng chữ)
     @Column(name = "role", nullable = false, length = 20)

@@ -13,6 +13,8 @@ import { imageURL } from "../../api/config";
 
 const Post = () => {
   const [posts, setPosts] = useState([]);
+  const [topics, setTopics] = useState([]);
+  const [selectedTopic, setSelectedTopic] = useState(null);
   const [postNew, setPostNew] = useState(null);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -23,22 +25,14 @@ const Post = () => {
   const navigate = useNavigate(); // ✅ Dùng để chuyển trang khi bấm số trang
 
   // ✅ Hàm load bài viết có phân trang
-  const fetchPosts = async (page = 1) => {
+  const fetchPosts = async (page = 1, topicId = null) => {
     setLoading(true);
     try {
-      const res = await apiPost.getAllPageuser(page);
-
-      if (res.status) {
-        // ✅ Đọc dữ liệu paginate từ Laravel đúng cách
-        const pagination = res.data;
-        const list = Array.isArray(pagination?.data) ? pagination.data : [];
-
-        setPosts(list);
-        setCurrentPage(pagination?.current_page || 1);
-        setLastPage(pagination?.last_page || 1);
-      } else {
-        setPosts([]);
-      }
+      const res = await apiPost.getAllPageuser(page, topicId);
+      // Spring Boot Page object has 'content', 'number', 'totalPages'
+      setPosts(res.content || []);
+      setCurrentPage(res.number + 1 || 1);
+      setLastPage(res.totalPages || 1);
     } catch (error) {
       console.error("❌ Lỗi khi tải bài viết:", error);
       setPosts([]);
@@ -54,10 +48,16 @@ const Post = () => {
       .catch((err) => console.error("Lỗi khi lấy bài viết mới:", err));
   }, []);
 
-  // ✅ Khi URL thay đổi (/posts/2, /posts/3,...), gọi lại fetchPosts
   useEffect(() => {
-    fetchPosts(Number(page) || 1);
-  }, [page]);
+    import("../../api/user/apiTopic").then(module => {
+      module.default.getAll().then(res => setTopics(res || []));
+    });
+  }, []);
+
+  // ✅ Khi URL hoặc topic thay đổi, gọi lại fetchPosts
+  useEffect(() => {
+    fetchPosts(Number(page) || 1, selectedTopic);
+  }, [page, selectedTopic]);
 
   // ✅ Chuyển trang bằng cách đổi URL → React Router tự render lại
   const goToPage = (page) => {
@@ -77,6 +77,25 @@ const Post = () => {
         <span className="text-gray-700 font-semibold">Bài viết</span>
       </nav>
 
+      {/* Topic Filter */}
+      <div className="flex flex-wrap gap-4 mb-8">
+        <button
+          onClick={() => setSelectedTopic(null)}
+          className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${!selectedTopic ? "bg-green-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
+        >
+          Tất cả
+        </button>
+        {topics.map(t => (
+          <button
+            key={t.id}
+            onClick={() => setSelectedTopic(t.id)}
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${selectedTopic === t.id ? "bg-green-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
+          >
+            {t.name}
+          </button>
+        ))}
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* ======= MAIN CONTENT ======= */}
         <div className="lg:col-span-3">
@@ -95,11 +114,7 @@ const Post = () => {
                     {/* Ảnh bài viết */}
                     <div className="md:w-1/3">
                       <img
-                        src={
-                          post.thumbnail
-                            ? `${imageURL}/post/${post.thumbnail}`
-                            : "/assets/images/no-image.jpg"
-                        }
+                        src={post.image || "/assets/images/no-image.jpg"}
                         alt={post.title}
                         className="w-full h-48 object-cover rounded-md"
                       />
@@ -228,11 +243,7 @@ const Post = () => {
                     className="flex gap-3 hover:bg-gray-50 p-2 rounded transition-colors"
                   >
                     <img
-                      src={
-                        post.thumbnail
-                          ? `${imageURL}/post/${post.thumbnail}`
-                          : "/assets/images/no-image.jpg"
-                      }
+                      src={post.image || "/assets/images/no-image.jpg"}
                       alt={post.title}
                       className="w-16 h-16 object-cover rounded"
                     />

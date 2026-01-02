@@ -8,7 +8,7 @@ import { FaUser, FaSortDown } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import apiCategory from "../api/user/apiCategory";
-import { imageURL } from "../api/config";
+import { imageURL, getImageUrl } from "../api/config";
 import { logout } from "../Redux/authSlice";
 import { toast } from "react-toastify";
 import { TbBrandShopee } from "react-icons/tb";
@@ -421,7 +421,7 @@ const HeaderUser = () => {
                               className="flex items-center gap-3 mb-2 hover:text-green-600 transition"
                             >
                               <img
-                                src={`${imageURL}/category/${cat.image}`}
+                                src={getImageUrl(cat.image, 'category')}
                                 alt={cat.name}
                                 className="w-10 h-10 object-cover rounded-full border border-gray-200"
                               />

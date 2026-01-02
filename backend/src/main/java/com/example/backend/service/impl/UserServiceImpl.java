@@ -17,13 +17,15 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final com.example.backend.config.CloudinaryService cloudinaryService;
 
     public UserServiceImpl(
             UserRepository userRepository,
-            PasswordEncoder passwordEncoder
-    ) {
+            PasswordEncoder passwordEncoder,
+            com.example.backend.config.CloudinaryService cloudinaryService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.cloudinaryService = cloudinaryService;
     }
 
     @Override
@@ -32,6 +34,34 @@ public class UserServiceImpl implements UserService {
                 .stream()
                 .map(UserMapper::toDto)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public org.springframework.data.domain.Page<UserDto> getPage(
+            java.util.List<com.example.backend.entity.enums.Role> roles, int page, int size) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size,
+                org.springframework.data.domain.Sort.by("id").descending());
+
+        if (roles == null || roles.isEmpty()) {
+            return userRepository.findAll(pageable).map(UserMapper::toDto);
+        }
+        return userRepository.findByRoles(roles, pageable).map(UserMapper::toDto);
+    }
+
+    @Override
+    public org.springframework.data.domain.Page<UserDto> search(String keyword,
+            java.util.List<com.example.backend.entity.enums.Role> roles, int page, int size) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size,
+                org.springframework.data.domain.Sort.by("id").descending());
+
+        if (roles == null || roles.isEmpty()) {
+            // Re-implementing a basic search without roles if roles list is empty
+            // Though in this system we usually have roles.
+            return userRepository.search(keyword, List.of(com.example.backend.entity.enums.Role.values()), pageable)
+                    .map(UserMapper::toDto);
+        }
+        return userRepository.search(keyword, roles, pageable)
+                .map(UserMapper::toDto);
     }
 
     @Override
@@ -68,6 +98,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public UserDto update(Integer id, UserDto dto) {
 
         User user = userRepository.findById(id)
@@ -76,12 +107,42 @@ public class UserServiceImpl implements UserService {
         user.setName(dto.getName());
         user.setPhone(dto.getPhone());
         user.setAddress(dto.getAddress());
-        user.setAvatar(dto.getAvatar());
+
+        // Handle Avatar update and Cloudinary cleanup
+        if (dto.getAvatar() != null && !dto.getAvatar().isBlank()) {
+            if (user.getAvatarPublicId() != null && !user.getAvatarPublicId().equals(dto.getAvatarPublicId())) {
+                try {
+                    cloudinaryService.deleteImage(user.getAvatarPublicId());
+                } catch (Exception e) {
+                    System.err.println("Lỗi xóa ảnh cũ khi update user: " + e.getMessage());
+                }
+            }
+            user.setAvatar(dto.getAvatar());
+            user.setAvatarPublicId(dto.getAvatarPublicId());
+        }
+
         user.setRole(dto.getRole());
         user.setStatus(dto.getStatus());
 
         User updated = userRepository.save(user);
         return UserMapper.toDto(updated);
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public void delete(Integer id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (user.getAvatarPublicId() != null) {
+            try {
+                cloudinaryService.deleteImage(user.getAvatarPublicId());
+            } catch (Exception e) {
+                System.err.println("Không xóa được ảnh Cloudinary khi xóa user: " + e.getMessage());
+            }
+        }
+
+        userRepository.delete(user);
     }
 
     @Override

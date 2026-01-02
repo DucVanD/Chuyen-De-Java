@@ -50,7 +50,11 @@ const apiProductAdmin = {
         params.append("size", size);
 
         return axiosAdmin.get(`/admin/products/filter?${params.toString()}`).then(res => res.data);
-    }
+    },
+
+    // TOGGLE STATUS
+    toggleStatus: (id) =>
+        axiosAdmin.get(`/admin/products/toggle-status/${id}`).then(res => res.data),
 };
 
 export default apiProductAdmin;

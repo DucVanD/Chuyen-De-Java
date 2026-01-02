@@ -1,24 +1,26 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { FaArrowLeft, FaImage, FaPlus } from "react-icons/fa";
 import { Editor } from "@tinymce/tinymce-react";
-import apiPost from "../../../api/user/apiPost";
-import apiTopic from "../../../api/user/apiTopic";
-import { imageURL } from "../../../api/config";
+import apiPostAdmin from "../../../api/admin/apiPostAdmin";
+import apiTopicAdmin from "../../../api/admin/apiTopicAdmin";
+import apiUpload from "../../../api/apiUpload";
+import { toast } from "react-toastify";
 
 const AddPost = () => {
   const navigate = useNavigate();
+  const title = "Thêm bài viết mới";
 
   const [topics, setTopics] = useState([]);
   const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    detail: "",
-    topic_id: "",
-    type: "post",
+    topicId: "",
+    image: "",
+    imagePublicId: "",
+    postType: "POST",
     status: 1,
+    slug: "",
   });
-  const [thumbnail, setThumbnail] = useState(null);
+  const [image, setImage] = useState(null); // Matches PostDto
   const [thumbPreview, setThumbPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -27,9 +29,9 @@ const AddPost = () => {
   useEffect(() => {
     const fetchTopics = async () => {
       try {
-        const res = await apiTopic.getAll();
-        setTopics(res.data || res);
-        console.log("Topics:", res.data || res);
+        const res = await apiTopicAdmin.getAll();
+        setTopics(res);
+        console.log("Topics:", res);
       } catch (error) {
         console.error("Lỗi khi tải chủ đề:", error);
       }
@@ -45,13 +47,13 @@ const AddPost = () => {
 
   // 🔹 TinyMCE editor change
   const handleEditorChange = (content) => {
-    setFormData((prev) => ({ ...prev, detail: content }));
+    setFormData((prev) => ({ ...prev, content: content }));
   };
 
   // 🔹 Chọn ảnh
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    setThumbnail(file || null);
+    setImage(file || null);
     if (file) {
       setThumbPreview(URL.createObjectURL(file));
     }
@@ -64,21 +66,25 @@ const AddPost = () => {
     setErrors({});
 
     try {
-      const data = new FormData();
-      Object.keys(formData).forEach((key) => {
-        data.append(key, formData[key] ?? "");
-      });
-      if (thumbnail) data.append("thumbnail", thumbnail);
+      let finalImageUrl = formData.image;
+      let finalImagePublicId = formData.imagePublicId;
 
-      const res = await apiPost.AddPost(data);
-      alert(res.message || "Thêm bài viết thành công!");
+      if (image) {
+        const uploadRes = await apiUpload.uploadPostImage(image);
+        finalImageUrl = uploadRes.url;
+        finalImagePublicId = uploadRes.publicId;
+      }
+
+      await apiPostAdmin.create({
+        ...formData,
+        image: finalImageUrl,
+        imagePublicId: finalImagePublicId
+      });
+      toast.success("Thêm bài viết thành công!");
       navigate("/admin/posts");
     } catch (error) {
       console.error("Lỗi khi thêm bài viết:", error);
-      if (error.response?.data?.errors) {
-        setErrors(error.response.data.errors);
-      }
-      alert(error.response?.data?.message || "Lỗi server khi thêm bài viết!");
+      toast.error("Lỗi khi thêm bài viết!");
     } finally {
       setLoading(false);
     }
@@ -90,16 +96,14 @@ const AddPost = () => {
         {/* Header */}
         <div className="p-6 flex flex-col sm:flex-row justify-between items-center border-b border-gray-200">
           <h3 className="text-2xl font-semibold text-gray-800 mb-3 sm:mb-0">
-            Thêm bài viết mới
+            {title}
           </h3>
-          <div>
-            <Link
-              to="/admin/posts"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded inline-flex items-center transition duration-200"
-            >
-              <FaArrowLeft className="mr-2" /> Về danh sách
-            </Link>
-          </div>
+          <button
+            onClick={() => navigate("/admin/posts")}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded inline-flex items-center transition duration-200"
+          >
+            <i className="fas fa-arrow-left mr-2"></i> Về danh sách
+          </button>
         </div>
 
         {/* Body */}
@@ -163,7 +167,7 @@ const AddPost = () => {
                   </h4>
                   <Editor
                     apiKey="08g2njx5rtkfad5tsq5p91c0bos9siwvip1tcsinbsduna70"
-                    value={formData.detail}
+                    value={formData.content}
                     init={{
                       height: 400,
                       menubar: true,
@@ -214,10 +218,11 @@ const AddPost = () => {
                       Chủ đề
                     </label>
                     <select
-                      name="topic_id"
-                      value={formData.topic_id}
+                      name="topicId"
+                      value={formData.topicId}
                       onChange={handleChange}
-                      className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                      className="w-full p-2.5 border border-gray-300 rounded-md"
+                      required
                     >
                       <option value="">Chọn chủ đề</option>
                       {topics.map((t) => (
@@ -226,27 +231,10 @@ const AddPost = () => {
                         </option>
                       ))}
                     </select>
-                    {errors.topic_id && (
-                      <p className="text-red-600 text-sm mt-1">
-                        {errors.topic_id[0]}
-                      </p>
-                    )}
+                    {errors.topicId && <span className="text-red-500 text-xs">{errors.topicId}</span>}
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Loại bài viết
-                    </label>
-                    <select
-                      name="type"
-                      value={formData.type}
-                      onChange={handleChange}
-                      className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                    >
-                      <option value="post">Bài viết</option>
-                      <option value="page">Trang</option>
-                    </select>
-                  </div>
+                  {/* Loại bài viết is hardcoded to POST in state, no need for selection in AddPost */}
                 </div>
 
                 <div className="bg-gray-50 p-6 rounded-lg shadow-sm">

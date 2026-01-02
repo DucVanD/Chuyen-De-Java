@@ -11,6 +11,11 @@ const apiCategory = {
     const res = await axiosInstance.get(`/categories/${id}`);
     return res.data;
   },
+
+  getParentsWithChildren: async () => {
+    const res = await axiosInstance.get("/categories/parents-with-children");
+    return res.data;
+  },
 };
 
 export default apiCategory;

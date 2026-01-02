@@ -12,10 +12,9 @@ import { FaSearch, FaEye } from "react-icons/fa";
 //   FaHeadset,
 // } from "react-icons/fa";
 // ✅ Hàm xử lý thumbnail thống nhất
-const getThumbnail = (thumbnail) => {
-    if (!thumbnail) return "https://source.unsplash.com/600x400/?food";
-    if (thumbnail.startsWith("http")) return thumbnail;
-    return `${imageURL}/post/${thumbnail}`;
+const getThumbnail = (image) => {
+    if (!image) return "/assets/images/no-image.jpg";
+    return image;
 };
 
 const DetailPost = () => {
@@ -30,9 +29,7 @@ const DetailPost = () => {
         const fetchPost = async () => {
             try {
                 const res = await apiPost.getPostBySlug(slug);
-                if (res.status) {
-                    setPost(res.data);
-                }
+                setPost(res); // Backend returns the DTO directly
             } catch (err) {
                 console.error("❌ Lỗi tải bài viết:", err);
             }
@@ -57,25 +54,29 @@ const DetailPost = () => {
             <div className="text-center text-gray-500 py-20">Đang tải bài viết...</div>
         );
 
-    // ✅ Giới hạn hiển thị 700 ký tự đầu nếu bài viết dài
-    const shouldTruncate = post.detail && post.detail.length > 1500;
+    // ✅ Giới hạn hiển thị 1500 ký tự đầu nếu bài viết dài (tùy chọn)
+    const shouldTruncate = post.content && post.content.length > 1500;
     const truncatedContent = shouldTruncate
-        ? post.detail.slice(0, 1500) + "..."
-        : post.detail;
+        ? post.content.slice(0, 1500) + "..."
+        : post.content;
 
     return (
         <div className="max-w-7xl mx-auto px-4 mt-10">
             {/* === Breadcrumb === */}
-            <nav className="text-sm text-gray-500 mb-6">
-                <Link to="/" className="hover:text-green-600">
+            <nav className="text-sm text-gray-500 mb-6 font-medium">
+                <Link to="/" className="hover:text-green-600 transition">
                     Trang chủ
                 </Link>
-                <span className="mx-2">/</span>
-                <Link to="/posts/1" className="hover:text-green-600">
-                    Bài viết
-                </Link>
-                <span className="mx-2">/</span>
-                <span className="text-gray-700 font-semibold">{post.title}</span>
+                <span className="mx-2 text-gray-300">/</span>
+                {post.postType === "POST" ? (
+                    <>
+                        <Link to="/posts/1" className="hover:text-green-600 transition">
+                            Bài viết
+                        </Link>
+                        <span className="mx-2 text-gray-300">/</span>
+                    </>
+                ) : null}
+                <span className="text-gray-900 font-bold truncate max-w-xs inline-block align-bottom">{post.title}</span>
             </nav>
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -83,9 +84,9 @@ const DetailPost = () => {
                 <article className="lg:col-span-3 bg-white rounded-xl shadow p-6">
                     {/* ✅ Thumbnail hiển thị chuẩn */}
                     <img
-                        src={getThumbnail(post.thumbnail)}
+                        src={getThumbnail(post.image)}
                         alt={post.title}
-                        className="w-150 rounded-xl object-cover mb-6"
+                        className="w-full rounded-xl object-cover mb-6"
                     />
 
                     {/* Tiêu đề + thông tin */}
@@ -100,9 +101,9 @@ const DetailPost = () => {
                         <span className="flex items-center gap-1">
                             <FaUser /> {post.created_by || "Admin"}
                         </span>
-                        {post.topic && (
+                        {post.postType === "POST" && post.topicId && (
                             <span className="flex items-center gap-1">
-                                <FaTag /> {post.topic.name}
+                                <FaTag /> {post.topicName || "Chủ đề"}
                             </span>
                         )}
                     </div>
@@ -111,7 +112,7 @@ const DetailPost = () => {
                     <div
                         className="prose max-w-none prose-green"
                         dangerouslySetInnerHTML={{
-                            __html: showFull ? post.detail : truncatedContent,
+                            __html: showFull ? post.content : truncatedContent,
                         }}
                     />
 
@@ -147,45 +148,44 @@ const DetailPost = () => {
                         </div>
                     </div>
 
-                    {/* Bài viết mới */}
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-                        <div className="bg-green-600 text-white px-4 py-3">
-                            <h3 className="font-semibold">BÀI VIẾT MỚI</h3>
-                        </div>
-                        <div className="p-4 space-y-3">
-                            {Array.isArray(postNew) && postNew.length > 0 ? (
-                                postNew.slice(0, 5).map((post, index) => (
-                                    <div
-                                        key={index}
-                                        className="flex gap-3 hover:bg-gray-50 p-2 rounded transition-colors"
-                                    >
-                                        <img
-                                            src={
-                                                post.thumbnail
-                                                    ? `${imageURL}/post/${post.thumbnail}`
-                                                    : "/assets/images/no-image.jpg"
-                                            }
-                                            alt={post.title}
-                                            className="w-16 h-16 object-cover rounded"
-                                        />
-                                        <div className="flex-1">
-                                            <Link
-                                                to={`/post/${post.slug}`}
-                                                className="text-sm font-medium text-gray-800 hover:text-green-600 transition-colors line-clamp-2"
-                                            >
-                                                {post.title}
-                                            </Link>
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                {new Date(post.created_at).toLocaleDateString("vi-VN")}
-                                            </p>
+                    {/* Bài viết mới - Only show for POST type */}
+                    {post.postType === "POST" && (
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="bg-green-600 text-white px-4 py-3">
+                                <h3 className="font-semibold uppercase tracking-wider text-sm">BÀI VIẾT MỚI</h3>
+                            </div>
+                            <div className="p-4 space-y-3">
+                                {Array.isArray(postNew) && postNew.length > 0 ? (
+                                    postNew.slice(0, 5).map((post, index) => (
+                                        <div
+                                            key={index}
+                                            className="flex gap-3 hover:bg-gray-50 p-2 rounded transition-colors"
+                                        >
+                                            <img
+                                                src={post.image || "/assets/images/no-image.jpg"}
+                                                alt={post.title}
+                                                className="w-16 h-16 object-cover rounded shadow-sm"
+                                            />
+                                            <div className="flex-1">
+                                                <Link
+                                                    to={`/post/${post.slug}`}
+                                                    className="text-sm font-medium text-gray-800 hover:text-green-600 transition-colors line-clamp-2 leading-tight"
+                                                >
+                                                    {post.title}
+                                                </Link>
+                                                <p className="text-[11px] text-gray-400 mt-1 flex items-center gap-1">
+                                                    <FaCalendarAlt size={10} />
+                                                    {new Date(post.created_at || post.createdAt).toLocaleDateString("vi-VN")}
+                                                </p>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))
-                            ) : (
-                                <p className="text-sm text-gray-500">Chưa có bài viết mới.</p>
-                            )}
+                                    ))
+                                ) : (
+                                    <p className="text-sm text-gray-500 italic px-2">Chưa có bài viết mới.</p>
+                                )}
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
         </div>

@@ -1,6 +1,5 @@
 package com.example.backend.controller;
 
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,8 +26,7 @@ public class FileUploadController {
             @RequestParam("file") MultipartFile file) {
         try {
             return ResponseEntity.ok(
-                    cloudinaryService.uploadImage(file, "categories")
-            );
+                    cloudinaryService.uploadImage(file, "categories"));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body("Upload category thất bại");
@@ -43,8 +41,7 @@ public class FileUploadController {
             @RequestParam("file") MultipartFile file) {
         try {
             return ResponseEntity.ok(
-                    cloudinaryService.uploadImage(file, "products")
-            );
+                    cloudinaryService.uploadImage(file, "products"));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body("Upload product thất bại");
@@ -59,8 +56,7 @@ public class FileUploadController {
             @RequestParam("file") MultipartFile file) {
         try {
             return ResponseEntity.ok(
-                    cloudinaryService.uploadImage(file, "brands")
-            );
+                    cloudinaryService.uploadImage(file, "brands"));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body("Upload brand thất bại");
@@ -75,11 +71,25 @@ public class FileUploadController {
             @RequestParam("file") MultipartFile file) {
         try {
             return ResponseEntity.ok(
-                    cloudinaryService.uploadImage(file, "users/avatar")
-            );
+                    cloudinaryService.uploadImage(file, "users/avatar"));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body("Upload user thất bại");
+        }
+    }
+
+    // =========================
+    // POST
+    // =========================
+    @PostMapping("/post")
+    public ResponseEntity<?> uploadPost(
+            @RequestParam("file") MultipartFile file) {
+        try {
+            return ResponseEntity.ok(
+                    cloudinaryService.uploadImage(file, "posts"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body("Upload post thất bại");
         }
     }
 }

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaCamera, FaArrowLeft, FaSave } from "react-icons/fa";
-import apiUser from "../../../api/user/apiUser";
+import apiUserAdmin from "../../../api/admin/apiUserAdmin";
 import apiUpload from "../../../api/apiUpload";
 
 const AddUser = () => {
@@ -17,6 +17,7 @@ const AddUser = () => {
     role: "CUSTOMER",
     status: 1,
     avatar: "",
+    avatarPublicId: "",
   });
 
   const [password, setPassword] = useState("");
@@ -31,8 +32,12 @@ const AddUser = () => {
 
     setUploading(true);
     try {
-      const avatarUrl = await apiUpload.uploadUserAvatar(file);
-      setForm((prev) => ({ ...prev, avatar: avatarUrl }));
+      const res = await apiUpload.uploadUserAvatar(file);
+      setForm((prev) => ({
+        ...prev,
+        avatar: res.url,
+        avatarPublicId: res.publicId
+      }));
       toast.success("✅ Upload avatar thành công");
     } catch {
       toast.error("❌ Upload avatar thất bại");
@@ -46,7 +51,7 @@ const AddUser = () => {
     if (!password) return toast.error("Vui lòng nhập mật khẩu");
 
     try {
-      await apiUser.create(form, password);
+      await apiUserAdmin.create(form, password);
       toast.success("Thêm người dùng thành công");
       navigate("/admin/users");
     } catch (err) {
@@ -168,7 +173,7 @@ const AddUser = () => {
 
         {/* Submit Button */}
         <div className="pt-4 flex items-center justify-end gap-4">
-           <button
+          <button
             type="button"
             onClick={() => navigate("/admin/users")}
             className="px-6 py-2 rounded-lg bg-gray-100 text-gray-700 font-medium hover:bg-gray-200 transition-colors"
