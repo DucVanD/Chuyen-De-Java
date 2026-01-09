@@ -13,5 +13,10 @@ public interface StockMovementRepository extends JpaRepository<StockMovement, In
             Integer productId,
             StockMovementType movementType);
 
+    // Lấy có phân trang, loại trừ một loại (ví dụ: loại trừ OUT)
+    org.springframework.data.domain.Page<StockMovement> findAllByMovementTypeNot(
+            StockMovementType movementType,
+            org.springframework.data.domain.Pageable pageable);
+
     long countBySupplierId(Integer supplierId);
 }

@@ -289,6 +289,11 @@ const Checkout = () => {
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-700 line-clamp-2">{item.name}</p>
+                    <p className="text-[10px] text-gray-500 mt-0.5">
+                      {item.saleType === "WEIGHT"
+                        ? `${item.unitLabel || "phần"} (${item.qty * (item.baseWeight || 0)} gram)`
+                        : (item.unitLabel || "đơn vị")}
+                    </p>
                     <p className="text-sm font-bold text-green-600 mt-1">{formatPrice(getFinalPrice(item) * item.qty)}</p>
                   </div>
                 </div>

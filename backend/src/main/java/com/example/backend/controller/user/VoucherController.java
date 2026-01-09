@@ -23,6 +23,12 @@ public class VoucherController {
         return ResponseEntity.ok(voucherService.getAll());
     }
 
+    // 1.1️⃣ Lấy danh sách voucher đang hoạt động (Hiển thị cho khách)
+    @GetMapping("/active")
+    public ResponseEntity<List<VoucherDto>> getAllActive() {
+        return ResponseEntity.ok(voucherService.getAllActive());
+    }
+
     // 2️⃣ Lấy voucher theo id
     @GetMapping("/{id}")
     public ResponseEntity<VoucherDto> getById(@PathVariable Integer id) {
@@ -45,8 +51,7 @@ public class VoucherController {
     @PutMapping("/{id}")
     public ResponseEntity<VoucherDto> update(
             @PathVariable Integer id,
-            @RequestBody VoucherDto dto
-    ) {
+            @RequestBody VoucherDto dto) {
         return ResponseEntity.ok(voucherService.update(id, dto));
     }
 

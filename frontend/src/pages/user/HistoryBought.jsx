@@ -100,7 +100,10 @@ const HistoryBought = () => {
               thumbnail: detail.product?.image || "/placeholder.png",
               price_buy: detail.priceBuy || 0,
               qty: detail.quantity,
-              amount: detail.amount || 0
+              amount: detail.amount || 0,
+              saleType: detail.product?.saleType,
+              unitLabel: detail.product?.unitLabel,
+              baseWeight: detail.product?.baseWeight
             })) || []
           }))
         };
@@ -326,7 +329,12 @@ const HistoryBought = () => {
                     <div>
                       <p className="font-medium text-gray-800">{p.name}</p>
                       <p className="text-sm text-gray-500">
-                        Giá: {p.price_buy.toLocaleString("vi-VN")} đ | SL: {p.qty}
+                        Giá: {p.price_buy.toLocaleString("vi-VN")} đ | SL: {p.qty}{" "}
+                        <span className="text-xs text-gray-400">
+                          {p.saleType === "WEIGHT"
+                            ? `${p.unitLabel || 'phần'} (${p.qty * (p.baseWeight || 0)} gram)`
+                            : (p.unitLabel || "đơn vị")}
+                        </span>
                       </p>
                     </div>
                   </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaTag, FaSpinner } from "react-icons/fa";
 import apiVoucher from "../../api/user/apiVoucher";
 import { toast } from "react-toastify";
@@ -8,21 +8,29 @@ const VoucherInput = ({ subtotal, onVoucherApplied }) => {
     const [loading, setLoading] = useState(false);
     const [appliedVoucher, setAppliedVoucher] = useState(null);
     const [discount, setDiscount] = useState(0);
+    const [savedCodes, setSavedCodes] = useState([]);
 
-    const handleApplyVoucher = async () => {
-        if (!voucherCode.trim()) {
+    useEffect(() => {
+        const saved = JSON.parse(localStorage.getItem("savedVouchers") || "[]");
+        setSavedCodes(saved);
+    }, []);
+
+    const handleApplyVoucher = async (codeToApply) => {
+        const code = (typeof codeToApply === 'string') ? codeToApply : voucherCode;
+        if (!code.trim()) {
             toast.warn("Vui lòng nhập mã voucher");
             return;
         }
 
         setLoading(true);
         try {
-            const voucher = await apiVoucher.validateVoucher(voucherCode.toUpperCase(), subtotal);
+            const voucher = await apiVoucher.validateVoucher(code.toUpperCase(), subtotal);
             const discountAmount = apiVoucher.calculateDiscount(voucher, subtotal);
 
             setAppliedVoucher(voucher);
             setDiscount(discountAmount);
             onVoucherApplied(voucher, discountAmount);
+            setVoucherCode(voucher.voucherCode);
 
             toast.success(`Áp dụng mã ${voucher.voucherCode} thành công!`);
         } catch (error) {
@@ -73,13 +81,30 @@ const VoucherInput = ({ subtotal, onVoucherApplied }) => {
                                     <span>Đang kiểm tra...</span>
                                 </>
                             ) : (
-                              <FaClipboardCheck />
+                                <FaClipboardCheck />
                             )}
                         </button>
                     </div>
                     <p className="text-xs text-gray-500">
                         Nhập mã giảm giá để nhận ưu đãi
                     </p>
+
+                    {savedCodes.length > 0 && (
+                        <div className="mt-4 pt-4 border-t border-gray-100">
+                            <p className="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Mã bạn đã lưu:</p>
+                            <div className="flex flex-wrap gap-2">
+                                {savedCodes.map(code => (
+                                    <button
+                                        key={code}
+                                        onClick={() => handleApplyVoucher(code)}
+                                        className="text-[10px] font-bold bg-indigo-50 text-indigo-600 border border-indigo-100 px-2 py-1 rounded hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                                    >
+                                        {code}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             ) : (
                 <div className="space-y-3">

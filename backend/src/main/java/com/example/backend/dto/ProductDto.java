@@ -1,5 +1,7 @@
 package com.example.backend.dto;
 
+import com.example.backend.entity.SaleType;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -41,8 +43,10 @@ public class ProductDto {
 
     @Min(value = 0, message = "Số lượng không được âm")
     private Integer qty;
-
     private Integer lockedQty;
+    private SaleType saleType;
+    private Integer baseWeight;
+    private String unitLabel;
 
     @Min(value = 0, message = "Giá nhập không được âm")
     private BigDecimal costPrice;

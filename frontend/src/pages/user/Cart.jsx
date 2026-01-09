@@ -170,7 +170,12 @@ const Cart = () => {
                         />
                         <div>
                           <h3 className="font-medium text-gray-800">{item.name}</h3>
-                          <p className="text-gray-400 text-sm">{item.categoryName || "Sản phẩm"}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded uppercase font-medium">
+                              {item.saleType === "WEIGHT" ? `${item.baseWeight}g / phần` : "Gói"}
+                            </span>
+                            <span className="text-gray-400 text-xs">| {item.categoryName || "Sản phẩm"}</span>
+                          </div>
                         </div>
                       </div>
 
@@ -215,6 +220,11 @@ const Cart = () => {
                             <FaPlus className="text-xs" />
                           </button>
                         </div>
+                        {item.saleType === "WEIGHT" && (
+                          <p className="text-[10px] text-gray-400 mt-1 text-center font-medium">
+                            Tổng: {item.qty * item.baseWeight}g
+                          </p>
+                        )}
                       </div>
 
                       {/* Cột: Thành tiền (Giá cuối * SL) */}

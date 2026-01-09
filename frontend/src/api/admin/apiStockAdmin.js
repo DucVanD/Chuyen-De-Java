@@ -5,8 +5,8 @@ const apiStockAdmin = {
     getAll: () => axiosAdmin.get("/admin/stock-movements").then(res => res.data),
 
     // Lấy có phân trang - Dùng chính cho ListInventory
-    getPage: (page = 0, size = 10) =>
-        axiosAdmin.get(`/admin/stock-movements/page?page=${page}&size=${size}`).then(res => res.data),
+    getPage: (page = 0, size = 10, excludeType = "") =>
+        axiosAdmin.get(`/admin/stock-movements/page?page=${page}&size=${size}&excludeType=${excludeType}`).then(res => res.data),
 
     // Lấy chi tiết
     getById: (id) => axiosAdmin.get(`/admin/stock-movements/${id}`).then(res => res.data),

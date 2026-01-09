@@ -20,11 +20,16 @@ export default function useAddToCart() {
     const existingItem = cartItems.find((item) => item.id === product.id);
     const currentQty = existingItem ? existingItem.qty : 0;
 
-    // Nếu tổng > tồn kho → cảnh báo
-    if (currentQty + quantity > product.qty) {
-      toast.warn(`Chỉ còn ${product.qty} sản phẩm trong kho!`, {
+    // TÍNH TOÁN GIỚI HẠN (portions/packages)
+    const maxPortions = product.saleType === "WEIGHT"
+      ? Math.floor(product.qty / (product.baseWeight || 1))
+      : product.qty;
+
+    // Nếu tổng > giới hạn → cảnh báo
+    if (currentQty + quantity > maxPortions) {
+      toast.warn(`Chỉ còn ${maxPortions} ${product.saleType === "WEIGHT" ? "phần" : "sản phẩm"} trong kho!`, {
         position: "top-right",
-        autoClose: 300,
+        autoClose: 1000,
       });
       return;
     }
@@ -34,13 +39,14 @@ export default function useAddToCart() {
       addToCart({
         ...product,
         qty: quantity,
-        product_qty: product.qty, // ✅ dùng đúng tên và giá trị tồn kho
+        product_qty: maxPortions, // ✅ giới hạn theo phần (đối với WEIGHT) hoặc số lượng (đối với PACKAGE)
       })
     );
 
-    toast.success(`🛒 Đã thêm ${quantity} "${product.name}" vào giỏ hàng!`, {
+    const unitLabel = product.saleType === "WEIGHT" ? "phần" : (product.saleType === "PACKAGE" ? "gói" : "sản phẩm");
+    toast.success(`🛒 Đã thêm ${quantity} ${unitLabel} "${product.name}" vào giỏ hàng!`, {
       position: "top-right",
-      autoClose: 300,
+      autoClose: 1000,
     });
   };
 

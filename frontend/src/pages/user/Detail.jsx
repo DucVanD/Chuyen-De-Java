@@ -12,8 +12,10 @@ import {
 import { useState, useEffect } from "react";
 // Assuming apiProduct is defined elsewhere
 import apiProduct from "../../api/user/apiProduct"; // Keep if you need the real API
+import apiVoucher from "../../api/user/apiVoucher";
 import { imageURL, getImageUrl } from "../../api/config";
 import useAddToCart from "../../hooks/useAddToCart";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ProductItem from "./ProductItem";
 
@@ -27,24 +29,34 @@ const Detail = () => {
   // Simulate API fetch. You should uncomment and use your real API call.
   const [relatedProducts, setRelatedProducts] = useState([]);
 
+  const [vouchers, setVouchers] = useState([]);
+  const [savedCodes, setSavedCodes] = useState([]);
+
   useEffect(() => {
-    const fetchProduct = async () => {
+    const fetchProductAndVouchers = async () => {
       setLoading(true);
       try {
-        const res = await apiProduct.getProductBySlug(slug);
-        console.log("du lieu api", res);
+        const [prodRes, voucherRes] = await Promise.all([
+          apiProduct.getProductBySlug(slug),
+          apiVoucher.getActive()
+        ]);
 
-        if (res) {
-          setProduct(res);
-
-          // ✅ Gọi sản phẩm liên quan khi có categoryId
-          if (res.categoryId) {
-            const related = await apiProduct.getRelatedProducts(res.id, res.categoryId);
+        if (prodRes) {
+          setProduct(prodRes);
+          if (prodRes.categoryId) {
+            const related = await apiProduct.getRelatedProducts(prodRes.id, prodRes.categoryId);
             setRelatedProducts(related || []);
           }
         } else {
           setError("Không tìm thấy sản phẩm.");
         }
+
+        setVouchers(voucherRes || []);
+
+        // Load saved vouchers from localStorage
+        const saved = JSON.parse(localStorage.getItem("savedVouchers") || "[]");
+        setSavedCodes(saved);
+
       } catch (err) {
         console.error(err);
         setError("Sân phẩm không tồn tại hoặc đã bị gỡ bỏ.");
@@ -53,8 +65,22 @@ const Detail = () => {
       }
     };
 
-    fetchProduct();
+    fetchProductAndVouchers();
   }, [slug]);
+
+  const handleSaveVoucher = (code) => {
+    const saved = JSON.parse(localStorage.getItem("savedVouchers") || "[]");
+    if (!saved.includes(code)) {
+      const newSaved = [...saved, code];
+      localStorage.setItem("savedVouchers", JSON.stringify(newSaved));
+      setSavedCodes(newSaved);
+      toast.success(`Đã lưu mã ${code} vào kho quà!`);
+    } else {
+      toast.info(`Mã ${code} đã có trong kho quà của bạn.`);
+    }
+    // Also copy to clipboard for convenience
+    navigator.clipboard.writeText(code);
+  };
 
 
 
@@ -65,8 +91,17 @@ const Detail = () => {
 
   // console.log("Product Details:", product);
   // Quantity handlers
+  const maxPortions = product?.saleType === "WEIGHT"
+    ? Math.floor((product?.qty || 0) / (product?.baseWeight || 1))
+    : (product?.qty || 0);
+
   const handleQuantityChange = (delta) => {
-    setQuantity((prev) => Math.max(1, prev + delta));
+    setQuantity((prev) => {
+      const next = prev + delta;
+      if (next < 1) return 1;
+      if (next > maxPortions) return Math.max(1, maxPortions);
+      return next;
+    });
   };
   const handleQuantityInput = (e) => {
     const value = parseInt(e.target.value);
@@ -212,6 +247,9 @@ const Detail = () => {
                     {product.salePrice ? product.salePrice.toLocaleString("vi-VN") : "Liên hệ"}₫
                   </span>
                 )}
+                <span className="text-xl text-gray-500 font-medium self-end mb-1">
+                  / {product.saleType === "WEIGHT" ? `${product.baseWeight}g` : "Gói"}
+                </span>
               </div>
 
               {/* Phần "tiết kiệm" */}
@@ -247,6 +285,11 @@ const Detail = () => {
             </div>
 
             {/* Quantity + Add to Cart + Actions (Combined and Styled) */}
+            {product.saleType === "WEIGHT" && (
+              <div className="text-sm font-medium text-gray-600 mb-3 bg-green-50 px-4 py-2 rounded-lg border border-green-100 inline-block">
+                Quy cách: <span className="text-green-700 font-bold">{quantity} phần</span> x {product.baseWeight}g = <span className="text-green-700 font-bold">{quantity * product.baseWeight}g</span>
+              </div>
+            )}
 
             <div className="flex items-center gap-4 mb-6">
               {/* Bộ chọn số lượng */}
@@ -331,42 +374,49 @@ const Detail = () => {
         </div>
 
         {/* --- Mã giảm giá (Coupon Code Section) --- */}
-        <div className="bg-green-50 rounded-xl p-6 my-10 border border-green-200">
-          <h3 className="font-bold text-xl text-center text-green-800 mb-4">
-            MÃ GIẢM GIÁ
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { code: "BEA50", desc: "Nhập mã BEA50 giảm 50K đơn từ 750K", type: "Lưu mã" },
-              { code: "BEA15", desc: "Nhập mã BEA15 giảm 15% đơn từ 1.500.000₫", type: "Lưu mã" },
-              { code: "BEAN99K", desc: "Nhập mã BEAN99K giảm ngay 99K", type: "Lưu mã" },
-              { code: "FREESHIP", desc: "Nhập mã FREESHIP miễn phí vận chuyển", type: "OK" },
-            ].map((coupon) => (
-              <div
-                key={coupon.code}
-                className="bg-white border-2 border-dashed border-green-500 rounded-lg p-4 transition duration-200 flex flex-col justify-between"
-              >
-                <div>
-                  <p className="text-xs text-gray-600 mb-1">{coupon.desc}</p>
-                  <div className="flex items-center justify-between mt-2">
-                    <p className="font-extrabold text-xl text-green-600">
-                      {coupon.code}
-                    </p>
-                    <button
-                      onClick={() => navigator.clipboard.writeText(coupon.code)}
-                      className={`text-sm font-bold px-3 py-1 rounded-full transition ${coupon.type === "Lưu mã"
-                        ? "bg-red-500 text-white hover:bg-red-600"
-                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                        }`}
-                    >
-                      {coupon.type}
-                    </button>
+        {vouchers.length > 0 && (
+          <div className="bg-green-50 rounded-xl p-6 my-10 border border-green-200">
+            <h3 className="font-bold text-xl text-center text-green-800 mb-4">
+              ✨ MÃ GIẢM GIÁ ĐANG CÓ ✨
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {vouchers.map((v) => {
+                const isSaved = savedCodes.includes(v.voucherCode);
+                return (
+                  <div
+                    key={v.id}
+                    className="bg-white border-2 border-dashed border-green-500 rounded-lg p-4 transition duration-200 flex flex-col justify-between hover:shadow-md"
+                  >
+                    <div>
+                      <p className="font-bold text-green-700 text-sm mb-1">{v.name}</p>
+                      <p className="text-[10px] text-gray-500 mb-1">
+                        {v.discountType === "PERCENTAGE"
+                          ? `Giảm ${v.discountValue}% (Tối đa ${v.maxDiscount.toLocaleString()}đ)`
+                          : `Giảm ${v.discountValue.toLocaleString()}đ`}
+                        <br />
+                        Đơn từ {v.minOrderAmount.toLocaleString()}đ
+                      </p>
+                      <div className="flex items-center justify-between mt-2">
+                        <p className="font-extrabold text-lg text-indigo-600">
+                          {v.voucherCode}
+                        </p>
+                        <button
+                          onClick={() => handleSaveVoucher(v.voucherCode)}
+                          className={`text-xs font-bold px-3 py-1.5 rounded-full shadow-sm transition-all ${isSaved
+                            ? "bg-green-600 text-white"
+                            : "bg-red-500 text-white hover:bg-red-600 active:scale-95"
+                            }`}
+                        >
+                          {isSaved ? "Đã lưu" : "Lưu mã"}
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            ))}
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
         {/* --- End Mã giảm giá --- */}
 
         {/* Tabs Mô tả / Hướng dẫn / Đánh giá */}

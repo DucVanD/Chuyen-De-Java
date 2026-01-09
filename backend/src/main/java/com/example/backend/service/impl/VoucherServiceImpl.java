@@ -30,6 +30,14 @@ public class VoucherServiceImpl implements VoucherService {
     }
 
     @Override
+    public List<VoucherDto> getAllActive() {
+        return voucherRepository.findAllActive(LocalDateTime.now())
+                .stream()
+                .map(VoucherMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public VoucherDto getById(Integer id) {
         Voucher voucher = voucherRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Voucher not found"));

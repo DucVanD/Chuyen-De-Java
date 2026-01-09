@@ -5,6 +5,10 @@ const apiVoucher = {
     getAll: () =>
         axiosInstance.get("/vouchers").then((res) => res.data),
 
+    // Get currently active vouchers for users to claim
+    getActive: () =>
+        axiosInstance.get("/vouchers/active").then((res) => res.data),
+
     // Get voucher by code (for applying discount)
     getByCode: (code) =>
         axiosInstance.get(`/vouchers/code/${code}`).then((res) => res.data),

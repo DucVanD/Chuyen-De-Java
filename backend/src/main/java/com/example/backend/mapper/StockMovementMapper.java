@@ -17,6 +17,11 @@ public class StockMovementMapper {
                 .id(entity.getId())
                 .productId(entity.getProduct() != null ? entity.getProduct().getId() : null)
                 .productName(entity.getProduct() != null ? entity.getProduct().getName() : "N/A")
+                // ✅ THÊM: Map saleType và unitLabel từ Product
+                .saleType(entity.getProduct() != null && entity.getProduct().getSaleType() != null
+                        ? entity.getProduct().getSaleType().name()
+                        : null)
+                .unitLabel(entity.getProduct() != null ? entity.getProduct().getUnitLabel() : null)
                 .supplierId(entity.getSupplier() != null ? entity.getSupplier().getId() : null)
                 .orderId(entity.getOrder() != null ? entity.getOrder().getId() : null)
                 .orderCode(entity.getOrder() != null ? entity.getOrder().getOrderCode() : null)

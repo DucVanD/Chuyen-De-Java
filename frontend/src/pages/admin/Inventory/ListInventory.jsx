@@ -3,6 +3,18 @@ import { Link } from "react-router-dom";
 import apiStockAdmin from "../../../api/admin/apiStockAdmin";
 import { FaPlus, FaMinus, FaExchangeAlt, FaUndo, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
+// Utility to format quantity (Standard Supermarket Logic)
+const formatQuantity = (qty, saleType, unitLabel) => {
+  const absQty = Math.abs(qty);
+  if (saleType === "WEIGHT") {
+    if (absQty >= 1000) {
+      return (qty / 1000).toFixed(1).replace(/\.0$/, "") + " kg";
+    }
+    return qty + " g";
+  }
+  return qty + " " + (unitLabel || "đv");
+};
+
 const ListInventory = () => {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -16,7 +28,7 @@ const ListInventory = () => {
 
   const loadMovements = () => {
     setLoading(true);
-    apiStockAdmin.getPage(currentPage, size)
+    apiStockAdmin.getPage(currentPage, size, "OUT")
       .then((data) => {
         setList(data.content);
         setTotalPages(data.totalPages);
@@ -59,9 +71,7 @@ const ListInventory = () => {
             <FaPlus className="mr-2" /> Nhập kho
           </Link>
 
-          <Link to="/admin/inventory/export" className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center shadow-sm transition-all text-sm font-medium">
-            <FaMinus className="mr-2" /> Xuất kho
-          </Link>
+
 
           <Link to="/admin/inventory/adjust" className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg flex items-center shadow-sm transition-all text-sm font-medium">
             <FaExchangeAlt className="mr-2" /> Điều chỉnh
@@ -85,7 +95,7 @@ const ListInventory = () => {
                     <th className="py-3 px-4">Loại giao dịch</th>
                     <th className="py-3 px-4">Số lượng</th>
                     <th className="py-3 px-4">Tồn sau GD</th>
-                    <th className="py-3 px-4 text-right">Giá trị đơn/c</th>
+                    <th className="py-3 px-4 text-right">Giá trị đơn</th>
                     <th className="py-3 px-4">Thời gian</th>
                   </tr>
                 </thead>
@@ -96,8 +106,10 @@ const ListInventory = () => {
                         <td className="py-3 px-4 text-gray-500">#{m.id}</td>
 
                         <td className="py-3 px-4 text-left">
-                          <div className="font-medium text-gray-900">{m.productName}</div>
-                          <div className="text-xs text-gray-500">Mã SP: {m.productId}</div>
+                          <div className="font-medium text-gray-900">
+                            {m.productName || <span className="text-gray-400 italic">Hệ thống / Summary</span>}
+                          </div>
+                          <div className="text-xs text-gray-500">Mã SP: {m.productId || "N/A"}</div>
                         </td>
 
                         <td className="py-3 px-4">
@@ -106,15 +118,20 @@ const ListInventory = () => {
                           </span>
                         </td>
 
-                        <td className="py-3 px-4 font-medium text-lg">
-                          {m.quantity > 0 ? (
-                            <span className="text-green-600">+{m.quantity}</span>
+                        <td className="py-3 px-4 font-bold text-base">
+                          {/* ✅ Hiển thị số lượng kèm đơn vị chuẩn (ví dụ: +2.5 kg, -5 chai) */}
+                          {m.movementType === "OUT" || (m.movementType === "ADJUSTMENT" && m.quantity < 0) ? (
+                            <span className="text-red-600">-{formatQuantity(m.quantity, m.saleType, m.unitLabel)}</span>
+                          ) : m.movementType === "IN" || m.movementType === "RETURN" ? (
+                            <span className="text-green-600">+{formatQuantity(m.quantity, m.saleType, m.unitLabel)}</span>
                           ) : (
-                            <span className="text-red-600">{m.quantity}</span>
+                            <span className="text-gray-600">{formatQuantity(m.quantity, m.saleType, m.unitLabel)}</span>
                           )}
                         </td>
 
-                        <td className="py-3 px-4 text-gray-700 font-semibold">{m.currentStock}</td>
+                        <td className="py-3 px-4 text-gray-700 font-semibold">
+                          {formatQuantity(m.currentStock, m.saleType, m.unitLabel)}
+                        </td>
 
                         <td className="py-3 px-4 text-right">
                           {m.unitPrice ? (
@@ -185,6 +202,5 @@ const ListInventory = () => {
     </div>
   );
 };
-
 
 export default ListInventory;

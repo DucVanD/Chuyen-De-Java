@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom"; // ✅ Import useNavigate
+import { useNavigate, useSearchParams } from "react-router-dom"; // ✅ Import useSearchParams
 import { toast } from "react-toastify";
 import AsyncSelect from "react-select/async";
 import { FaArrowLeft, FaSave, FaBoxOpen } from "react-icons/fa";
@@ -9,10 +9,14 @@ import apiProductAdmin from "../../../api/admin/apiProductAdmin";
 import apiSupplierAdmin from "../../../api/admin/apiSupplierAdmin";
 
 const FormNhapKho = () => {
-  const navigate = useNavigate(); // ✅ Hook điều hướng
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const productIdFromUrl = searchParams.get("productId");
+
   const [suppliers, setSuppliers] = useState([]);
   const [loadingPrice, setLoadingPrice] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   const [form, setForm] = useState({
     productId: "",
@@ -22,12 +26,18 @@ const FormNhapKho = () => {
     note: "",
   });
 
-  /* LOAD SUPPLIERS */
+  /* LOAD INITIAL DATA */
   useEffect(() => {
+    // 1. Load suppliers
     apiSupplierAdmin.getAll()
       .then(setSuppliers)
       .catch(() => toast.error("Không tải được nhà cung cấp"));
-  }, []);
+
+    // 2. If productId in URL, load product detail
+    if (productIdFromUrl) {
+      handleProductChange({ value: productIdFromUrl });
+    }
+  }, [productIdFromUrl]);
 
   /* SEARCH PRODUCT */
   const loadProductOptions = async (inputValue) => {
@@ -45,20 +55,23 @@ const FormNhapKho = () => {
   const handleProductChange = async (opt) => {
     if (!opt) {
       setForm((prev) => ({ ...prev, productId: "", unitPrice: "", supplierId: "" }));
+      setSelectedProduct(null); // ✅ Clear product detail
       return;
     }
 
     const productId = opt.value;
     setForm((prev) => ({ ...prev, productId }));
 
-    // AUTO GET LAST PRICE & SUPPLIER
+    // ✅ FETCH CHI TIẾT SẢN PHẨM (để lấy saleType, baseWeight, unitLabel)
     try {
       setLoadingPrice(true);
-      const [lastPrice, lastSupId] = await Promise.all([
+      const [productDetail, lastPrice, lastSupId] = await Promise.all([
+        apiProductAdmin.getById(productId),
         apiStockAdmin.getLastImportPrice(productId),
         apiStockAdmin.getLastSupplierId(productId)
       ]);
 
+      setSelectedProduct(productDetail); // ✅ Lưu chi tiết sản phẩm
       setForm((prev) => ({
         ...prev,
         unitPrice: (lastPrice && lastPrice > 0) ? lastPrice : prev.unitPrice,
@@ -121,6 +134,7 @@ const FormNhapKho = () => {
               cacheOptions
               loadOptions={loadProductOptions}
               onChange={handleProductChange}
+              value={selectedProduct ? { value: selectedProduct.id, label: selectedProduct.name } : null}
               placeholder="Tìm sản phẩm..."
               noOptionsMessage={() => "Không tìm thấy sản phẩm"}
               classNamePrefix="react-select"
@@ -145,30 +159,87 @@ const FormNhapKho = () => {
           </div>
         </div>
 
-        {/* ROW 2: Quantity & Price */}
+        {/* ✅ INFO BOX - THÔNG TIN SẢN PHẨM */}
+        {selectedProduct && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
+            <h3 className="text-sm font-semibold text-blue-800">📦 Thông tin sản phẩm</h3>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <span className="text-gray-600">Loại bán:</span>{" "}
+                <span className="font-medium text-gray-800">
+                  {selectedProduct.saleType === "WEIGHT" ? "Theo cân" : "Theo đơn vị"}
+                </span>
+              </div>
+              {selectedProduct.saleType === "WEIGHT" && selectedProduct.baseWeight && (
+                <div>
+                  <span className="text-gray-600">Quy cách bán:</span>{" "}
+                  <span className="font-medium text-gray-800">
+                    {selectedProduct.baseWeight}g / 1 {selectedProduct.unitLabel || "phần"}
+                  </span>
+                </div>
+              )}
+              {selectedProduct.saleType === "UNIT" && selectedProduct.unitLabel && (
+                <div>
+                  <span className="text-gray-600">Đơn vị:</span>{" "}
+                  <span className="font-medium text-gray-800">{selectedProduct.unitLabel}</span>
+                </div>
+              )}
+              {/* ✅ THÊM: Hiển thị tồn kho hiện tại */}
+              <div className="col-span-2 pt-2 border-t border-blue-200">
+                <span className="text-gray-600">Tồn kho hiện tại:</span>{" "}
+                <span className="font-bold text-blue-700">
+                  {selectedProduct.saleType === "WEIGHT"
+                    ? `${selectedProduct.qty?.toLocaleString() || 0} gram`
+                    : `${selectedProduct.qty || 0} ${selectedProduct.unitLabel || "đơn vị"}`}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ROW 2: Quantity & Price - ✅ LABELS ĐỘNG */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Số lượng nhập <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {selectedProduct?.saleType === "WEIGHT"
+                ? "Số lượng nhập (gram)"
+                : `Số lượng nhập (${selectedProduct?.unitLabel || "đơn vị"})`}
+              {" "}
+              <span className="text-red-500">*</span>
+            </label>
             <input
               type="number"
               min="1"
-              placeholder="0"
+              placeholder={selectedProduct?.saleType === "WEIGHT"
+                ? "Ví dụ: 50000"
+                : `Ví dụ: 100 ${selectedProduct?.unitLabel || ""}`}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
               value={form.quantity}
               onChange={(e) => setForm({ ...form, quantity: e.target.value })}
               required
             />
+            {/* ✅ THÊM: Hiển thị quy đổi cho WEIGHT */}
+            {selectedProduct?.saleType === "WEIGHT" && selectedProduct?.baseWeight && form.quantity > 0 && (
+              <p className="text-xs text-green-600 mt-1 font-medium">
+                ≈ {Math.floor(form.quantity / selectedProduct.baseWeight)} {selectedProduct.unitLabel || "phần"}
+                ({selectedProduct.baseWeight}g / {selectedProduct.unitLabel || "phần"})
+              </p>
+            )}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Đơn giá nhập (VNĐ) <span className="text-red-500">*</span>
+              {selectedProduct?.saleType === "WEIGHT"
+                ? "Đơn giá nhập (VNĐ / kg)"
+                : `Đơn giá nhập (VNĐ / ${selectedProduct?.unitLabel || "đơn vị"})`}
+              {" "}
+              <span className="text-red-500">*</span>
               {loadingPrice && <span className="text-xs text-green-600 ml-2 animate-pulse">(Đang lấy giá cũ...)</span>}
             </label>
             <input
               type="number"
               min="0"
-              placeholder="0"
+              placeholder={selectedProduct?.saleType === "WEIGHT" ? "Ví dụ: 150000" : "Ví dụ: 25000"}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
               value={form.unitPrice}
               onChange={(e) => setForm({ ...form, unitPrice: e.target.value })}

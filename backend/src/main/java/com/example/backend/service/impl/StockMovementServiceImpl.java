@@ -53,9 +53,19 @@ public class StockMovementServiceImpl implements StockMovementService {
     }
 
     @Override
-    public org.springframework.data.domain.Page<StockMovementDto> getPage(int page, int size) {
+    public org.springframework.data.domain.Page<StockMovementDto> getPage(int page, int size, String excludeType) {
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size,
                 org.springframework.data.domain.Sort.by("createdAt").descending());
+
+        if (excludeType != null && !excludeType.isEmpty()) {
+            try {
+                StockMovementType type = StockMovementType.valueOf(excludeType.toUpperCase());
+                return stockMovementRepository.findAllByMovementTypeNot(type, pageable)
+                        .map(StockMovementMapper::toDto);
+            } catch (IllegalArgumentException e) {
+                // If invalid type, fallback to normal page
+            }
+        }
         return stockMovementRepository.findAll(pageable)
                 .map(StockMovementMapper::toDto);
     }

@@ -29,8 +29,9 @@ public class AdminStockMovementController {
     @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
     public ResponseEntity<org.springframework.data.domain.Page<StockMovementDto>> getPage(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(stockMovementService.getPage(page, size));
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String excludeType) {
+        return ResponseEntity.ok(stockMovementService.getPage(page, size, excludeType));
     }
 
     @GetMapping("/{id}")

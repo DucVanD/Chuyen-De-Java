@@ -36,6 +36,10 @@ const AddProduct = () => {
     qty: 0,
     costPrice: null,
     status: 1,
+    // ✅ THÊM CÁC FIELD CHO SALE TYPE
+    saleType: "UNIT", // Mặc định UNIT
+    baseWeight: "",   // Gram / phần (chỉ dùng cho WEIGHT)
+    unitLabel: "cái", // gói/chai/thùng/phần/khúc
   });
 
   /* ================= FETCH DATA ================= */
@@ -75,6 +79,12 @@ const AddProduct = () => {
     setForm((prev) => {
       const updated = { ...prev, [name]: value };
       if (name === "name") updated.slug = generateSlug(value);
+
+      // ✅ Reset baseWeight khi đổi từ WEIGHT sang UNIT
+      if (name === "saleType" && value === "UNIT") {
+        updated.baseWeight = "";
+      }
+
       return updated;
     });
   };
@@ -153,7 +163,11 @@ const AddProduct = () => {
         status: Number(form.status),
         imagePublicId: form.imagePublicId, // ✅ 3. THÊM DÒNG NÀY (Gửi ID lên Server)
         qty: 0, // Mặc định 0 khi tạo mới
-        costPrice: null // Chưa có giá nhập khi tạo mới
+        costPrice: null, // Chưa có giá nhập khi tạo mới
+        // ✅ THÊM SaleType fields
+        saleType: form.saleType,
+        baseWeight: form.saleType === "WEIGHT" && form.baseWeight ? Number(form.baseWeight) : null,
+        unitLabel: form.unitLabel || null,
       };
 
       await apiProductAdmin.create(payload);
@@ -397,6 +411,76 @@ const AddProduct = () => {
                     <option value={1}>Hoạt động</option>
                     <option value={0}>Ẩn / Nháp</option>
                   </select>
+                </div>
+              </div>
+            </div>
+
+            {/* ✅ Card: Cấu hình Bán hàng (SaleType) */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <FaBoxOpen className="text-indigo-500" /> Cấu hình bán hàng
+              </h3>
+
+              <div className="space-y-4">
+                {/* Loại bán */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Loại bán <span className="text-red-500">*</span></label>
+                  <select
+                    name="saleType"
+                    value={form.saleType}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
+                    required
+                  >
+                    <option value="UNIT">Theo đơn vị (gói/chai/thùng/...)</option>
+                    <option value="WEIGHT">Theo cân (gram)</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {form.saleType === "WEIGHT"
+                      ? "📊 Kho lưu gram, bán theo phần/khúc"
+                      : "📦 Kho lưu số lượng đơn vị"}
+                  </p>
+                </div>
+
+                {/* Base Weight - chỉ hiện khi WEIGHT */}
+                {form.saleType === "WEIGHT" && (
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <label className="block text-sm font-medium text-blue-800 mb-1">
+                      Quy cách (gram / phần) <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      name="baseWeight"
+                      value={form.baseWeight}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+                      placeholder="Ví dụ: 300"
+                      min="1"
+                      required={form.saleType === "WEIGHT"}
+                    />
+                    <p className="text-xs text-blue-600 mt-1">
+                      💡 Ví dụ: Thịt 300g/phần → nhập <strong>300</strong>
+                    </p>
+                  </div>
+                )}
+
+                {/* Unit Label */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Đơn vị hiển thị</label>
+                  <input
+                    type="text"
+                    name="unitLabel"
+                    value={form.unitLabel}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder={form.saleType === "WEIGHT" ? "phần, khúc, ..." : "gói, chai, thùng, ..."}
+                    maxLength="20"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {form.saleType === "WEIGHT"
+                      ? "Ví dụ: phần, khúc, miếng"
+                      : "Ví dụ: gói, chai, thùng, hộp, lon"}
+                  </p>
                 </div>
               </div>
             </div>

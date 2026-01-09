@@ -23,6 +23,9 @@ public class StockMovementDto {
     private Integer orderId;
     private String orderCode;
     private String productName;
+    // ✅ THÊM: Để hiển thị đơn vị (gram/chai/gói...)
+    private String saleType;
+    private String unitLabel;
     private StockMovementType movementType;
 
     private Integer quantity;

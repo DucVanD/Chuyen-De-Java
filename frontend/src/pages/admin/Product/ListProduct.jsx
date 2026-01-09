@@ -6,6 +6,17 @@ import apiCategoryAdmin from "../../../api/admin/apiCategoryAdmin";
 import apiBrandAdmin from "../../../api/admin/apiBrandAdmin";
 import { FaPlus, FaTrash, FaEdit, FaToggleOn, FaToggleOff, FaSearch, FaFilter, FaRedo } from "react-icons/fa";
 
+// Utility to format quantity (Standard Supermarket Logic)
+const formatQuantity = (qty, saleType, unitLabel) => {
+  if (saleType === "WEIGHT") {
+    if (qty >= 1000) {
+      return (qty / 1000).toFixed(1).replace(/\.0$/, "") + " kg";
+    }
+    return qty + " g";
+  }
+  return qty + " " + (unitLabel || "đv");
+};
+
 const ListProduct = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -29,7 +40,7 @@ const ListProduct = () => {
   // Pagination State
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const [size, setSize] = useState(8); // Số lượng item mỗi trang
+  const [size, setSize] = useState(8);
 
   useEffect(() => {
     // 1. Get User Role
@@ -54,13 +65,8 @@ const ListProduct = () => {
         apiBrandAdmin.getAll()
       ]);
 
-      // --- THÊM DÒNG NÀY ---
-      // Lọc: Chỉ giữ lại danh mục nào có parent là null (hoặc parentId tuỳ vào API của bạn)
       const rootCategories = cats.filter(c => c.parentId != null);
-
       setCategories(rootCategories);
-      // ---------------------
-
       setBrands(brs);
     } catch (err) {
       console.error("Lỗi tải danh mục/thương hiệu", err);
@@ -71,11 +77,9 @@ const ListProduct = () => {
     setLoading(true);
     try {
       let data;
-      // 1. SEARCH
       if (keyword.trim()) {
         data = await apiProductAdmin.search(keyword, currentPage, size);
       }
-      // 2. FILTER
       else if (filterCategory || filterBrand || filterStatus || minPrice || maxPrice || hasPromo) {
         data = await apiProductAdmin.filter(
           filterCategory || null,
@@ -88,17 +92,14 @@ const ListProduct = () => {
           size
         );
       }
-      // 3. DEFAULT (getPage)
       else {
         data = await apiProductAdmin.getPage(currentPage, size);
       }
 
-      // Backend returns Page<ProductDto> which contains { content, totalPages, number... }
       if (data && data.content) {
         setProducts(data.content);
         setTotalPages(data.totalPages);
       } else {
-        // Fallback for safety
         setProducts(Array.isArray(data) ? data : []);
         setTotalPages(0);
       }
@@ -109,17 +110,14 @@ const ListProduct = () => {
     }
   };
 
-  /* ======================
-      ACTIONS
-  ====================== */
   const handleSearch = () => {
-    setCurrentPage(0); // Reset về trang 1
+    setCurrentPage(0);
     loadProducts();
   };
 
   const handleFilter = () => {
-    setKeyword(""); // Reset search text khi filter
-    setCurrentPage(0); // Reset về trang 1
+    setKeyword("");
+    setCurrentPage(0);
     loadProducts();
   };
 
@@ -132,7 +130,6 @@ const ListProduct = () => {
     setMaxPrice("");
     setHasPromo(false);
     setCurrentPage(0);
-    // setTimeout is useful when multiple states change and we want to trigger load once
     setTimeout(() => {
       loadProducts();
     }, 100);
@@ -150,7 +147,7 @@ const ListProduct = () => {
       await apiProductAdmin.delete(id);
       toast.success("Đã xóa sản phẩm");
       loadProducts();
-    } catch (error) { // Catch error object
+    } catch (error) {
       toast.error(error.response?.data?.message || "Xóa thất bại (Sản phẩm có thể đang trong đơn hàng)");
     }
   };
@@ -168,16 +165,13 @@ const ListProduct = () => {
   const formatPrice = (price) =>
     new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
 
-  // Check Permissions
   const isAdmin = currentUser?.role === "ADMIN";
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden min-h-[600px]">
-      {/* HEADER */}
       <div className="p-6 flex justify-between items-center border-b">
         <h2 className="text-2xl font-bold text-gray-800">Quản lý Sản phẩm</h2>
 
-        {/* Chỉ ADMIN mới được thêm */}
         {isAdmin && (
           <Link
             to="/admin/product/add"
@@ -188,12 +182,8 @@ const ListProduct = () => {
         )}
       </div>
 
-      {/* TOOLBAR */}
       <div className="p-6 bg-gray-50 border-b space-y-4">
-
-        {/* Row 1: Search & Common Filters */}
         <div className="flex flex-wrap gap-3 items-center">
-          {/* Search */}
           <div className="relative">
             <input
               type="text"
@@ -205,7 +195,6 @@ const ListProduct = () => {
             <FaSearch className="absolute left-3 top-3 text-gray-400" />
           </div>
 
-          {/* Category Filter */}
           <select
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
@@ -217,7 +206,6 @@ const ListProduct = () => {
             ))}
           </select>
 
-          {/* Brand Filter */}
           <select
             value={filterBrand}
             onChange={(e) => setFilterBrand(e.target.value)}
@@ -229,7 +217,6 @@ const ListProduct = () => {
             ))}
           </select>
 
-          {/* Status Filter */}
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
@@ -239,10 +226,8 @@ const ListProduct = () => {
             <option value="1">Đang hoạt động</option>
             <option value="0">Đang ẩn</option>
           </select>
-
         </div>
 
-        {/* Row 2: Advanced Filters (Price & Promo) */}
         <div className="flex flex-wrap gap-3 items-center">
           <input
             type="number"
@@ -282,7 +267,6 @@ const ListProduct = () => {
         </div>
       </div>
 
-      {/* TABLE DATA */}
       <div className="p-6">
         {loading ? (
           <p className="text-center py-10 text-gray-500 italic">Đang tải dữ liệu sản phẩm...</p>
@@ -304,7 +288,6 @@ const ListProduct = () => {
                 {products.length > 0 ? (
                   products.map((p) => (
                     <tr key={p.id} className="hover:bg-gray-50 transition-colors group">
-                      {/* Cột 1: Ảnh + Tên */}
                       <td className="py-3 px-4 text-left">
                         <div className="flex items-center gap-3">
                           <div className="w-12 h-12 rounded-lg border border-gray-200 overflow-hidden bg-white shrink-0">
@@ -321,13 +304,11 @@ const ListProduct = () => {
                         </div>
                       </td>
 
-                      {/* Cột 2: Category & Brand */}
                       <td className="py-3 px-4 text-left">
                         <p className="text-gray-800 font-medium">{p.categoryName || "—"}</p>
                         <p className="text-xs text-gray-500 uppercase tracking-wide mt-1">{p.brandName || "—"}</p>
                       </td>
 
-                      {/* Cột 3: Giá */}
                       <td className="py-3 px-4 text-right">
                         {p.discountPrice && p.discountPrice > 0 && p.discountPrice < p.salePrice ? (
                           <>
@@ -339,16 +320,16 @@ const ListProduct = () => {
                         )}
                       </td>
 
-                      {/* Cột 4: Kho */}
                       <td className="py-3 px-4">
                         {p.qty > 0 ? (
-                          <span className="font-medium text-gray-700">{p.qty}</span>
+                          <div className="font-bold text-gray-800">
+                            {formatQuantity(p.qty, p.saleType, p.unitLabel)}
+                          </div>
                         ) : (
                           <span className="text-red-500 text-xs font-bold bg-red-50 px-2 py-1 rounded">Hết hàng</span>
                         )}
                       </td>
 
-                      {/* Cột 5: Status */}
                       <td className="py-3 px-4">
                         {p.status === 1 ? (
                           <span className="px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-700 border border-green-200">
@@ -361,11 +342,8 @@ const ListProduct = () => {
                         )}
                       </td>
 
-                      {/* Cột 6: Actions */}
                       <td className="py-3 px-4">
                         <div className="flex justify-center items-center space-x-3">
-
-                          {/* ADMIN ONLY ACTIONS */}
                           {isAdmin ? (
                             <>
                               <button
@@ -412,7 +390,6 @@ const ListProduct = () => {
         )}
       </div>
 
-      {/* PAGINATION */}
       {totalPages > 1 && (
         <div className="flex justify-center gap-4 mt-6 p-4 border-t bg-gray-50">
           <button

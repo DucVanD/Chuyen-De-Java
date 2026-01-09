@@ -8,6 +8,8 @@ public interface VoucherService {
 
     List<VoucherDto> getAll();
 
+    List<VoucherDto> getAllActive();
+
     VoucherDto getById(Integer id);
 
     VoucherDto getByCode(String code);

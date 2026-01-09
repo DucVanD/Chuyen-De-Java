@@ -9,7 +9,7 @@ public interface StockMovementService {
 
     List<StockMovementDto> getAll();
 
-    org.springframework.data.domain.Page<StockMovementDto> getPage(int page, int size);
+    org.springframework.data.domain.Page<StockMovementDto> getPage(int page, int size, String excludeType);
 
     StockMovementDto getById(Integer id);
 

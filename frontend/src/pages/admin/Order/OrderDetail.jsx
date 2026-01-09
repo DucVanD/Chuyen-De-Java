@@ -211,7 +211,20 @@ const DetailOrder = () => {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-gray-700">Số lượng: {detail.quantity}</p>
+                        <p className="text-gray-700">
+                          Số lượng: {detail.quantity}{" "}
+                          <span className="text-xs text-gray-400 block mt-1">
+                            {detail.product?.saleType === "WEIGHT"
+                              ? (() => {
+                                const totalGrams = detail.quantity * (detail.product?.baseWeight || 0);
+                                const formattedWeight = totalGrams >= 1000
+                                  ? (totalGrams / 1000).toFixed(1).replace(/\.0$/, "") + " kg"
+                                  : totalGrams + " g";
+                                return `${detail.product?.unitLabel || 'phần'} (${formattedWeight})`;
+                              })()
+                              : (detail.product?.unitLabel || "đơn vị")}
+                          </span>
+                        </p>
                         <p className="text-gray-700 font-semibold">
                           Tổng: {detail.amount.toLocaleString("vi-VN")} đ
                         </p>

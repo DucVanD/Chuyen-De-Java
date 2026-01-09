@@ -49,7 +49,8 @@ public class OrderServiceImpl implements OrderService {
     public Page<OrderDto> getPage(int page, int size, String orderCode,
             com.example.backend.entity.enums.OrderStatus status,
             com.example.backend.entity.enums.PaymentMethod paymentMethod) {
-        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size,
+                org.springframework.data.domain.Sort.by("id").descending());
 
         // Build dynamic specification
         org.springframework.data.jpa.domain.Specification<Order> spec = (root, query, cb) -> {
@@ -108,7 +109,6 @@ public class OrderServiceImpl implements OrderService {
 
         // Process OrderDetails if present
         if (dto.getOrderDetails() != null && !dto.getOrderDetails().isEmpty()) {
-            int totalItemsCount = 0;
 
             List<OrderDetail> details = dto.getOrderDetails().stream()
                     .map(detailDto -> {
@@ -116,18 +116,39 @@ public class OrderServiceImpl implements OrderService {
                                 .orElseThrow(
                                         () -> new RuntimeException("Product not found: " + detailDto.getProductId()));
 
-                        // Deduct product quantity
+                        // Deduct product quantity (WEIGHT: grams, PACKAGE: units)
                         int currentQty = product.getQty() != null ? product.getQty() : 0;
                         int orderQty = detailDto.getQuantity();
+                        int deductQty = orderQty;
 
-                        if (currentQty < orderQty) {
-                            throw new RuntimeException("Insufficient stock for product: " + product.getName()
-                                    + ". Available: " + currentQty + ", Requested: " + orderQty);
+                        if (product.getSaleType() == com.example.backend.entity.SaleType.WEIGHT) {
+                            int baseWeight = product.getBaseWeight() != null ? product.getBaseWeight() : 0;
+                            deductQty = orderQty * baseWeight;
                         }
 
-                        product.setQty(currentQty - orderQty);
+                        if (currentQty < deductQty) {
+                            throw new RuntimeException("Insufficient stock for product: " + product.getName()
+                                    + " (" + product.getSaleType() + "). Available: " + currentQty
+                                    + ", Requested: " + deductQty);
+                        }
+
+                        product.setQty(currentQty - deductQty);
                         productRepository.save(product);
-                        System.out.println("✅ Product qty updated: " + product.getName() + " -> " + product.getQty());
+
+                        // ✅ CREATE ITEMIZED STOCK MOVEMENT
+                        StockMovement stockMovement = StockMovement.builder()
+                                .product(product)
+                                .order(saved)
+                                .movementType(com.example.backend.entity.enums.StockMovementType.OUT)
+                                .quantity(deductQty)
+                                .unitPrice(detailDto.getPriceBuy()) // Use the purchase price for this item
+                                .currentStock(product.getQty())
+                                .note("Xuất kho đơn hàng: " + saved.getOrderCode())
+                                .build();
+                        stockMovementRepository.save(stockMovement);
+
+                        System.out.println(
+                                "✅ Itemized stock movement created: " + product.getName() + " | -" + deductQty);
 
                         return com.example.backend.mapper.OrderDetailMapper.toEntity(detailDto, saved, product);
                     })
@@ -135,29 +156,6 @@ public class OrderServiceImpl implements OrderService {
 
             saved.setOrderDetails(details);
             orderRepository.save(saved);
-
-            // Create ONE summary stock movement for the entire order
-            // Set product to NULL since this is an order summary, not a specific product
-            // movement
-            if (!details.isEmpty()) {
-                totalItemsCount = dto.getOrderDetails().size();
-                int totalQuantity = dto.getOrderDetails().stream()
-                        .mapToInt(com.example.backend.dto.OrderDetailDto::getQuantity)
-                        .sum();
-
-                StockMovement stockMovement = StockMovement.builder()
-                        .product(null) // NULL for order summary
-                        .order(saved)
-                        .movementType(com.example.backend.entity.enums.StockMovementType.OUT)
-                        .quantity(totalQuantity)
-                        .unitPrice(dto.getTotalAmount())
-                        .currentStock(0) // Not applicable for order summary
-                        .note("Order " + saved.getOrderCode() + " - " + totalItemsCount + " items (total qty)")
-                        .build();
-                stockMovementRepository.save(stockMovement);
-                System.out.println("✅ Stock movement created: Order " + saved.getOrderCode() + " - " + totalQuantity
-                        + " units total");
-            }
         }
 
         // Increment voucher usage if voucher was applied
@@ -240,37 +238,36 @@ public class OrderServiceImpl implements OrderService {
                             + currentStatus);
         }
 
-        // 1. Restore Stock
-        // Iterate through order details and increment product quantity
+        // 1. Restore Stock & Record Itemized Stock Movements
         for (OrderDetail detail : order.getOrderDetails()) {
             if (detail.getProduct() != null) {
                 com.example.backend.entity.Product product = detail.getProduct();
                 int currentQty = product.getQty() != null ? product.getQty() : 0;
                 int restoreQty = detail.getQuantity();
 
+                if (product.getSaleType() == com.example.backend.entity.SaleType.WEIGHT) {
+                    int baseWeight = product.getBaseWeight() != null ? product.getBaseWeight() : 0;
+                    restoreQty = restoreQty * baseWeight;
+                }
+
                 product.setQty(currentQty + restoreQty);
                 productRepository.save(product);
-                System.out.println("🔄 Restored stock for: " + product.getName() + " | +" + restoreQty + " -> "
-                        + product.getQty());
-            }
-        }
 
-        // Record Stock Movement for Restoration (Optional but good for tracking)
-        // We can create one summary movement OR one per product. Let's do summary like
-        // in create()
-        if (!order.getOrderDetails().isEmpty()) {
-            int totalRestoreQty = order.getOrderDetails().stream().mapToInt(OrderDetail::getQuantity).sum();
-            StockMovement stockMovement = StockMovement.builder()
-                    .product(null)
-                    .order(order)
-                    .movementType(com.example.backend.entity.enums.StockMovementType.IN) // Refund/Cancel = IN
-                    .quantity(totalRestoreQty)
-                    .unitPrice(java.math.BigDecimal.ZERO)
-                    .currentStock(0)
-                    .note("Restock from Cancelled Order " + order.getOrderCode())
-                    .createdAt(java.time.LocalDateTime.now())
-                    .build();
-            stockMovementRepository.save(stockMovement);
+                // ✅ CREATE ITEMIZED RESTORATION MOVEMENT
+                StockMovement sm = StockMovement.builder()
+                        .product(product)
+                        .order(order)
+                        .movementType(com.example.backend.entity.enums.StockMovementType.IN) // Refund/Cancel = IN
+                        .quantity(restoreQty)
+                        .unitPrice(detail.getPriceBuy()) // Record what price was refunded/restored
+                        .currentStock(product.getQty())
+                        .note("Hoàn kho từ đơn hàng hủy: " + order.getOrderCode())
+                        .createdAt(java.time.LocalDateTime.now())
+                        .build();
+                stockMovementRepository.save(sm);
+
+                System.out.println("🔄 Restored stock itemized for: " + product.getName() + " | +" + restoreQty);
+            }
         }
 
         // 2. Revert Voucher Usage
@@ -319,6 +316,7 @@ public class OrderServiceImpl implements OrderService {
         // Get all orders for this user
         java.util.List<com.example.backend.entity.Order> allOrders = orderRepository.findAll().stream()
                 .filter(o -> o.getUser().getId().equals(userId))
+                .sorted((o1, o2) -> o2.getId().compareTo(o1.getId()))
                 .collect(java.util.stream.Collectors.toList());
 
         // Apply filters
