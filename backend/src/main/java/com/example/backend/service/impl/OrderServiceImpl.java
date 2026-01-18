@@ -78,7 +78,26 @@ public class OrderServiceImpl implements OrderService {
     public OrderDto getById(Integer id) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
-        return OrderMapper.toDto(order);
+
+        OrderDto dto = OrderMapper.toDto(order);
+
+        // Populate creator info (Người tạo đơn)
+        if (order.getCreatedBy() != null) {
+            userRepository.findById(order.getCreatedBy()).ifPresent(creator -> {
+                dto.setCreatedByName(creator.getName());
+                dto.setCreatedByEmail(creator.getEmail());
+            });
+        }
+
+        // Populate updater info (Nhân viên chốt đơn/xử lý cuối)
+        if (order.getUpdatedBy() != null) {
+            userRepository.findById(order.getUpdatedBy()).ifPresent(updater -> {
+                dto.setUpdatedByName(updater.getName());
+                dto.setUpdatedByEmail(updater.getEmail());
+            });
+        }
+
+        return dto;
     }
 
     @Override
@@ -370,6 +389,9 @@ public class OrderServiceImpl implements OrderService {
                 .mapToInt(o -> o.getOrderDetails().size()).sum());
         summary.put("delivered_orders", filteredOrders.stream()
                 .filter(o -> o.getStatus() == com.example.backend.entity.enums.OrderStatus.COMPLETED).count());
+        summary.put("delivered_shipping", filteredOrders.stream()
+                .filter(o -> o.getStatus() == com.example.backend.entity.enums.OrderStatus.SHIPPING).count());
+
         summary.put("pending_orders", filteredOrders.stream()
                 .filter(o -> o.getStatus() == com.example.backend.entity.enums.OrderStatus.PENDING).count());
         summary.put("confirmed_orders", filteredOrders.stream()

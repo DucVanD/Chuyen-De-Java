@@ -14,14 +14,14 @@ const ListOrder = () => {
 
   const [orders, setOrders] = useState([]);
   const [currentPage, setCurrentPage] = useState(Number(page) || 1);
-  const [lastPage, setLastPage] = useState(1);
+  const [lastPage, setLastPage] = useState(0);
   const [loading, setLoading] = useState(false);
 
   // 🔹 Tiêu chí lọc
   const [filters, setFilters] = useState({
     status: "",
-    payment: "",
-    order_code: "",
+    paymentMethod: "",  // Changed from 'payment' to match backend
+    orderCode: "",      // Changed from 'order_code' to match backend
   });
 
   // Danh sách trạng thái đơn hàng (Backend Enum)
@@ -34,13 +34,13 @@ const ListOrder = () => {
   };
 
   // 🔹 Lấy danh sách đơn hàng
-  const fetchOrders = async (page = 0) => {
+  const fetchOrders = async (pageIdx = 0) => {
     setLoading(true);
     try {
-      const res = await apiOrderAdmin.getPage(page, 10, filters);
+      const res = await apiOrderAdmin.getPage(pageIdx, 10, filters);
       setOrders(res.content || []);
-      setCurrentPage(res.number);
-      setLastPage(res.totalPages - 1);
+      setCurrentPage(res.number + 1); // 1-indexed for UI
+      setLastPage(res.totalPages > 0 ? res.totalPages - 1 : 0);
     } catch (err) {
       console.error("Lỗi khi lấy đơn hàng:", err);
       toast.error("Không thể tải danh sách đơn hàng");
@@ -50,24 +50,54 @@ const ListOrder = () => {
   };
 
   useEffect(() => {
-    const pageNumber = Number(page) || 0;
-    fetchOrders(pageNumber);
+    const p = Number(page) || 1;
+    localStorage.setItem("currentOrderPage", p);
+    fetchOrders(p - 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
   // Phân trang
-  const goToPage = (pageNumber) => {
-    if (pageNumber >= 0 && pageNumber <= lastPage) {
-      localStorage.setItem("currentOrderPage", pageNumber);
-      navigate(`/admin/orders/${pageNumber}`);
+  const goToPage = (p) => {
+    if (p >= 1 && p <= (lastPage + 1)) {
+      localStorage.setItem("currentOrderPage", p);
+      if (p === 1) {
+        navigate(`/admin/orders`);
+      } else {
+        navigate(`/admin/orders/${p}`);
+      }
     }
   };
 
 
   // Áp dụng bộ lọc
   const handleFilter = () => {
-    navigate(`/admin/orders/0`);
+    navigate(`/admin/orders`);
     fetchOrders(0);
+  };
+
+  // Bỏ lọc
+  const handleClearFilters = async () => {
+    const emptyFilters = {
+      status: "",
+      paymentMethod: "",
+      orderCode: ""
+    };
+    setFilters(emptyFilters);
+    navigate(`/admin/orders`);
+
+    // Fetch immediately with empty filters
+    setLoading(true);
+    try {
+      const res = await apiOrderAdmin.getPage(0, 10, emptyFilters);
+      setOrders(res.content || []);
+      setCurrentPage(res.number + 1);
+      setLastPage(res.totalPages > 0 ? res.totalPages - 1 : 0);
+    } catch (err) {
+      console.error("Lỗi khi lấy đơn hàng:", err);
+      toast.error("Không thể tải danh sách đơn hàng");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Xóa đơn hàng
@@ -121,8 +151,8 @@ const ListOrder = () => {
         <div>
           <label className="text-sm text-gray-600 block mb-1">Phương thức</label>
           <select
-            value={filters.payment}
-            onChange={(e) => setFilters({ ...filters, payment: e.target.value })}
+            value={filters.paymentMethod}
+            onChange={(e) => setFilters({ ...filters, paymentMethod: e.target.value })}
             className="border rounded-md p-2 text-sm w-48"
           >
             <option value="">Tất cả</option>
@@ -138,21 +168,32 @@ const ListOrder = () => {
           <input
             type="text"
             placeholder="Nhập mã đơn..."
-            value={filters.order_code}
+            value={filters.orderCode}
             onChange={(e) =>
-              setFilters({ ...filters, order_code: e.target.value })
+              setFilters({ ...filters, orderCode: e.target.value })
             }
             className="border rounded-md p-2 text-sm w-48"
           />
         </div>
 
-        <button
-          onClick={handleFilter}
-          disabled={loading}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded text-sm font-semibold flex items-center gap-2 disabled:opacity-50"
-        >
-          <FaSearch /> {loading ? "Đang lọc..." : "Lọc"}
-        </button>
+        {/* Buttons */}
+        <div className="flex gap-2">
+          <button
+            onClick={handleFilter}
+            disabled={loading}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-md flex items-center transition duration-200"
+          >
+            <FaSearch className="mr-2" />
+            {loading ? "Đang lọc..." : "Lọc"}
+          </button>
+          <button
+            onClick={handleClearFilters}
+            disabled={loading}
+            className="bg-gray-500 hover:bg-gray-600 text-white px-5 py-2 rounded-md transition duration-200"
+          >
+            Bỏ lọc
+          </button>
+        </div>
       </div>
 
       {/* Bảng đơn hàng */}
@@ -235,7 +276,7 @@ const ListOrder = () => {
         </table>
 
         {/* Phân trang */}
-        <div className="flex justify-center mt-4 space-x-2">
+        <div className="flex justify-center mt-4 space-x-2 pb-6">
           <button
             onClick={() => goToPage(currentPage - 1)}
             disabled={currentPage === 1}
@@ -243,21 +284,24 @@ const ListOrder = () => {
           >
             Trước
           </button>
-          {Array.from({ length: lastPage }, (_, i) => (
-            <button
-              key={i}
-              onClick={() => goToPage(i + 1)}
-              className={`px-3 py-1 rounded ${currentPage === i + 1
-                ? "bg-indigo-600 text-white"
-                : "bg-gray-200 hover:bg-gray-300"
-                }`}
-            >
-              {i + 1}
-            </button>
-          ))}
+          {Array.from({ length: lastPage + 1 }, (_, i) => {
+            const p = i + 1;
+            return (
+              <button
+                key={p}
+                onClick={() => goToPage(p)}
+                className={`px-3 py-1 rounded ${currentPage === p
+                  ? "bg-indigo-600 text-white"
+                  : "bg-gray-200 hover:bg-gray-300"
+                  }`}
+              >
+                {p}
+              </button>
+            );
+          })}
           <button
             onClick={() => goToPage(currentPage + 1)}
-            disabled={currentPage === lastPage}
+            disabled={currentPage === lastPage + 1}
             className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
           >
             Sau

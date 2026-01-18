@@ -43,25 +43,25 @@ const FooterUser = () => {
       {/* ================= FOOTER CONTENT ================= */}
       <footer className="mt-12 border-t border-gray-100 bg-white">
         <div className="max-w-7xl mx-auto px-4 lg:px-8 py-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          
+
           {/* Cột 1: Thông tin thương hiệu */}
           <div>
             <div className="flex items-center gap-2">
               {/* Logo - Hãy thay đường dẫn ảnh logo của bạn vào đây */}
-              <img 
-                src="/src/assets/images/logo.png" 
-                alt="Bean Farm Logo" 
-                className="h-10 w-auto object-contain" 
-                onError={(e) => {e.target.style.display='none'; e.target.nextSibling.style.display='block'}}
+              <img
+                src="/src/assets/images/logo.png"
+                alt="Bean Farm Logo"
+                className="h-10 w-auto object-contain"
+                onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block' }}
               />
               <span className="text-2xl font-bold text-emerald-700 hidden">Bean Farm</span>
             </div>
-            
+
             <p className="mt-4 text-gray-600 text-sm leading-relaxed">
-              Bean Farm - Siêu thị trực tuyến mua sắm nông sản, chất lượng, tươi xanh. 
+              Bean Farm - Siêu thị trực tuyến mua sắm nông sản, chất lượng, tươi xanh.
               <span className="block font-medium text-emerald-600 mt-1">Giá siêu tốt - Giao siêu tốc.</span>
             </p>
-            
+
             <div className="mt-5 space-y-2 text-sm text-gray-600">
               <p>
                 <span className="font-bold text-gray-800">Địa chỉ:</span> 70 Lữ Gia, P.15, Q.11, TP.HCM
@@ -127,14 +127,14 @@ const FooterUser = () => {
             </div>
 
             <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 flex items-center gap-3">
-               <div className="bg-white border p-1 rounded">
-                  {/* Placeholder QR Code */}
-                  <div className="w-12 h-12 bg-gray-200 flex items-center justify-center text-[10px] text-gray-500">QR CODE</div>
-               </div>
-               <div>
-                  <p className="text-xs font-bold text-gray-700">Zalo Mini App</p>
-                  <p className="text-[10px] text-gray-500">Quét mã để nhận ưu đãi</p>
-               </div>
+              <div className="bg-white border p-1 rounded">
+                {/* Placeholder QR Code */}
+                <div className="w-12 h-12 bg-gray-200 flex items-center justify-center text-[10px] text-gray-500">QR CODE</div>
+              </div>
+              <div>
+                <p className="text-xs font-bold text-gray-700">Zalo Mini App</p>
+                <p className="text-[10px] text-gray-500">Quét mã để nhận ưu đãi</p>
+              </div>
             </div>
           </div>
         </div>
@@ -150,7 +150,7 @@ const FooterUser = () => {
 
       {/* ================= FLOATING ACTION BUTTONS (NÚT NỔI) ================= */}
       <div className="fixed bottom-6 right-6 flex flex-col items-center gap-4 z-50">
-        
+
         {/* 1. Nút Scroll Top (Chỉ hiện khi cuộn xuống) */}
         {showButton && (
           <button
@@ -164,22 +164,64 @@ const FooterUser = () => {
 
         {/* 2. Cụm Nút Liên Hệ Đa Năng */}
         <div className="relative group">
-          
+
           {/* Menu Popup (Hiện ra khi state showContactMenu = true) */}
-          <div 
+          <div
             className={`absolute bottom-full right-0 mb-4 w-60 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden transition-all duration-300 origin-bottom-right 
             ${showContactMenu ? 'opacity-100 scale-100 translate-y-0 visible' : 'opacity-0 scale-90 translate-y-4 invisible pointer-events-none'}`}
           >
             <div className="p-3 bg-emerald-50 text-emerald-800 text-xs font-bold text-center border-b border-emerald-100">
               HỖ TRỢ TRỰC TUYẾN 24/7
             </div>
-            
+
             <ul className="flex flex-col">
+              {/* Chat với AI */}
+              <li>
+                <button
+                  onClick={() => {
+                    window.dispatchEvent(new CustomEvent('openChatbot'));
+                    setShowContactMenu(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-emerald-50 transition border-b border-emerald-50 group/item text-left"
+                >
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-md group-hover/item:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-bold text-indigo-600 uppercase tracking-wider">Mới ✨</span>
+                    <span className="text-sm font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Chat với trợ lý AI</span>
+                  </div>
+                </button>
+              </li>
+
+              {/* Liên hệ Admin */}
+              <li>
+                <button
+                  onClick={() => {
+                    window.dispatchEvent(new CustomEvent('openChatbot', { detail: { initialMessage: 'Tôi muốn để lại lời nhắn cho Admin' } }));
+                    setShowContactMenu(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-emerald-50 transition border-b border-emerald-50 group/item text-left"
+                >
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md group-hover/item:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l3.255-4.143a1.087 1.087 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <span className="text-sm font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">Liên hệ Admin (AI hỗ trợ)</span>
+                    <span className="block text-[10px] text-gray-500 italic mt-0.5">Để lại lời nhắn nhanh</span>
+                  </div>
+                </button>
+              </li>
+
               {/* Gọi Hotline */}
               <li>
                 <a href="tel:19006750" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition border-b border-gray-50 group/item">
                   <div className="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center shadow-sm group-hover/item:scale-110 transition-transform">
-                    <FaPhoneAlt size={14}/>
+                    <FaPhoneAlt size={14} />
                   </div>
                   <div>
                     <span className="block text-xs text-gray-500">Hotline</span>
@@ -187,12 +229,12 @@ const FooterUser = () => {
                   </div>
                 </a>
               </li>
-              
+
               {/* Chat Zalo */}
               <li>
                 <a href="https://zalo.me/YOUR_ZALO_ID" target="_blank" rel="noreferrer" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition border-b border-gray-50 group/item">
                   <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-sm group-hover/item:scale-110 transition-transform">
-                    <SiZalo size={16}/>
+                    <SiZalo size={16} />
                   </div>
                   <div>
                     <span className="block text-xs text-gray-500">Chat Zalo</span>
@@ -205,7 +247,7 @@ const FooterUser = () => {
               <li>
                 <a href="https://m.me/YOUR_PAGE_ID" target="_blank" rel="noreferrer" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition border-b border-gray-50 group/item">
                   <div className="w-8 h-8 rounded-full bg-[#0084FF] text-white flex items-center justify-center shadow-sm group-hover/item:scale-110 transition-transform">
-                    <FaFacebookMessenger size={18}/>
+                    <FaFacebookMessenger size={18} />
                   </div>
                   <div>
                     <span className="block text-xs text-gray-500">Facebook</span>
@@ -218,7 +260,7 @@ const FooterUser = () => {
               <li>
                 <a href="/contact" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition group/item">
                   <div className="w-8 h-8 rounded-full bg-yellow-500 text-white flex items-center justify-center shadow-sm group-hover/item:scale-110 transition-transform">
-                    <FaMapMarkerAlt size={14}/>
+                    <FaMapMarkerAlt size={14} />
                   </div>
                   <span className="text-sm font-medium text-gray-700">Tìm cửa hàng</span>
                 </a>
@@ -234,7 +276,7 @@ const FooterUser = () => {
             title="Liên hệ với chúng tôi"
           >
             {showContactMenu ? <FaTimes size={24} /> : <FaComments size={26} />}
-            
+
             {/* Chấm đỏ thông báo (Ping animation) */}
             {!showContactMenu && (
               <span className="absolute top-0 right-0 flex h-4 w-4">

@@ -43,12 +43,14 @@ public class VoucherController {
 
     // 4️⃣ Tạo voucher mới
     @PostMapping
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<VoucherDto> create(@RequestBody VoucherDto dto) {
         return ResponseEntity.ok(voucherService.create(dto));
     }
 
     // 5️⃣ Cập nhật voucher
     @PutMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<VoucherDto> update(
             @PathVariable Integer id,
             @RequestBody VoucherDto dto) {
@@ -57,6 +59,7 @@ public class VoucherController {
 
     // 6️⃣ Vô hiệu hóa voucher (soft delete)
     @PutMapping("/{id}/deactivate")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<Void> deactivate(@PathVariable Integer id) {
         voucherService.deactivate(id);
         return ResponseEntity.noContent().build();

@@ -50,7 +50,11 @@ public class OrderDto {
 
     // Auditing
     private Integer createdBy;
+    private String createdByName; // Tên người tạo
+    private String createdByEmail; // Email người tạo
     private Integer updatedBy;
+    private String updatedByName; // Nhân viên chốt đơn/xử lý
+    private String updatedByEmail; // Email nhân viên xử lý
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

@@ -68,6 +68,13 @@ import AddVoucher from "../pages/admin/Voucher/AddVoucher";
 import EditVoucher from "../pages/admin/Voucher/EditVoucher";
 
 
+// Contact
+import ListContact from "../pages/admin/Contact/ListContact";
+
+// Customer
+import ListCustomer from "../pages/admin/Customer/ListCustomer";
+
+
 // định nghĩa các route cho trang admin
 const AdminRoute = [
   { path: "dashboard", component: Dashboard },
@@ -136,6 +143,11 @@ const AdminRoute = [
   { path: "inventory/import", component: FormNhapKho },
   { path: "inventory/export", component: ListOrderExport },
   { path: "inventory/adjust", component: FormDieuChinh },
+  // Contact
+  { path: "contacts", component: ListContact },
+
+  // Customer
+  { path: "customers", component: ListCustomer },
 ];
 
 export default AdminRoute;

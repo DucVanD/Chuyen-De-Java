@@ -149,7 +149,7 @@ const Post = () => {
                       </p>
 
                       <Link
-                        to={`/post/${post.id}`}
+                        to={`/post/${post.slug}`}
                         className="inline-flex items-center text-green-600 hover:text-green-700 font-medium transition-colors"
                       >
                         Đọc tiếp

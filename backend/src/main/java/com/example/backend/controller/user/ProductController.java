@@ -40,11 +40,13 @@ public class ProductController {
     }
 
     @PostMapping
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<ProductDto> create(@RequestBody ProductDto dto) {
         return ResponseEntity.ok(productService.create(dto));
     }
 
     @PutMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<ProductDto> update(
             @PathVariable Integer id,
             @RequestBody ProductDto dto) {
@@ -52,6 +54,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
         productService.delete(id);
         return ResponseEntity.noContent().build();

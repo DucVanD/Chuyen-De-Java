@@ -31,21 +31,23 @@ public class SupplierController {
 
     // 3️⃣ Tạo supplier mới
     @PostMapping
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<SupplierDto> create(@RequestBody SupplierDto dto) {
         return ResponseEntity.ok(supplierService.create(dto));
     }
 
     // 4️⃣ Cập nhật supplier
     @PutMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<SupplierDto> update(
             @PathVariable Integer id,
-            @RequestBody SupplierDto dto
-    ) {
+            @RequestBody SupplierDto dto) {
         return ResponseEntity.ok(supplierService.update(id, dto));
     }
 
     // 5️⃣ Xóa supplier
     @DeleteMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
         supplierService.delete(id);
         return ResponseEntity.noContent().build();

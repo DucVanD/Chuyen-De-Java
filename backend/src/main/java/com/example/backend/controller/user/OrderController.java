@@ -18,21 +18,35 @@ public class OrderController {
     }
 
     @GetMapping
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<List<OrderDto>> getAll() {
         return ResponseEntity.ok(orderService.getAll());
     }
 
     @GetMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<OrderDto> getById(@PathVariable Integer id) {
         return ResponseEntity.ok(orderService.getById(id));
     }
 
     @PostMapping
-    public ResponseEntity<OrderDto> create(@RequestBody OrderDto dto) {
-        return ResponseEntity.ok(orderService.create(dto));
+    public ResponseEntity<?> create(@RequestBody OrderDto dto) {
+        OrderDto createdOrder = orderService.create(dto);
+
+        // If payment method is VNPAY, return order info for payment URL generation
+        if (dto.getPaymentMethod() == com.example.backend.entity.enums.PaymentMethod.VNPAY) {
+            return ResponseEntity.ok(java.util.Map.of(
+                    "status", "success",
+                    "order", createdOrder,
+                    "message", "Order created, proceed to payment"));
+        }
+
+        // For COD/BANK, return order directly
+        return ResponseEntity.ok(createdOrder);
     }
 
     @PutMapping("/{id}/status")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<OrderDto> updateStatus(
             @PathVariable Integer id,
             @RequestBody OrderDto dto) {

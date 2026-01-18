@@ -1,7 +1,10 @@
 package com.example.backend.service.impl;
 
+import com.example.backend.dto.CustomerDto;
 import com.example.backend.dto.UserDto;
+import com.example.backend.entity.Order;
 import com.example.backend.entity.User;
+import com.example.backend.entity.enums.OrderStatus;
 import com.example.backend.mapper.UserMapper;
 import com.example.backend.repository.UserRepository;
 import com.example.backend.service.UserService;
@@ -18,14 +21,17 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final com.example.backend.config.CloudinaryService cloudinaryService;
+    private final com.example.backend.repository.OrderRepository orderRepository;
 
     public UserServiceImpl(
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
-            com.example.backend.config.CloudinaryService cloudinaryService) {
+            com.example.backend.config.CloudinaryService cloudinaryService,
+            com.example.backend.repository.OrderRepository orderRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.cloudinaryService = cloudinaryService;
+        this.orderRepository = orderRepository;
     }
 
     @Override
@@ -165,5 +171,51 @@ public class UserServiceImpl implements UserService {
 
         user.setStatus(1);
         userRepository.save(user);
+    }
+
+    @Override
+    public List<CustomerDto> getCustomers() {
+        List<User> usersWithOrders = userRepository.findUsersWithOrders();
+
+        return usersWithOrders.stream()
+                .map(user -> {
+                    // Fetch orders for this user
+                    List<Order> userOrders = orderRepository.findByUserId(user.getId());
+
+                    List<Order> completedOrders = userOrders.stream()
+                            .filter(order -> order.getStatus() == OrderStatus.COMPLETED)
+                            .collect(Collectors.toList());
+
+                    long totalOrders = (long) userOrders.size();
+                    java.math.BigDecimal totalSpent = completedOrders.stream()
+                            .map(Order::getTotalAmount)
+                            .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+
+                    java.time.LocalDateTime lastOrderDate = userOrders.stream()
+                            .map(Order::getCreatedAt)
+                            .max(java.time.LocalDateTime::compareTo)
+                            .orElse(null);
+
+                    java.math.BigDecimal averageOrderValue = totalOrders > 0
+                            ? totalSpent.divide(java.math.BigDecimal.valueOf(totalOrders), 2,
+                                    java.math.RoundingMode.HALF_UP)
+                            : java.math.BigDecimal.ZERO;
+
+                    return CustomerDto.builder()
+                            .id(user.getId())
+                            .name(user.getName())
+                            .email(user.getEmail())
+                            .phone(user.getPhone())
+                            .address(user.getAddress())
+                            .avatar(user.getAvatar())
+                            .totalOrders(totalOrders)
+                            .totalSpent(totalSpent)
+                            .lastOrderDate(lastOrderDate)
+                            .averageOrderValue(averageOrderValue)
+                            .createdAt(user.getCreatedAt())
+                            .status(user.getStatus() == 1 ? "Active" : "Locked")
+                            .build();
+                })
+                .collect(Collectors.toList());
     }
 }

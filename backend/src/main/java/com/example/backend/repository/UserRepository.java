@@ -26,4 +26,8 @@ public interface UserRepository extends JpaRepository<User, Integer> {
         org.springframework.data.domain.Page<User> findByRoles(
                         @org.springframework.data.repository.query.Param("roles") java.util.List<com.example.backend.entity.enums.Role> roles,
                         org.springframework.data.domain.Pageable pageable);
+
+        // Find users who have placed orders (customers)
+        @org.springframework.data.jpa.repository.Query("SELECT DISTINCT u FROM User u WHERE u.role = 'CUSTOMER' AND u.id IN (SELECT o.user.id FROM Order o) ORDER BY u.createdAt DESC")
+        java.util.List<User> findUsersWithOrders();
 }

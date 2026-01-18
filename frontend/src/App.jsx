@@ -12,6 +12,7 @@ import Adminroute from "./routers/admin.js";
 import LayoutAdmin from "./components/LayoutAdmin.jsx";
 import AdminPrivateRoute from "./components/AdminPrivateRoute.jsx";
 import AdminLogin from "./pages/admin/AdminLogin"; // 👈 THÊM DÒNG NÀY/
+import ForgotPassword from "./pages/auth/ForgotPassword";
 
 function App() {
   return (
@@ -28,6 +29,9 @@ function App() {
 
           {/* ADMIN LOGIN (Public) */}
           <Route path="/admin/login" element={<AdminLogin />} />
+
+          {/* FORGOT PASSWORD (Public) */}
+          <Route path="/forgot-password" element={<ForgotPassword />} />
 
           {/* ADMIN (Protected) */}
           {/* <Route

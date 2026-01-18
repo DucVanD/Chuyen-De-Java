@@ -31,21 +31,23 @@ public class BrandController {
 
     // 3️⃣ Tạo brand mới
     @PostMapping
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<BrandDto> create(@RequestBody BrandDto dto) {
         return ResponseEntity.ok(brandService.create(dto));
     }
 
     // 4️⃣ Cập nhật brand
     @PutMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<BrandDto> update(
             @PathVariable Integer id,
-            @RequestBody BrandDto dto
-    ) {
+            @RequestBody BrandDto dto) {
         return ResponseEntity.ok(brandService.update(id, dto));
     }
 
     // 5️⃣ Xóa brand
     @DeleteMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
         brandService.delete(id);
         return ResponseEntity.noContent().build();

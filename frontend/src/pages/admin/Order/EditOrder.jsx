@@ -79,7 +79,14 @@ const EditOrder = () => {
       });
 
       toast.success("✅ Cập nhật đơn hàng thành công");
-      setTimeout(() => navigate("/admin/orders/0"), 1200);
+      setTimeout(() => {
+        const lp = localStorage.getItem("currentOrderPage");
+        if (!lp || lp === "1" || lp === "0" || lp === "null" || lp === "undefined") {
+          navigate("/admin/orders");
+        } else {
+          navigate(`/admin/orders/${lp}`);
+        }
+      }, 1200);
     } catch (err) {
       console.error(err);
       toast.error("❌ Cập nhật thất bại");
@@ -101,12 +108,27 @@ const EditOrder = () => {
         <h3 className="text-2xl font-semibold">
           Chỉnh sửa đơn hàng #{order.orderCode}
         </h3>
-        <button
-          onClick={() => navigate("/admin/orders/0")}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded"
-        >
-          ← Quay lại
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => {
+              const lp = localStorage.getItem("currentOrderPage");
+              if (!lp || lp === "1" || lp === "0" || lp === "null" || lp === "undefined") {
+                navigate("/admin/orders");
+              } else {
+                navigate(`/admin/orders/${lp}`);
+              }
+            }}
+            className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded text-sm inline-flex items-center"
+          >
+            <i className="fa fa-list mr-1"></i> Về danh sách
+          </button>
+          <button
+            onClick={() => navigate(`/admin/order/detail/${id}`)}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-sm inline-flex items-center"
+          >
+            <i className="fa fa-info-circle mr-1"></i> Về chi tiết
+          </button>
+        </div>
       </div>
 
       {/* ===== FORM ===== */}

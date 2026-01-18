@@ -1,19 +1,19 @@
-import axiosClient from "./axiosClient"; // Config axios của bạn
+import axiosInstance from "../axios";
 
 const apiContact = {
   // Lấy tất cả
   getAll: () => {
-    return axiosClient.get("/contacts");
+    return axiosInstance.get("/contacts");
   },
-  
+
   // Xóa
   delete: (id) => {
-    return axiosClient.delete(`/contacts/${id}`);
+    return axiosInstance.delete(`/contacts/${id}`);
   },
 
   // Cập nhật (Dùng để trả lời và đổi status)
   update: (id, data) => {
-    return axiosClient.put(`/contacts/${id}`, data);
+    return axiosInstance.put(`/contacts/${id}`, data);
   }
 };
 

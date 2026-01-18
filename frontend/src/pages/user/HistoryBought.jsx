@@ -2,8 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import apiUser from "../../api/user/apiUser";
 import apiOrder from "../../api/user/apiOrder";
+import apiContactUser from "../../api/user/apiContactUser";
 import { toast } from "react-toastify";
-import { FaBoxOpen, FaCalendarAlt, FaTimes } from "react-icons/fa";
+import { FaBoxOpen, FaCalendarAlt, FaTimes, FaRobot } from "react-icons/fa";
 import { HiOutlineClipboardDocumentCheck } from "react-icons/hi2";
 
 // ---------------- STATUS ----------------
@@ -13,6 +14,14 @@ const statusLabels = {
   3: { text: "Đang giao hàng", color: "bg-orange-100 text-orange-800" },   // SHIPPING
   4: { text: "Hoàn thành", color: "bg-green-100 text-green-800" },         // COMPLETED
   5: { text: "Đã hủy", color: "bg-red-100 text-red-800" },                 // CANCELLED
+};
+
+// ---------------- PAYMENT STATUS ----------------
+const paymentStatusLabels = {
+  UNPAID: { text: "Chưa thanh toán", color: "bg-gray-100 text-gray-700", icon: "⏳" },
+  PAID: { text: "Đã thanh toán", color: "bg-green-100 text-green-700", icon: "✅" },
+  FAILED: { text: "Thanh toán thất bại", color: "bg-red-100 text-red-700", icon: "❌" },
+  REFUNDED: { text: "Đã hoàn tiền", color: "bg-purple-100 text-purple-700", icon: "💰" },
 };
 
 // ---------------- CANCEL REASONS ----------------
@@ -57,6 +66,9 @@ const HistoryBought = () => {
   const [cancelReason, setCancelReason] = useState("");
   const [customReason, setCustomReason] = useState("");
 
+  // Support tickets
+  const [orderTickets, setOrderTickets] = useState({}); // { orderCode: [tickets] }
+
   // ---------------- FETCH HISTORY ----------------
   const fetchHistory = async (pageNum = 1) => {
     setLoading(true);
@@ -89,6 +101,7 @@ const HistoryBought = () => {
             order_code: order.orderCode,
             created_at: new Date(order.createdAt).toLocaleString("vi-VN"),
             payment: order.paymentMethod,
+            paymentStatus: order.paymentStatus, // Add payment status
             // Keep as numbers for logic, format in render
             subtotal: order.subtotal || 0,
             discount_amount: order.discountAmount || 0,
@@ -108,6 +121,11 @@ const HistoryBought = () => {
           }))
         };
         setUserData(transformedData);
+
+        // Fetch tickets for all orders
+        transformedData.orders.forEach(order => {
+          fetchOrderTickets(order.order_code);
+        });
       } else {
         setUserData(null);
       }
@@ -123,6 +141,39 @@ const HistoryBought = () => {
     fetchHistory(parseInt(page) || 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
+
+  // ---------------- TICKET HELPERS ----------------
+  const getTicketTypeLabel = (type) => {
+    const labels = {
+      CANCEL: "🚫 Yêu cầu hủy đơn",
+      CHANGE_ADDRESS: "📍 Đổi địa chỉ",
+      PRODUCT_ISSUE: "⚠️ Vấn đề sản phẩm",
+      DELAY: "⏰ Giao hàng chậm",
+      GENERAL: "💬 Khác"
+    };
+    return labels[type] || type;
+  };
+
+  const getTicketStatusColor = (status) => {
+    const colors = {
+      OPEN: "bg-yellow-100 text-yellow-800",
+      IN_PROGRESS: "bg-blue-100 text-blue-800",
+      RESOLVED: "bg-green-100 text-green-800",
+      REJECTED: "bg-red-100 text-red-800"
+    };
+    return colors[status] || "bg-gray-100 text-gray-800";
+  };
+
+  const fetchOrderTickets = async (orderCode) => {
+    if (orderTickets[orderCode]) return; // Already fetched
+
+    try {
+      const tickets = await apiContactUser.getByOrderCode(orderCode);
+      setOrderTickets(prev => ({ ...prev, [orderCode]: tickets }));
+    } catch (error) {
+      console.error("Failed to fetch tickets:", error);
+    }
+  };
 
   // ---------------- HANDLERS ----------------
   const handleFilter = () => {
@@ -179,6 +230,16 @@ const HistoryBought = () => {
     }
   };
 
+  const handleSupportOrder = (order) => {
+    window.dispatchEvent(
+      new CustomEvent("openChatbot", {
+        detail: {
+          initialMessage: `Tôi cần hỗ trợ cho đơn hàng #${order.order_code}. Trạng thái hiện tại là gì?`,
+        },
+      })
+    );
+  };
+
   // ---------------- RENDER ----------------
   if (loading && !userData) {
     return (
@@ -197,6 +258,8 @@ const HistoryBought = () => {
   }
 
   const { summary, orders, pagination } = userData;
+
+  console.log("aksj", userData)
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10 relative">
@@ -278,6 +341,7 @@ const HistoryBought = () => {
           <div className="flex flex-wrap gap-4 mt-2 text-sm">
             <p>🟢 Đã giao: <b>{summary.delivered_orders}</b></p>
             <p>🟡 Đang chờ: <b>{summary.pending_orders}</b></p>
+            <p>?? Đang giao: <b>{summary.delivered_shipping}</b></p>
             <p>🔵 Đã xác nhận: <b>{summary.confirmed_orders}</b></p>
             <p>🔴 Đã hủy: <b>{summary.canceled_orders}</b></p>
           </div>
@@ -296,17 +360,35 @@ const HistoryBought = () => {
             >
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-gray-50 p-4 border-b border-gray-200">
                 <div>
-                  <p className="font-semibold text-gray-800">
-                    Mã đơn:{" "}
-                    <span className="text-indigo-600 font-mono">{order.order_code}</span>
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-gray-800">
+                      Mã đơn:{" "}
+                      <span className="text-indigo-600 font-mono">{order.order_code}</span>
+                    </p>
+                    {orderTickets[order.order_code]?.some(t => t.status === 'RESOLVED') && (
+                      <span className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full flex items-center gap-1">
+                        📩 Có phản hồi
+                      </span>
+                    )}
+                  </div>
                   <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
                     <FaCalendarAlt className="text-gray-400" /> {order.created_at}
                   </p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Thanh toán:{" "}
-                    <span className="font-medium text-green-600">{order.payment}</span>
-                  </p>
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
+                    <p className="text-sm text-gray-600">
+                      Phương thức:{" "}
+                      <span className="font-medium text-blue-600">{order.payment}</span>
+                    </p>
+                    {/* Payment Status Badge */}
+                    {order.paymentStatus && (
+                      <span
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${paymentStatusLabels[order.paymentStatus]?.color || 'bg-gray-100 text-gray-700'}`}
+                      >
+                        <span>{paymentStatusLabels[order.paymentStatus]?.icon || '❓'}</span>
+                        <span>{paymentStatusLabels[order.paymentStatus]?.text || order.paymentStatus}</span>
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <span
                   className={`px-3 py-1 rounded-full text-xs font-semibold ${statusLabels[order.status]?.color}`}
@@ -342,6 +424,42 @@ const HistoryBought = () => {
                 </div>
               ))}
 
+              {/* Support Tickets Section */}
+              {orderTickets[order.order_code]?.length > 0 && (
+                <div className="p-4 bg-gray-50 border-t border-gray-200">
+                  <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    📩 Yêu cầu hỗ trợ
+                  </h4>
+                  <div className="space-y-3">
+                    {orderTickets[order.order_code].map(ticket => (
+                      <div key={ticket.id} className="bg-white p-3 rounded-lg border border-gray-200">
+                        <div className="flex justify-between items-start mb-2">
+                          <span className="text-sm font-medium text-gray-700">
+                            {getTicketTypeLabel(ticket.type)}
+                          </span>
+                          <span className={`px-2 py-1 text-xs rounded-full ${getTicketStatusColor(ticket.status)}`}>
+                            {ticket.status}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-2">{ticket.content}</p>
+                        {ticket.replyContent && (
+                          <div className="mt-2 p-3 bg-green-50 border-l-4 border-green-500 rounded">
+                            <p className="text-xs font-semibold text-green-700 mb-1">✅ Phản hồi từ Admin:</p>
+                            <p className="text-sm text-gray-700">{ticket.replyContent}</p>
+                            {ticket.updatedAt && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                {new Date(ticket.updatedAt).toLocaleString('vi-VN')}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+
               <div className="p-4 bg-gray-50 border-t border-gray-200">
                 {/* Price Breakdown */}
                 <div className="space-y-2 mb-4">
@@ -365,8 +483,17 @@ const HistoryBought = () => {
 
                 {/* Action Buttons */}
                 <div className="flex justify-end gap-2">
-                  {/* Review Button - Only for completed orders (status 5) */}
-                  {order.status === 5 && (
+                  {/* AI Support Button */}
+                  <button
+                    onClick={() => handleSupportOrder(order)}
+                    className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-4 py-2 rounded-md text-sm transition flex items-center gap-2 border border-indigo-200"
+                  >
+                    <FaRobot className="text-indigo-600" />
+                    Hỗ trợ AI
+                  </button>
+
+                  {/* Review Button - Only for completed orders (status 4) */}
+                  {order.status === 4 && (
                     <button
                       onClick={() => {/* TODO: Open review modal */ }}
                       className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md text-sm transition flex items-center gap-1"

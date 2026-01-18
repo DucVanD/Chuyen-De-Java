@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import apiOrderAdmin from "../../../api/admin/apiOrderAdmin";
 import { imageURL } from "../../../api/config";
+import { generateSalesReceipt } from "../../../utils/invoiceGenerator";
 
 // Helper function to get image URL
 const getImageUrl = (thumbnail) => {
@@ -33,12 +34,19 @@ const DetailOrder = () => {
     fetchOrder();
   }, [id]);
 
-  // const handleExportInvoice = () => {
-  //   window.open(`http://127.0.0.1:8000/api/orders/${order.id}/invoice`, "_blank");
-  // };
-
   const handleExportInvoice = () => {
-    apiOrder.exportInvoice(order.id);
+    try {
+      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const invoiceWindow = window.open('', '_blank');
+
+      const invoiceHTML = generateSalesReceipt(order, currentUser);
+
+      invoiceWindow.document.write(invoiceHTML);
+      invoiceWindow.document.close();
+    } catch (error) {
+      alert('Lỗi: ' + error.message);
+      console.error('Invoice generation error:', error);
+    }
   };
 
 
@@ -90,9 +98,21 @@ const DetailOrder = () => {
             </button>
 
             <button
+              onClick={() => navigate(`/admin/order/edit/${order.id}`)}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-sm inline-flex items-center"
+            >
+              <i className="fa fa-edit mr-1"></i> Cập nhật đơn
+            </button>
+
+            <button
               onClick={() => {
-                const lastPage = localStorage.getItem("currentOrderPage") || 0;
-                navigate(`/admin/orders/${lastPage}`);
+                const lp = localStorage.getItem("currentOrderPage");
+                // Strictly handle page index 0 or not set to go to root /admin/orders
+                if (!lp || lp === "1" || lp === "0" || lp === "null" || lp === "undefined") {
+                  navigate("/admin/orders");
+                } else {
+                  navigate(`/admin/orders/${lp}`);
+                }
               }}
               className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded text-sm inline-flex items-center"
             >

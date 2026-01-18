@@ -201,6 +201,10 @@ public class ProductServiceImpl implements ProductService {
         product.setStatus(dto.getStatus());
         product.setCategory(category);
         product.setBrand(brand);
+        // CẬP NHẬT CẤU HÌNH BÁN HÀNG
+        product.setSaleType(dto.getSaleType());
+        product.setBaseWeight(dto.getBaseWeight());
+        product.setUnitLabel(dto.getUnitLabel());
         product.setUpdatedBy(1);
 
         // ✅ CHỈ SET ẢNH KHI CÓ ẢNH MỚI

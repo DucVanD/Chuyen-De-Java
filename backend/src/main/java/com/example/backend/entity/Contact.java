@@ -1,6 +1,7 @@
 package com.example.backend.entity;
 
 import com.example.backend.entity.enums.ContactStatus;
+import com.example.backend.entity.enums.ContactType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -29,6 +30,18 @@ public class Contact {
     @JoinColumn(name = "user_id", nullable = true)
     private User user;
 
+    @Column(name = "order_id")
+    private Integer orderId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
+    @Builder.Default
+    private ContactType type = ContactType.GENERAL;
+
+    @Column(length = 20)
+    @Builder.Default
+    private String priority = "NORMAL";
+
     @Column(nullable = false, length = 100)
     private String name;
 
@@ -48,9 +61,9 @@ public class Contact {
     private String replyContent;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     @Builder.Default
-    private ContactStatus status = ContactStatus.PROCESSING; // Mặc định là đang xử lý
+    private ContactStatus status = ContactStatus.OPEN; // Mặc định là mới tiếp nhận
 
     // Người cập nhật (Admin trả lời) - Tự động lấy ID từ Spring Security
     @LastModifiedBy

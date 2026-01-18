@@ -1,6 +1,8 @@
 package com.example.backend.entity.enums;
 
 public enum ContactStatus {
-    PROCESSING,
-    RESPONDED
+    OPEN, // Mới tiếp nhận
+    IN_PROGRESS, // Đang xử lý
+    RESOLVED, // Đã giải quyết
+    REJECTED // Từ chối/Đóng
 }

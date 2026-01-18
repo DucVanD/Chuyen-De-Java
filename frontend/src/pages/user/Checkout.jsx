@@ -146,13 +146,30 @@ const Checkout = () => {
       const res = await apiOrder.checkout(orderData);
       console.log("Checkout response:", res);
 
-      // Handle VNPAY redirect
-      if (form.payment === "vnpay" && res?.payment_url) {
-        window.location.href = res.payment_url;
+      // Handle VNPay payment
+      if (form.payment === "vnpay") {
+        // Backend returns { status, order, message } for VNPay
+        if (res?.order?.id) {
+          try {
+            const paymentRes = await apiOrder.createVnpayPayment(res.order.id);
+            if (paymentRes?.paymentUrl) {
+              // Redirect to VNPay payment page
+              window.location.href = paymentRes.paymentUrl;
+              return;
+            }
+          } catch (paymentError) {
+            console.error("VNPay payment error:", paymentError);
+            toast.error("Không thể tạo link thanh toán VNPay. Vui lòng thử lại!");
+            setLoading(false);
+            return;
+          }
+        }
+        toast.error("Không thể tạo đơn hàng. Vui lòng thử lại!");
+        setLoading(false);
         return;
       }
 
-      // Success - backend returns OrderDto directly
+      // Success for COD/BANK - backend returns OrderDto directly
       toast.success("🎉 Đặt hàng thành công!");
       dispatch(clearCart());
       setTimeout(() => {
