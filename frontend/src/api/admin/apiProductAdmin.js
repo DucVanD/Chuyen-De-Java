@@ -37,8 +37,9 @@ const apiProductAdmin = {
         axiosAdmin.get(`/admin/products/search?keyword=${keyword}&page=${page}&size=${size}`).then(res => res.data),
 
     // FILTER (Paginated)
-    filter: (categoryId, brandId, status, minPrice, maxPrice, hasPromotion, page = 0, size = 8) => {
+    filter: (keyword, categoryId, brandId, status, minPrice, maxPrice, hasPromotion, page = 0, size = 8) => {
         const params = new URLSearchParams();
+        if (keyword) params.append("keyword", keyword);
         if (categoryId) params.append("categoryId", categoryId);
         if (brandId) params.append("brandId", brandId);
         if (status) params.append("status", status);

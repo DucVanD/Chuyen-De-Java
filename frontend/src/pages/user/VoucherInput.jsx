@@ -15,6 +15,29 @@ const VoucherInput = ({ subtotal, onVoucherApplied }) => {
         setSavedCodes(saved);
     }, []);
 
+    // Re-validate voucher if subtotal changes (e.g. user unselects items)
+    useEffect(() => {
+        if (appliedVoucher) {
+            reValidateVoucher();
+        }
+    }, [subtotal]);
+
+    const reValidateVoucher = async () => {
+        try {
+            const voucher = await apiVoucher.validateVoucher(appliedVoucher.voucherCode, subtotal);
+            const discountAmount = apiVoucher.calculateDiscount(voucher, subtotal);
+            setAppliedVoucher(voucher);
+            setDiscount(discountAmount);
+            onVoucherApplied(voucher, discountAmount);
+        } catch (error) {
+            // If subtotal is now too low or other error, remove voucher
+            setAppliedVoucher(null);
+            setDiscount(0);
+            onVoucherApplied(null, 0);
+            toast.error(`Voucher không còn hiệu lực: ${error}`, { toastId: "voucher-invalid" });
+        }
+    };
+
     const handleApplyVoucher = async (codeToApply) => {
         const code = (typeof codeToApply === 'string') ? codeToApply : voucherCode;
         if (!code.trim()) {
@@ -38,6 +61,15 @@ const VoucherInput = ({ subtotal, onVoucherApplied }) => {
             setAppliedVoucher(null);
             setDiscount(0);
             onVoucherApplied(null, 0);
+
+            // ✅ Tự động dọn dẹp mã lỗi khỏi danh sách đã lưu (trong trường hợp mã bị xóa khỏi DB)
+            const saved = JSON.parse(localStorage.getItem("savedVouchers") || "[]");
+            if (saved.includes(code.toUpperCase())) {
+                const updated = saved.filter(c => c !== code.toUpperCase());
+                localStorage.setItem("savedVouchers", JSON.stringify(updated));
+                setSavedCodes(updated);
+                console.log(`Auto-cleaned invalid voucher: ${code}`);
+            }
         } finally {
             setLoading(false);
         }

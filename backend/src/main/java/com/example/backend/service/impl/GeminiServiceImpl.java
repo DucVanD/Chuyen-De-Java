@@ -54,16 +54,21 @@ public class GeminiServiceImpl implements AiChatService {
             +
             "2. Nếu hệ thống chưa có ETA, hãy trả lời: 'Hiện chưa có thời gian dự kiến chính xác, tôi đã tạo yêu cầu để nhân viên báo lại cho bạn sớm nhất'.\n"
             +
-            "3. QUY TRÌNH HỖ TRỢ CHI TIẾT:\n" +
+            "3. HÌNH ẢNH & CHI TIẾT: Khi bạn tìm thấy sản phẩm thông qua công cụ tìm kiếm, hệ thống sẽ TỰ ĐỘNG hiển thị thẻ sản phẩm (Product Card) có chứa HÌNH ẢNH, GIÁ và nút 'XEM CHI TIẾT' ngay bên dưới tin nhắn của bạn.\n"
+            +
+            "   - Vì vậy, hãy nói kiểu: 'Tôi tìm thấy sản phẩm X, bạn có thể xem hình ảnh và chi tiết ở các thẻ bên dưới nhé'.\n"
+            +
+            "   - ĐỪNG BAO GIỜ nói 'tôi không thể hiển thị hình ảnh' hoặc 'tôi chỉ cung cấp thông tin văn bản'.\n" +
+            "4. QUY TRÌNH HỖ TRỢ CHI TIẾT:\n" +
             "   - Đơn PENDING/CONFIRMED: 'Đơn hàng [Mã đơn] hiện ở trạng thái [Status]. Bạn có thể gửi yêu cầu thay đổi địa chỉ để nhân viên kiểm tra. Lưu ý: Thay đổi cần được nhân viên xác nhận và có thể không thực hiện được nếu đơn đã đóng gói'.\n"
             +
             "     TRÁNH DƯ THỪA: Không hỏi lại Tên/SĐT nếu đã có thông tin đơn hàng. Chỉ hỏi thông tin mới (vd: địa chỉ mới chi tiết).\n"
             +
             "   - Đơn SHIPPING/COMPLETED: Giải thích lý do không thể thay đổi trực tiếp và hướng dẫn quy trình khiếu nại (bắt buộc nhắc chuẩn bị video mở hàng cho đơn đã hoàn thành).\n"
             +
-            "4. ANTI-SPAM & SLA: Thông báo rõ 'Nhân viên sẽ phản hồi trong giờ hành chính (8:00 - 18:00)' và không tạo ticket trùng.\n"
+            "5. ANTI-SPAM & SLA: Thông báo rõ 'Nhân viên sẽ phản hồi trong giờ hành chính (8:00 - 18:00)' và không tạo ticket trùng.\n"
             +
-            "5. DATA CONSISTENCY: Luôn ưu tiên dùng thông tin (Tên/SĐT) từ Đơn hàng để tạo Ticket hỗ trợ, không để khách nhập số khác gây rủi ro giả mạo.";
+            "6. DATA CONSISTENCY: Luôn ưu tiên dùng thông tin (Tên/SĐT) từ Đơn hàng để tạo Ticket hỗ trợ, không để khách nhập số khác gây rủi ro giả mạo.";
 
     @Override
     public ChatResponse chat(String message, List<ChatMessageDto> history) throws Exception {
@@ -392,14 +397,25 @@ public class GeminiServiceImpl implements AiChatService {
                 .collect(Collectors.toList());
 
         // Build message
-        StringBuilder message = new StringBuilder(
-                String.format("Tôi tìm thấy %d sản phẩm phù hợp cho bạn:\n\n", products.size()));
-        for (int i = 0; i < products.size(); i++) {
-            Product p = products.get(i);
-            message.append(String.format("%d. **%s** - Giá: %s\n",
-                    i + 1, p.getName(), formatPrice(p.getSalePrice())));
+        StringBuilder message = new StringBuilder();
+
+        if (products.size() == 1) {
+            message.append(String.format(
+                    "Tôi đã tìm thấy sản phẩm **%s** cho bạn. Bạn có thể xem hình ảnh và chi tiết ở thẻ bên dưới nhé! 🛒",
+                    products.get(0).getName()));
+        } else {
+            message.append(String.format("Tôi tìm thấy %d sản phẩm phù hợp cho bạn:\n\n", products.size()));
+            for (int i = 0; i < products.size(); i++) {
+                Product p = products.get(i);
+                String priceStr = formatPrice(p.getSalePrice());
+                if (p.getDiscountPrice() != null && p.getDiscountPrice().compareTo(p.getSalePrice()) < 0) {
+                    priceStr = String.format("%s (Giảm còn %s)", priceStr, formatPrice(p.getDiscountPrice()));
+                }
+                message.append(String.format("%d. **%s** - Giá: %s\n",
+                        i + 1, p.getName(), priceStr));
+            }
+            message.append("\nBạn có thể xem hình ảnh và click vào thẻ sản phẩm bên dưới để xem chi tiết nhé! 🛒");
         }
-        message.append("\nBạn có thể click vào sản phẩm để xem chi tiết nhé! 🛒");
 
         return new ChatResponse(message.toString(), productDtos);
     }
@@ -417,14 +433,20 @@ public class GeminiServiceImpl implements AiChatService {
         }
 
         Product product = productOpt.get();
+        String priceStr = formatPrice(product.getSalePrice());
+        if (product.getDiscountPrice() != null && product.getDiscountPrice().compareTo(product.getSalePrice()) < 0) {
+            priceStr = String.format("%s (Khuyến mãi chỉ còn %s)", priceStr, formatPrice(product.getDiscountPrice()));
+        }
+
         String message = String.format(
-                "📦 **Thông tin sản phẩm:**\n\n" +
-                        "**Tên:** %s\n" +
-                        "**Giá:** %s\n" +
-                        "**Tồn kho:** %d sản phẩm\n" +
-                        "**Mô tả:** %s",
+                "Tôi đã lấy được thông tin chi tiết của sản phẩm **%s**. Bạn có thể xem hình ảnh và mô tả đầy đủ ở phần thẻ bên dưới nhé!\n\n"
+                        +
+                        "📦 **Thông tin tóm tắt:**\n" +
+                        "- **Giá:** %s\n" +
+                        "- **Tồn kho:** %d sản phẩm\n" +
+                        "- **Mô tả:** %s",
                 product.getName(),
-                formatPrice(product.getSalePrice()),
+                priceStr,
                 product.getQty(),
                 product.getDetail() != null ? product.getDetail() : "Chưa có mô tả");
 
@@ -435,6 +457,7 @@ public class GeminiServiceImpl implements AiChatService {
         ProductDto dto = new ProductDto();
         dto.setId(product.getId());
         dto.setName(product.getName());
+        dto.setSlug(product.getSlug());
         dto.setSalePrice(product.getSalePrice());
         dto.setDiscountPrice(product.getDiscountPrice());
         dto.setImage(product.getImage());

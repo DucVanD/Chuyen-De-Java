@@ -22,11 +22,19 @@ const Cart = () => {
   const [companyInvoice, setCompanyInvoice] = useState(false);
   const [appliedVoucher, setAppliedVoucher] = useState(null);
   const [discountAmount, setDiscountAmount] = useState(0);
+  const [selectedIds, setSelectedIds] = useState([]);
 
   const cartItems = useSelector((state) => state.cart.items);
   const isLoggedIn = useSelector((state) => !!state.auth.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  // Initialize selection when cart is loaded
+  React.useEffect(() => {
+    if (cartItems.length > 0 && selectedIds.length === 0) {
+      setSelectedIds(cartItems.map(item => item.id));
+    }
+  }, [cartItems.length]);
 
   // --- Logic Xử lý ---
 
@@ -53,10 +61,26 @@ const Cart = () => {
     }
     if (window.confirm("Bạn có chắc muốn xóa tất cả sản phẩm trong giỏ hàng?")) {
       dispatch(clearCart());
+      setAppliedVoucher(null);
+      setDiscountAmount(0);
       toast.success("🧹 Đã xóa toàn bộ sản phẩm khỏi giỏ hàng!", {
         position: "top-right",
         autoClose: 1000,
       });
+    }
+  };
+
+  const toggleSelectItem = (id) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(itemId => itemId !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === cartItems.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(cartItems.map(item => item.id));
     }
   };
 
@@ -74,7 +98,9 @@ const Cart = () => {
     return Math.round(((original - sale) / original) * 100);
   };
 
-  const getSubtotal = cartItems.reduce(
+  const selectedCartItems = cartItems.filter(item => selectedIds.includes(item.id));
+
+  const getSubtotal = selectedCartItems.reduce(
     (total, item) => total + getFinalPrice(item) * item.qty,
     0
   );
@@ -83,6 +109,14 @@ const Cart = () => {
   const totalAmount = getSubtotal - discountAmount + shippingFee;
 
   const formatPrice = (price) => new Intl.NumberFormat("vi-VN").format(price) + "₫";
+
+  const formatWeight = (grams) => {
+    if (!grams) return "0g";
+    if (grams >= 1000) {
+      return `${(grams / 1000).toFixed(1).replace(/\.0$/, "")}kg`;
+    }
+    return `${grams}g`;
+  };
 
   const handleVoucherApplied = (voucher, discount) => {
     setAppliedVoucher(voucher);
@@ -98,11 +132,18 @@ const Cart = () => {
       navigate("/registered", { state: { from: "/cart" } });
       return;
     }
-    // Pass voucher data to checkout
+    if (selectedCartItems.length === 0) {
+      toast.warn("Vui lòng chọn ít nhất một sản phẩm để thanh toán!");
+      return;
+    }
+
+    // Pass voucher data and selected items to checkout
     navigate("/checkout", {
       state: {
         appliedVoucher,
-        discountAmount
+        discountAmount,
+        selectedCartItems,
+        selectedIds
       }
     });
   };
@@ -123,7 +164,7 @@ const Cart = () => {
             🛒 Giỏ hàng của bạn
           </h1>
           <p className="text-gray-500 mt-1 text-sm sm:text-base">
-            Bạn hiện có <span className="font-semibold text-green-600">{cartItems.length}</span> sản phẩm trong giỏ hàng
+            Đã chọn <span className="font-semibold text-green-600">{selectedIds.length}</span> / {cartItems.length} sản phẩm
           </p>
         </div>
 
@@ -144,7 +185,20 @@ const Cart = () => {
         <div className="lg:col-span-3 space-y-6">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="hidden md:grid md:grid-cols-12 gap-4 p-4 bg-green-50 border-b border-green-100 font-semibold text-gray-700 text-sm uppercase tracking-wide">
-              <div className="col-span-5">Sản phẩm</div>
+              <div className="col-span-1 flex justify-center">
+                <div
+                  onClick={toggleSelectAll}
+                  className={`w-6 h-6 rounded-full border-2 flex items-center justify-center cursor-pointer transition-all duration-200 ${selectedIds.length === cartItems.length && cartItems.length > 0
+                    ? "bg-green-600 border-green-600 shadow-sm"
+                    : "bg-white border-gray-300 hover:border-green-400"
+                    }`}
+                >
+                  {selectedIds.length === cartItems.length && cartItems.length > 0 && (
+                    <FaCheck className="text-white text-[10px]" />
+                  )}
+                </div>
+              </div>
+              <div className="col-span-4">Sản phẩm</div>
               <div className="col-span-2 text-center">Đơn giá</div>
               <div className="col-span-2 text-center">Số lượng</div>
               <div className="col-span-2 text-center">Thành tiền</div>
@@ -159,10 +213,30 @@ const Cart = () => {
                   const finalPrice = getFinalPrice(item);
                   const hasDiscount = item.discountPrice && item.discountPrice > 0 && item.discountPrice < item.salePrice;
 
+                  // Tính số lượng tối đa dựa trên loại sản phẩm
+                  const maxAvailable = item.saleType === "WEIGHT"
+                    ? Math.floor((item.product_qty || 0) / (item.baseWeight || 1))
+                    : (item.product_qty || 0);
+
                   return (
-                    <div key={item.id} className="p-4 md:grid md:grid-cols-12 flex flex-col md:items-center gap-4 hover:bg-gray-50 transition-colors">
+                    <div key={item.id} className={`p-4 md:grid md:grid-cols-12 flex flex-col md:items-center gap-4 transition-colors ${selectedIds.includes(item.id) ? "bg-emerald-50/30" : "hover:bg-gray-50"}`}>
+                      {/* Cột: Checkbox (Custom Round) */}
+                      <div className="col-span-1 flex justify-center order-first md:order-none">
+                        <div
+                          onClick={() => toggleSelectItem(item.id)}
+                          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center cursor-pointer transition-all duration-200 ${selectedIds.includes(item.id)
+                            ? "bg-green-600 border-green-600 shadow-sm"
+                            : "bg-white border-gray-300 hover:border-green-400"
+                            }`}
+                        >
+                          {selectedIds.includes(item.id) && (
+                            <FaCheck className="text-white text-[10px]" />
+                          )}
+                        </div>
+                      </div>
+
                       {/* Cột: Hình ảnh & Tên */}
-                      <div className="col-span-5 flex items-center gap-4">
+                      <div className="col-span-4 flex items-center gap-4">
                         <img
                           src={getImageUrl(item.image)}
                           alt={item.name}
@@ -171,8 +245,8 @@ const Cart = () => {
                         <div>
                           <h3 className="font-medium text-gray-800">{item.name}</h3>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded uppercase font-medium">
-                              {item.saleType === "WEIGHT" ? `${item.baseWeight}g / phần` : "Gói"}
+                            <span className="text-[10px] text-gray-500 bg-gray-100 px-2 py-1 rounded-md font-bold uppercase tracking-wider">
+                              {item.unitLabel || (item.saleType === "WEIGHT" ? "Phần" : "Gói")}
                             </span>
                             <span className="text-gray-400 text-xs">| {item.categoryName || "Sản phẩm"}</span>
                           </div>
@@ -200,7 +274,7 @@ const Cart = () => {
                       <div className="col-span-2 flex justify-center">
                         <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden h-9">
                           <button
-                            onClick={() => changeQuantity(item.id, item.qty - 1, item.product_qty)}
+                            onClick={() => changeQuantity(item.id, item.qty - 1, maxAvailable)}
                             className="px-2 h-full hover:bg-gray-100 transition flex items-center"
                           >
                             <FaMinus className="text-xs" />
@@ -208,21 +282,21 @@ const Cart = () => {
                           <input
                             type="number"
                             value={item.qty}
-                            onChange={(e) => changeQuantity(item.id, parseInt(e.target.value) || 1, item.product_qty)}
-                            className="w-10 text-center border-x border-gray-200 focus:outline-none h-full text-sm"
+                            onChange={(e) => changeQuantity(item.id, parseInt(e.target.value) || 1, maxAvailable)}
+                            className="w-10 text-center border-x border-gray-200 focus:outline-none h-full text-sm font-bold"
                             min="1"
-                            max={item.product_qty}
+                            max={maxAvailable}
                           />
                           <button
-                            onClick={() => changeQuantity(item.id, item.qty + 1, item.product_qty)}
+                            onClick={() => changeQuantity(item.id, item.qty + 1, maxAvailable)}
                             className="px-2 h-full hover:bg-gray-100 transition flex items-center"
                           >
                             <FaPlus className="text-xs" />
                           </button>
                         </div>
                         {item.saleType === "WEIGHT" && (
-                          <p className="text-[10px] text-gray-400 mt-1 text-center font-medium">
-                            Tổng: {item.qty * item.baseWeight}g
+                          <p className="text-[10px] text-emerald-600 mt-1 text-center font-bold">
+                            Tổng: {formatWeight(item.qty * item.baseWeight)}
                           </p>
                         )}
                       </div>
@@ -277,8 +351,9 @@ const Cart = () => {
           {cartItems.length > 0 && (
             <div className="text-end">
               <button
-                className="bg-green-600 text-white px-10 py-4 rounded-xl font-semibold text-lg hover:bg-green-700 shadow-md transition-all hover:-translate-y-1"
+                className={`px-10 py-4 rounded-xl font-semibold text-lg shadow-md transition-all ${selectedIds.length > 0 ? "bg-green-600 text-white hover:bg-green-700 hover:-translate-y-1" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
                 onClick={handleCheckout}
+                disabled={selectedIds.length === 0}
               >
                 TIẾN HÀNH THANH TOÁN
               </button>

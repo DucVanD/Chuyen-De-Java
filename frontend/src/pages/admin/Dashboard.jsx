@@ -49,13 +49,17 @@ const Dashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const now = new Date();
+    const offset = now.getTimezoneOffset() * 60000;
+    return new Date(now - offset).toISOString().split("T")[0];
+  });
 
   const fetchDashboardData = async (dateStr) => {
     try {
       setLoading(true);
-      const targetDate = new Date(dateStr);
-      targetDate.setHours(0, 0, 0, 0);
+      // ✅ Tạo range thời gian cho CẢ ngày được chọn (Local Time)
+      const targetDate = new Date(dateStr + "T00:00:00");
       const nextDate = new Date(targetDate);
       nextDate.setDate(targetDate.getDate() + 1);
 

@@ -19,7 +19,7 @@ public class CategoryDto {
 
     private Integer id;
     @NotBlank(message = "Tên danh mục không được trống")
-    @Size(min = 3, max = 100, message = "Tên danh mục phải từ 3-100 ký tự")
+    @Size(min = 1, max = 100, message = "Tên danh mục phải từ 1-100 ký tự")
     private String name;
 
     // Slug sẽ tự động sinh từ name, không cần @NotBlank

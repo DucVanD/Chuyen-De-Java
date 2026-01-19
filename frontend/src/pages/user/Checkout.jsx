@@ -19,6 +19,7 @@ import {
   FaEnvelope
 } from "react-icons/fa";
 import "react-toastify/dist/ReactToastify.css";
+import { removeItems } from "../../Redux/cartSlice";
 
 // --- Data mẫu ---
 const districts = {
@@ -44,9 +45,14 @@ const Checkout = () => {
   const cartItems = useSelector((state) => state.cart.items);
   const user = useSelector((state) => state.auth.user);
 
-  // Get voucher from Cart
+  // Get selected items from Cart state
+  const selectedCartItems = location.state?.selectedCartItems || [];
+  const selectedIds = location.state?.selectedIds || [];
   const appliedVoucher = location.state?.appliedVoucher || null;
   const voucherDiscount = location.state?.discountAmount || 0;
+
+  // Use selected items if available, otherwise fallback to full cart
+  const checkoutItems = selectedCartItems.length > 0 ? selectedCartItems : cartItems;
 
   const [form, setForm] = useState({
     email: "", name: "", phone: "", address: "", province: "Hồ Chí Minh", district: "", ward: "", note: "", payment: "cod",
@@ -55,16 +61,19 @@ const Checkout = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      setForm((prev) => ({
-        ...prev,
-        email: user.email || "",
-        name: user.name || "",
-        phone: user.phone || "",
-        address: user.address || "",
-      }));
+    if (!user) {
+      toast.info("Vui lòng đăng nhập để tiến hành thanh toán!", { toastId: "checkout-auth" });
+      navigate("/registered");
+      return;
     }
-  }, [user]);
+    setForm((prev) => ({
+      ...prev,
+      email: user.email || "",
+      name: user.name || "",
+      phone: user.phone || "",
+      address: user.address || "",
+    }));
+  }, [user, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -84,7 +93,7 @@ const Checkout = () => {
     return item.salePrice;
   };
 
-  const subtotal = cartItems.reduce((sum, item) => sum + getFinalPrice(item) * item.qty, 0);
+  const subtotal = checkoutItems.reduce((sum, item) => sum + getFinalPrice(item) * item.qty, 0);
   const formatPrice = (price) => new Intl.NumberFormat("vi-VN").format(price) + "₫";
 
   const validateForm = () => {
@@ -134,8 +143,8 @@ const Checkout = () => {
       // Voucher code (if applied)
       voucherCode: appliedVoucher?.voucherCode || null,
 
-      // Cart -> OrderDetails
-      orderDetails: cartItems.map((item) => ({
+      // Items to buy
+      orderDetails: checkoutItems.map((item) => ({
         productId: item.id,
         quantity: item.qty,
         priceBuy: getFinalPrice(item),
@@ -171,7 +180,15 @@ const Checkout = () => {
 
       // Success for COD/BANK - backend returns OrderDto directly
       toast.success("🎉 Đặt hàng thành công!");
-      dispatch(clearCart());
+
+      // Only remove the items that were checked out
+      if (selectedIds.length > 0) {
+        dispatch(removeItems(selectedIds));
+      } else {
+        // Fallback for direct navigation or old behavior
+        dispatch(clearCart());
+      }
+
       setTimeout(() => {
         navigate("/");
       }, 1500);
@@ -298,7 +315,7 @@ const Checkout = () => {
             <h2 className="text-lg font-bold text-gray-800 mb-4 pb-3 border-b border-gray-100">Đơn hàng của bạn</h2>
 
             <div className="max-h-[350px] overflow-y-auto pr-2 custom-scrollbar space-y-4 mb-4">
-              {cartItems.map((item) => (
+              {checkoutItems.map((item) => (
                 <div key={item.id} className="flex gap-3">
                   <div className="relative">
                     <img src={getImageUrl(item.image)} alt={item.name} className="w-14 h-14 rounded-lg object-cover border border-gray-100" />

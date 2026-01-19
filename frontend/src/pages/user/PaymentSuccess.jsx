@@ -1,5 +1,6 @@
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import React, { useEffect, useState } from "react";
+import { FaCheckCircle, FaTimesCircle, FaExclamationCircle, FaHome, FaHistory, FaShoppingCart, FaArrowLeft } from "react-icons/fa";
 
 const PaymentSuccess = () => {
   const [params] = useSearchParams();
@@ -7,104 +8,151 @@ const PaymentSuccess = () => {
   const status = params.get("status");
   const orderId = params.get("order_id");
   const [message, setMessage] = useState("");
+  const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
+    // Trigger entrance animation
+    setTimeout(() => setIsAnimating(true), 100);
+
     // VNPay success: status = "success" or vnp_ResponseCode = "00"
     if (status === "success" || status === "00") {
       localStorage.removeItem("cartItems");
-      setMessage("Cảm ơn bạn đã thanh toán thành công! Đơn hàng của bạn đang được xử lý.");
+      setMessage("Cảm ơn bạn đã tin dùng sản phẩm của chúng tôi! Đơn hàng của bạn đã được tiếp nhận và sẽ sớm được chuẩn bị để giao đến bạn.");
     }
     // VNPay cancelled/failed: status = "cancelled" or vnp_ResponseCode != "00"
     else if (status === "cancelled" || status === "7" || (status && status !== "00" && status !== "success")) {
-      setMessage("Thanh toán thất bại hoặc đã bị hủy. Vui lòng thử lại!");
-      setTimeout(() => navigate("/cart"), 3000);
+      setMessage("Giao dịch tài khoản đã bị tạm dừng hoặc bạn đã hủy thanh toán. Bạn có thể thử lại sau vài phút hoặc đổi phương thức thanh toán.");
     }
     // Payment failed
     else if (status === "failed") {
-      setMessage("Thanh toán thất bại. Vui lòng thử lại sau!");
+      setMessage("Rất tiếc, đã có lỗi xảy ra trong quá trình xử lý giao dịch. Vui lòng kiểm tra lại số dư hoặc liên hệ ngân hàng để được hỗ trợ.");
     }
     // Invalid transaction
     else {
-      setMessage("Giao dịch không hợp lệ hoặc đã hết hạn.");
+      setMessage("Thông tin giao dịch không hợp lệ hoặc link đã hết hạn sử dụng. Vui lòng quay lại giỏ hàng để bắt đầu lại.");
     }
   }, [status, navigate]);
 
-  const getStyle = () => {
-    // VNPay success: "success" or "00"
-    if (status === "success" || status === "00") {
+  const getTheme = () => {
+    const isSuccess = status === "success" || status === "00";
+    const isCancel = status === "cancelled" || status === "7" || (status && status !== "00" && status !== "success" && status !== "failed");
+    const isFailed = status === "failed";
+
+    if (isSuccess) {
       return {
-        color: "text-green-600",
-        bg: "bg-green-50",
-        border: "border-green-200",
-        icon: "✅",
+        title: "Thanh toán thành công!",
+        gradient: "from-emerald-500 to-teal-600",
+        icon: <FaCheckCircle className="text-emerald-500" />,
+        colorClass: "text-emerald-600",
+        bgLight: "bg-emerald-50",
+        shadow: "shadow-emerald-200/50",
+        btn: "bg-emerald-600 hover:bg-emerald-700",
       };
     }
-    // VNPay/general failed
-    if (status === "failed") {
+    if (isCancel) {
       return {
-        color: "text-red-600",
-        bg: "bg-red-50",
-        border: "border-red-200",
-        icon: "❌",
+        title: "Thanh toán đã hủy",
+        gradient: "from-amber-400 to-orange-500",
+        icon: <FaExclamationCircle className="text-amber-500" />,
+        colorClass: "text-amber-600",
+        bgLight: "bg-amber-50",
+        shadow: "shadow-amber-200/50",
+        btn: "bg-amber-500 hover:bg-amber-600",
       };
     }
-    // VNPay cancelled or other non-success codes
-    if (status === "cancelled" || status === "7" || (status && status !== "00" && status !== "success")) {
-      return {
-        color: "text-yellow-600",
-        bg: "bg-yellow-50",
-        border: "border-yellow-200",
-        icon: "⚠️",
-      };
-    }
-    // Default/invalid
     return {
-      color: "text-gray-600",
-      bg: "bg-gray-50",
-      border: "border-gray-200",
-      icon: "ℹ️",
+      title: "Thanh toán thất bại",
+      gradient: "from-rose-500 to-red-600",
+      icon: <FaTimesCircle className="text-rose-500" />,
+      colorClass: "text-rose-600",
+      bgLight: "bg-rose-50",
+      shadow: "shadow-rose-200/50",
+      btn: "bg-rose-600 hover:bg-rose-700",
     };
   };
 
-  const { color, bg, border, icon } = getStyle();
+  const theme = getTheme();
 
   return (
-    <div className={`flex flex-col items-center justify-center min-h-screen ${bg} px-4`}>
-      <div className={`bg-white shadow-md rounded-xl p-6 border ${border} max-w-sm w-full text-center`}>
-        <div className="text-5xl mb-3">{icon}</div>
-        <h1 className={`${color} text-xl font-semibold mb-2`}>
-          {status === "success"
-            ? "Thanh toán thành công!"
-            : status === "failed"
-              ? "Thanh toán thất bại!"
-              : status === "cancelled" || status === "7"
-                ? "Đơn hàng đã bị hủy!"
-                : "Giao dịch không hợp lệ"}
-        </h1>
-        <p className="text-gray-700 text-sm mb-4">{message}</p>
+    <div className={`min-h-screen flex items-center justify-center bg-gradient-to-br ${theme.gradient} p-4 sm:p-6 transition-all duration-700`}>
+      {/* Background shapes for aesthetic */}
+      <div className="absolute top-20 left-20 w-32 h-32 bg-white/10 rounded-full blur-2xl animate-pulse"></div>
+      <div className="absolute bottom-20 right-20 w-64 h-64 bg-black/5 rounded-full blur-3xl"></div>
 
-        {orderId && (
-          <p className="text-xs text-gray-500 italic mb-4">
-            Mã đơn hàng: <span className="font-semibold">{orderId}</span>
+      <div className={`w-full max-w-lg bg-white/95 backdrop-blur-md rounded-[2.5rem] shadow-2xl ${theme.shadow} overflow-hidden transition-all duration-1000 transform ${isAnimating ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"}`}>
+        {/* Top Header Card */}
+        <div className={`h-2 bg-gradient-to-r ${theme.gradient}`}></div>
+
+        <div className="p-8 sm:p-12 text-center">
+          {/* Animated Icon Container */}
+          <div className="flex justify-center mb-8 relative">
+            <div className={`absolute inset-0 ${theme.bgLight} rounded-full blur-xl scale-125 opacity-60`}></div>
+            <div className={`relative bg-white rounded-full p-1 shadow-lg transform transition-transform duration-700 delay-300 ${isAnimating ? "scale-100 rotate-0" : "scale-0 -rotate-45"}`}>
+              <div className="text-7xl">
+                {theme.icon}
+              </div>
+            </div>
+          </div>
+
+          <h1 className={`text-2xl sm:text-3xl font-extrabold ${theme.colorClass} mb-4 tracking-tight`}>
+            {theme.title}
+          </h1>
+
+          <p className="text-gray-600 text-sm sm:text-base mb-8 leading-relaxed max-w-sm mx-auto">
+            {message}
           </p>
-        )}
 
-        <div className="flex justify-center gap-3">
-          <a
-            href="/"
-            className="bg-green-500 text-white text-sm px-4 py-2 rounded-md hover:bg-green-600 transition"
-          >
-            Trang chủ
-          </a>
+          {orderId && (
+            <div className="inline-flex items-center gap-2 bg-gray-50 border border-gray-100 px-4 py-2 rounded-full mb-10">
+              <span className="text-xs text-gray-400 font-medium uppercase tracking-wider">Mã đơn hàng:</span>
+              <span className="text-sm font-bold text-gray-700">#{orderId}</span>
+            </div>
+          )}
 
-          {(status === "failed" || status === "cancelled" || status === "7" || (status && status !== "00" && status !== "success")) && (
-            <button
-              onClick={() => navigate("/cart")}
-              className="bg-yellow-400 text-white text-sm px-4 py-2 rounded-md hover:bg-yellow-500 transition"
+          {/* Action Buttons */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Link
+              to="/"
+              className={`flex items-center justify-center gap-2 ${theme.btn} text-white font-bold py-4 rounded-2xl shadow-lg transition-all active:scale-95 group`}
             >
-              Quay lại giỏ hàng
+              <FaHome className="group-hover:-translate-y-1 transition-transform" />
+              <span>Trang chủ</span>
+            </Link>
+
+            {(status === "success" || status === "00") ? (
+              <Link
+                to="/history"
+                className="flex items-center justify-center gap-2 bg-white border-2 border-gray-100 text-gray-700 font-bold py-4 rounded-2xl hover:bg-gray-50 transition-all active:scale-95 group"
+              >
+                <FaHistory className="group-hover:rotate-12 transition-transform" />
+                <span>Xem đơn hàng</span>
+              </Link>
+            ) : (
+              <Link
+                to="/cart"
+                className="flex items-center justify-center gap-2 bg-white border-2 border-gray-100 text-gray-700 font-bold py-4 rounded-2xl hover:bg-gray-50 transition-all active:scale-95 group"
+              >
+                <FaShoppingCart className="group-hover:bounce-sm transition-transform" />
+                <span>Về giỏ hàng</span>
+              </Link>
+            )}
+          </div>
+
+          {/* Simple return hint for failed/cancelled */}
+          {(status !== "success" && status !== "00") && (
+            <button
+              onClick={() => navigate(-1)}
+              className="mt-8 text-gray-400 hover:text-gray-600 text-sm font-medium flex items-center justify-center gap-1 mx-auto transition-colors"
+            >
+              <FaArrowLeft className="text-[10px]" />
+              Quay lại bước trước
             </button>
           )}
+
+          {/* Footer security badge */}
+          <div className="mt-12 pt-8 border-t border-gray-50 flex items-center justify-center gap-4 opacity-40">
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Secure Payment Gateway</span>
+          </div>
         </div>
       </div>
     </div>

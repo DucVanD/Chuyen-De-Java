@@ -8,7 +8,8 @@ import java.util.List;
 
 @Repository
 public interface PostRepository extends JpaRepository<Post, Integer> {
-        List<Post> findTop6ByStatusOrderByCreatedAtDesc(Integer status);
+        List<Post> findTop6ByPostTypeAndStatusOrderByCreatedAtDesc(
+                        com.example.backend.entity.enums.PostType postType, Integer status);
 
         org.springframework.data.domain.Page<Post> findByPostTypeAndStatus(
                         com.example.backend.entity.enums.PostType postType, Integer status,

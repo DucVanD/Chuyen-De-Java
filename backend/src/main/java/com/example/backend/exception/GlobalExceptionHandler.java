@@ -10,7 +10,24 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<String> handleMaxSizeException(MaxUploadSizeExceededException exc) {
-        return ResponseEntity.status(400).body("File quá lớn! Vui lòng chọn file nhỏ hơn 10MB.");
+        return ResponseEntity.status(400).body("File quá lớn! Vui lòng chọn file nhỏ hơn 50MB.");
+    }
+
+    // Xử lý lỗi validation (@Valid, @NotBlank, @Size, etc.)
+    @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
+    public ResponseEntity<java.util.Map<String, Object>> handleValidationException(
+            org.springframework.web.bind.MethodArgumentNotValidException e) {
+
+        // Lấy message từ validation error đầu tiên
+        String errorMessage = e.getBindingResult().getFieldErrors().stream()
+                .findFirst()
+                .map(error -> error.getDefaultMessage())
+                .orElse("Dữ liệu không hợp lệ");
+
+        return ResponseEntity.status(400).body(java.util.Map.of(
+                "status", 400,
+                "error", "Validation Error",
+                "message", errorMessage));
     }
 
     // 1. Xử lý lỗi "No value present" (Khi dùng orElseThrow() mà không thấy dữ

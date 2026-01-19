@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaArrowLeft, FaSave, FaEdit, FaCamera, FaTag, FaLayerGroup, FaPercentage, FaBoxOpen } from "react-icons/fa";
 import { Editor } from "@tinymce/tinymce-react";
@@ -12,6 +12,7 @@ import apiUpload from "../../../api/apiUpload";
 const EditProduct = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
@@ -206,13 +207,26 @@ const EditProduct = () => {
         unitLabel: form.unitLabel || null,
       };
 
-      await apiProductAdmin.update(id, payload);
+      const response = await apiProductAdmin.update(id, payload);
+      console.log('Update product response:', response);
 
       toast.success("✅ Cập nhật sản phẩm thành công");
-      setTimeout(() => navigate("/admin/products"), 500);
+
+      // Lấy page number từ URL và navigate về đúng trang
+      const page = searchParams.get('page') || '0';
+      setTimeout(() => {
+        navigate(`/admin/products?page=${page}`);
+      }, 500);
     } catch (err) {
-      console.error(err);
-      toast.error("❌ Cập nhật thất bại");
+      console.error('Update product error:', err);
+
+      // Parse error message từ backend
+      const errorMessage = err.response?.data?.message
+        || err.response?.data?.error
+        || err.message
+        || "Cập nhật thất bại";
+
+      toast.error(`❌ ${errorMessage}`);
     } finally {
       setSubmitting(false);
     }
@@ -240,7 +254,10 @@ const EditProduct = () => {
           <div className="flex gap-3">
             <button
               type="button"
-              onClick={() => navigate("/admin/products")}
+              onClick={() => {
+                const page = searchParams.get('page') || '0';
+                navigate(`/admin/products?page=${page}`);
+              }}
               className="px-5 py-2.5 rounded-lg bg-white border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-all flex items-center gap-2"
             >
               <FaArrowLeft size={14} /> Quay lại

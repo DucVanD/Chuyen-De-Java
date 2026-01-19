@@ -75,6 +75,13 @@ const ProductByCat = () => {
                     </p>
                   )}
                 </div>
+
+                <div className="flex items-center gap-1.5 mt-1">
+                  <span className="text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full font-medium">
+                    /{(product.baseWeight ? product.baseWeight : "")}
+                    {product.saleType === "WEIGHT" ? (product.unitLabel || "kg") : (product.unitLabel || "cái")}
+                  </span>
+                </div>
               </div>
 
               {/* Nút mua */}

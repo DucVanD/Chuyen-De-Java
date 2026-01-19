@@ -200,11 +200,23 @@
   white-space: nowrap;
 }
 
-.product-price {
+.product-price-wrapper {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.product-price-discount {
   font-size: 14px;
   font-weight: 700;
-  color: #667eea;
-  margin: 0 0 6px 0;
+  color: #e53e3e;
+}
+
+.product-price-original {
+  font-size: 11px;
+  color: #a0aec0;
+  text-decoration: line-through;
 }
 
 .product-link {

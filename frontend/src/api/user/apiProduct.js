@@ -61,7 +61,15 @@ const apiProduct = {
 
   getLatestDiscount: (limit = 8) =>
     axiosInstance.get("/products/filter", {
-      params: { hasPromotion: true, page: 0, size: limit }
+      params: {
+        hasPromotion: true,
+        categoryId: [7, 9, 10], // Rau xanh, Thịt heo, Cá
+        page: 0,
+        size: limit
+      },
+      paramsSerializer: {
+        indexes: null // Gửi array dạng ?categoryId=7&categoryId=9&categoryId=10
+      }
     }).then(res => res.data),
 };
 

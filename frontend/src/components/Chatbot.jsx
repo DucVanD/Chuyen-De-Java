@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import apiChat from '../api/apiChat';
+import { getImageUrl } from '../api/config';
 import '../styles/chatbot.css';
 
 const Chatbot = () => {
@@ -172,23 +174,34 @@ const Chatbot = () => {
                                             {msg.products.map((product) => (
                                                 <div key={product.id} className="product-card">
                                                     <img
-                                                        src={product.image || '/placeholder.png'}
+                                                        src={getImageUrl(product.image, 'product')}
                                                         alt={product.name}
                                                         className="product-image"
                                                     />
                                                     <div className="product-info">
                                                         <h4 className="product-name">{product.name}</h4>
-                                                        <p className="product-price">
-                                                            {product.salePrice?.toLocaleString('vi-VN')} đ
-                                                        </p>
-                                                        <a
-                                                            href={`/product/${product.id}`}
+                                                        <div className="product-price-wrapper">
+                                                            {product.discountPrice && product.discountPrice < product.salePrice ? (
+                                                                <>
+                                                                    <span className="product-price-discount">
+                                                                        {product.discountPrice.toLocaleString('vi-VN')} đ
+                                                                    </span>
+                                                                    <span className="product-price-original">
+                                                                        {product.salePrice.toLocaleString('vi-VN')} đ
+                                                                    </span>
+                                                                </>
+                                                            ) : (
+                                                                <span className="product-price-discount">
+                                                                    {product?.salePrice?.toLocaleString('vi-VN')} đ
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <Link
+                                                            to={`/product/${product.slug}`}
                                                             className="product-link"
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
                                                         >
                                                             Xem chi tiết →
-                                                        </a>
+                                                        </Link>
                                                     </div>
                                                 </div>
                                             ))}

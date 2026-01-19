@@ -25,7 +25,8 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public List<PostDto> getNewest() {
-        return postRepository.findTop6ByStatusOrderByCreatedAtDesc(1).stream()
+        return postRepository.findTop6ByPostTypeAndStatusOrderByCreatedAtDesc(
+                com.example.backend.entity.enums.PostType.POST, 1).stream()
                 .map(PostMapper::toDto)
                 .collect(Collectors.toList());
     }

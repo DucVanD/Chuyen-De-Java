@@ -4,15 +4,22 @@ import apiStockAdmin from "../../../api/admin/apiStockAdmin";
 import { FaPlus, FaMinus, FaExchangeAlt, FaUndo, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 // Utility to format quantity (Standard Supermarket Logic)
+// Utility to format quantity (Standard Supermarket Logic)
 const formatQuantity = (qty, saleType, unitLabel) => {
   const absQty = Math.abs(qty);
+  let value = absQty;
+  let unit = unitLabel || (saleType === "WEIGHT" ? "phần" : "đv");
+
   if (saleType === "WEIGHT") {
     if (absQty >= 1000) {
-      return (qty / 1000).toFixed(1).replace(/\.0$/, "") + " kg";
+      value = (absQty / 1000).toFixed(1).replace(/\.0$/, "");
+      unit = "kg";
+    } else {
+      unit = "g";
     }
-    return qty + " g";
   }
-  return qty + " " + (unitLabel || "đv");
+
+  return { value: qty < 0 ? `-${value}` : value, unit };
 };
 
 const ListInventory = () => {
@@ -118,19 +125,34 @@ const ListInventory = () => {
                           </span>
                         </td>
 
-                        <td className="py-3 px-4 font-bold text-base">
+                        <td className="py-3 px-4">
                           {/* ✅ Hiển thị số lượng kèm đơn vị chuẩn (ví dụ: +2.5 kg, -5 chai) */}
-                          {m.movementType === "OUT" || (m.movementType === "ADJUSTMENT" && m.quantity < 0) ? (
-                            <span className="text-red-600">-{formatQuantity(m.quantity, m.saleType, m.unitLabel)}</span>
-                          ) : m.movementType === "IN" || m.movementType === "RETURN" ? (
-                            <span className="text-green-600">+{formatQuantity(m.quantity, m.saleType, m.unitLabel)}</span>
-                          ) : (
-                            <span className="text-gray-600">{formatQuantity(m.quantity, m.saleType, m.unitLabel)}</span>
-                          )}
+                          {(() => {
+                            const { value, unit } = formatQuantity(m.quantity, m.saleType, m.unitLabel);
+                            const isNegative = m.movementType === "OUT" || (m.movementType === "ADJUSTMENT" && m.quantity < 0);
+                            const isPositive = m.movementType === "IN" || m.movementType === "RETURN";
+                            const colorClass = isNegative ? "text-red-600" : isPositive ? "text-green-600" : "text-gray-600";
+                            const prefix = isPositive ? "+" : "";
+
+                            return (
+                              <div className="flex flex-col items-center">
+                                <span className={`font-bold text-base ${colorClass}`}>{prefix}{value}</span>
+                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter -mt-1">{unit}</span>
+                              </div>
+                            );
+                          })()}
                         </td>
 
-                        <td className="py-3 px-4 text-gray-700 font-semibold">
-                          {formatQuantity(m.currentStock, m.saleType, m.unitLabel)}
+                        <td className="py-3 px-4">
+                          {(() => {
+                            const { value, unit } = formatQuantity(m.currentStock, m.saleType, m.unitLabel);
+                            return (
+                              <div className="flex flex-col items-center">
+                                <span className="font-semibold text-gray-700">{value}</span>
+                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter -mt-1">{unit}</span>
+                              </div>
+                            );
+                          })()}
                         </td>
 
                         <td className="py-3 px-4 text-right">

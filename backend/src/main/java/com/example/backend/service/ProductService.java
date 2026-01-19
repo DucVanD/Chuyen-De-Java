@@ -22,7 +22,7 @@ public interface ProductService {
 
         List<ProductDto> search(String keyword);
 
-        List<ProductDto> filter(List<Integer> categoryIds, List<Integer> brandIds, Integer status,
+        List<ProductDto> filter(String keyword, List<Integer> categoryIds, List<Integer> brandIds, Integer status,
                         java.math.BigDecimal minPrice,
                         java.math.BigDecimal maxPrice, Boolean hasPromotion);
 
@@ -32,7 +32,7 @@ public interface ProductService {
 
         Page<ProductDto> search(String keyword, int page, int size);
 
-        Page<ProductDto> filter(List<Integer> categoryIds, List<Integer> brandIds, Integer status,
+        Page<ProductDto> filter(String keyword, List<Integer> categoryIds, List<Integer> brandIds, Integer status,
                         java.math.BigDecimal minPrice,
                         java.math.BigDecimal maxPrice, Boolean hasPromotion, String sortBy, int page, int size);
 

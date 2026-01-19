@@ -85,11 +85,11 @@ public class ProductServiceImpl implements ProductService {
     // FILTER
     // =====================
     @Override
-    public List<ProductDto> filter(List<Integer> categoryIds, List<Integer> brandIds, Integer status,
+    public List<ProductDto> filter(String keyword, List<Integer> categoryIds, List<Integer> brandIds, Integer status,
             java.math.BigDecimal minPrice,
             java.math.BigDecimal maxPrice, Boolean hasPromotion) {
         return productRepository
-                .filter(categoryIds, brandIds, status, minPrice, maxPrice, hasPromotion, Pageable.unpaged())
+                .filter(keyword, categoryIds, brandIds, status, minPrice, maxPrice, hasPromotion, Pageable.unpaged())
                 .getContent()
                 .stream()
                 .map(ProductMapper::toDto)
@@ -97,7 +97,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Page<ProductDto> filter(List<Integer> categoryIds, List<Integer> brandIds, Integer status,
+    public Page<ProductDto> filter(String keyword, List<Integer> categoryIds, List<Integer> brandIds, Integer status,
             java.math.BigDecimal minPrice,
             java.math.BigDecimal maxPrice, Boolean hasPromotion, String sortBy, int page, int size) {
 
@@ -111,7 +111,8 @@ public class ProductServiceImpl implements ProductService {
         }
 
         Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, sort);
-        return productRepository.filter(categoryIds, brandIds, status, minPrice, maxPrice, hasPromotion, pageable)
+        return productRepository
+                .filter(keyword, categoryIds, brandIds, status, minPrice, maxPrice, hasPromotion, pageable)
                 .map(ProductMapper::toDto);
     }
 
@@ -294,12 +295,17 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public List<CategoryHomeDto> getCategoriesHome() {
-        return categoryRepository.findByParentIsNull().stream()
+        // Chỉ lấy 3 danh mục cụ thể: Dầu ăn (21), Kẹo (18), Nước ngọt (13)
+        List<Integer> targetCategoryIds = List.of(21, 18, 13);
+
+        return targetCategoryIds.stream()
+                .map(categoryId -> categoryRepository.findById(categoryId).orElse(null))
+                .filter(cat -> cat != null)
                 .map(cat -> {
-                    // Fetch top 4 products for each parent category
+                    // Fetch top 4 products for each category
                     Pageable topFour = PageRequest.of(0, 4, org.springframework.data.domain.Sort.by("id").descending());
                     List<ProductDto> products = productRepository.filter(
-                            List.of(cat.getId()), null, 1, null, null, null, topFour)
+                            null, List.of(cat.getId()), null, 1, null, null, null, topFour)
                             .getContent()
                             .stream()
                             .map(ProductMapper::toDto)
@@ -313,7 +319,6 @@ public class ProductServiceImpl implements ProductService {
                             .build();
                 })
                 .filter(dto -> !dto.getProducts().isEmpty())
-                .limit(3)
                 .toList();
     }
 

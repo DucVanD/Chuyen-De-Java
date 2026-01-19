@@ -142,7 +142,7 @@ const HeaderUser = () => {
       {/* ================= TOP BAR (Desktop & Mobile) ================= */}
       <div className="bg-emerald-700 text-white text-xs sm:text-sm py-2">
         <div className="max-w-7xl mx-auto px-4 flex justify-between items-center">
-          <p className="hidden sm:block opacity-90">🌱 Bean Farm - Nông sản sạch cho mọi nhà</p>
+          <p className="hidden sm:block opacity-90"> Bean Farm - Nông sản sạch cho mọi nhà</p>
           <div className="flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-end">
              {/* Hotline */}
              <a href="tel:19006750" className="flex items-center gap-2 hover:text-amber-300 transition">

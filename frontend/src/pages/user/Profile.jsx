@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; // Thêm useNavigate
 import { toast } from "react-toastify";
 import apiUser from "../../api/user/apiUser";
 import "react-toastify/dist/ReactToastify.css";
@@ -12,11 +13,16 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const dispatch = useDispatch();
+  const navigate = useNavigate(); // Khởi tạo navigate
 
   const currentUser = useSelector((state) => state.auth.user);
 
   useEffect(() => {
-    if (!currentUser?.id) return;
+    if (!currentUser?.id) {
+      toast.info("Vui lòng đăng nhập để xem thông tin hồ sơ!", { toastId: "profile-auth" });
+      navigate("/registered");
+      return;
+    }
     const fetchProfile = async () => {
       try {
         const res = await apiUser.getById(currentUser.id);
@@ -80,8 +86,8 @@ const Profile = () => {
         toast.warning("⚠️ Cập nhật thất bại!");
       }
     } catch (err) {
-        // ... (Giữ nguyên logic xử lý lỗi của bạn)
-        toast.error("❌ Đã xảy ra lỗi khi lưu!");
+      // ... (Giữ nguyên logic xử lý lỗi của bạn)
+      toast.error("❌ Đã xảy ra lỗi khi lưu!");
     }
   };
 
@@ -99,13 +105,13 @@ const Profile = () => {
       {/* Header trang */}
       <div className="mb-8 border-b border-gray-100 pb-4">
         <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-           Hồ sơ của bạn
+          Hồ sơ của bạn
         </h1>
         <p className="text-gray-500 text-sm mt-1">Quản lý thông tin hồ sơ để bảo mật tài khoản</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        
+
         {/* CỘT TRÁI: AVATAR CARD */}
         <div className="md:col-span-1">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col items-center text-center sticky top-6">
@@ -113,9 +119,9 @@ const Profile = () => {
               {/* Vòng tròn Avatar */}
               <div className="w-40 h-40 rounded-full p-1 border-2 border-dashed border-green-500/50">
                 <img
-                    src={avatarPreview ? avatarPreview : getImageUrl(user.avatar, "avatar")}
-                    alt="Avatar"
-                    className="w-full h-full rounded-full object-cover shadow-sm"
+                  src={avatarPreview ? avatarPreview : getImageUrl(user.avatar, "avatar")}
+                  alt="Avatar"
+                  className="w-full h-full rounded-full object-cover shadow-sm"
                 />
               </div>
 
@@ -139,14 +145,13 @@ const Profile = () => {
             {/* Nút Toggle Chỉnh sửa */}
             <button
               onClick={() => {
-                 setIsEditing(!isEditing);
-                 setAvatarPreview(null); // Reset preview nếu hủy
+                setIsEditing(!isEditing);
+                setAvatarPreview(null); // Reset preview nếu hủy
               }}
-              className={`w-full py-2.5 rounded-xl font-medium flex items-center justify-center gap-2 transition-all ${
-                isEditing
-                  ? "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  : "bg-green-600 text-white hover:bg-green-700 shadow-md hover:shadow-lg"
-              }`}
+              className={`w-full py-2.5 rounded-xl font-medium flex items-center justify-center gap-2 transition-all ${isEditing
+                ? "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                : "bg-green-600 text-white hover:bg-green-700 shadow-md hover:shadow-lg"
+                }`}
             >
               {isEditing ? <><FaTimes /> Hủy bỏ</> : <><FaUserEdit /> Chỉnh sửa hồ sơ</>}
             </button>
@@ -157,18 +162,18 @@ const Profile = () => {
         <div className="md:col-span-2">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
             <div className="flex justify-between items-center mb-6">
-                 <h3 className="text-lg font-bold text-gray-800 border-l-4 border-green-500 pl-3">
-                    Thông tin cá nhân
-                </h3>
-                {isEditing && <span className="text-xs text-green-600 font-semibold bg-green-50 px-2 py-1 rounded">Đang chỉnh sửa</span>}
+              <h3 className="text-lg font-bold text-gray-800 border-l-4 border-green-500 pl-3">
+                Thông tin cá nhân
+              </h3>
+              {isEditing && <span className="text-xs text-green-600 font-semibold bg-green-50 px-2 py-1 rounded">Đang chỉnh sửa</span>}
             </div>
-           
+
 
             <div className="space-y-5">
               {/* Họ tên */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                   <FaUser className="text-green-600"/> Họ và tên
+                  <FaUser className="text-green-600" /> Họ và tên
                 </label>
                 <input
                   type="text"
@@ -176,18 +181,17 @@ const Profile = () => {
                   value={user.name || ""}
                   onChange={handleChange}
                   disabled={!isEditing}
-                  className={`w-full p-3 rounded-xl border transition-all outline-none ${
-                    isEditing
-                      ? "bg-white border-green-300 focus:ring-2 focus:ring-green-100 focus:border-green-500 text-gray-800"
-                      : "bg-gray-50 border-transparent text-gray-600"
-                  }`}
+                  className={`w-full p-3 rounded-xl border transition-all outline-none ${isEditing
+                    ? "bg-white border-green-300 focus:ring-2 focus:ring-green-100 focus:border-green-500 text-gray-800"
+                    : "bg-gray-50 border-transparent text-gray-600"
+                    }`}
                 />
               </div>
 
               {/* Email (Luôn disabled) */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                   <FaEnvelope className="text-green-600"/> Email
+                  <FaEnvelope className="text-green-600" /> Email
                 </label>
                 <input
                   type="email"
@@ -200,7 +204,7 @@ const Profile = () => {
               {/* Số điện thoại */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                   <FaPhone className="text-green-600"/> Số điện thoại
+                  <FaPhone className="text-green-600" /> Số điện thoại
                 </label>
                 <input
                   type="text"
@@ -209,18 +213,17 @@ const Profile = () => {
                   onChange={handleChange}
                   disabled={!isEditing}
                   placeholder={isEditing ? "Nhập số điện thoại..." : "Chưa cập nhật"}
-                  className={`w-full p-3 rounded-xl border transition-all outline-none ${
-                    isEditing
-                      ? "bg-white border-green-300 focus:ring-2 focus:ring-green-100 focus:border-green-500 text-gray-800"
-                      : "bg-gray-50 border-transparent text-gray-600"
-                  }`}
+                  className={`w-full p-3 rounded-xl border transition-all outline-none ${isEditing
+                    ? "bg-white border-green-300 focus:ring-2 focus:ring-green-100 focus:border-green-500 text-gray-800"
+                    : "bg-gray-50 border-transparent text-gray-600"
+                    }`}
                 />
               </div>
 
               {/* Địa chỉ */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                   <FaMapMarkerAlt className="text-green-600"/> Địa chỉ
+                  <FaMapMarkerAlt className="text-green-600" /> Địa chỉ
                 </label>
                 <input
                   type="text"
@@ -229,11 +232,10 @@ const Profile = () => {
                   onChange={handleChange}
                   disabled={!isEditing}
                   placeholder={isEditing ? "Nhập địa chỉ nhận hàng..." : "Chưa cập nhật"}
-                  className={`w-full p-3 rounded-xl border transition-all outline-none ${
-                    isEditing
-                      ? "bg-white border-green-300 focus:ring-2 focus:ring-green-100 focus:border-green-500 text-gray-800"
-                      : "bg-gray-50 border-transparent text-gray-600"
-                  }`}
+                  className={`w-full p-3 rounded-xl border transition-all outline-none ${isEditing
+                    ? "bg-white border-green-300 focus:ring-2 focus:ring-green-100 focus:border-green-500 text-gray-800"
+                    : "bg-gray-50 border-transparent text-gray-600"
+                    }`}
                 />
               </div>
 

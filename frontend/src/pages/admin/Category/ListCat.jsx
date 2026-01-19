@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect, useMemo } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import apiCategoryAdmin from "../../../api/admin/apiCategoryAdmin";
 import { FaPlus, FaTrash, FaEdit, FaToggleOn, FaToggleOff, FaMinusSquare, FaPlusSquare } from "react-icons/fa";
@@ -147,7 +147,8 @@ const ListCat = () => {
   };
 
   // Pagination States
-  const [page, setPage] = useState(0);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const page = parseInt(searchParams.get("page") || "0", 10);
   const [rowsPerPage] = useState(5);
 
   // Pagination Logic (Client-side)
@@ -156,7 +157,7 @@ const ListCat = () => {
 
   // Reset page khi search/filter query thay đổi
   useEffect(() => {
-    setPage(0);
+    setSearchParams({ page: 0 });
   }, [searchTerm, filterStatus]);
 
   /* ===============================
@@ -224,7 +225,11 @@ const ListCat = () => {
               <button onClick={() => handleToggleStatus(node)} className="text-gray-500 hover:text-green-600 transition-colors" title="Bật/Tắt">
                 {node.status === 1 ? <FaToggleOn size={22} /> : <FaToggleOff size={22} />}
               </button>
-              <Link to={`/admin/category/edit/${node.id}`} className="text-blue-500 hover:text-blue-700 transition-colors" title="Sửa">
+              <Link
+                to={`/admin/category/edit/${node.id}?page=${page}`}
+                className="text-blue-500 hover:text-blue-700 transition-colors"
+                title="Sửa"
+              >
                 <FaEdit size={18} />
               </Link>
               <button onClick={() => handleDelete(node.id)} className="text-red-500 hover:text-red-700 transition-colors" title="Xóa">
@@ -235,7 +240,11 @@ const ListCat = () => {
         </tr>
 
         {/* Recursive Children Rendering */}
-        {hasChildren && isExpanded && node.children.map(child => renderRow(child, level + 1))}
+        {hasChildren && isExpanded && node.children.map(child => (
+          <React.Fragment key={child.id}>
+            {renderRow(child, level + 1)}
+          </React.Fragment>
+        ))}
       </>
     );
   };
@@ -312,7 +321,7 @@ const ListCat = () => {
               <div className="flex justify-center gap-4 mt-6">
                 <button
                   disabled={page === 0}
-                  onClick={() => setPage(page - 1)}
+                  onClick={() => setSearchParams({ page: page - 1 })}
                   className="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50 transition-colors"
                 >
                   ← Trước
@@ -320,7 +329,7 @@ const ListCat = () => {
                 <span className="flex items-center text-gray-600">Trang {page + 1} / {totalPages}</span>
                 <button
                   disabled={page === totalPages - 1}
-                  onClick={() => setPage(page + 1)}
+                  onClick={() => setSearchParams({ page: page + 1 })}
                   className="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50 transition-colors"
                 >
                   Sau →

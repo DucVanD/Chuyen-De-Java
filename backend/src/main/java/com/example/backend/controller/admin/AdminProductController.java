@@ -63,6 +63,7 @@ public class AdminProductController {
     @GetMapping("/filter")
     @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
     public ResponseEntity<Page<ProductDto>> filter(
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) List<Integer> categoryId,
             @RequestParam(required = false) List<Integer> brandId,
             @RequestParam(required = false) Integer status,
@@ -73,7 +74,8 @@ public class AdminProductController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity
-                .ok(productService.filter(categoryId, brandId, status, minPrice, maxPrice, hasPromotion, sortBy, page,
+                .ok(productService.filter(keyword, categoryId, brandId, status, minPrice, maxPrice, hasPromotion,
+                        sortBy, page,
                         size));
     }
 

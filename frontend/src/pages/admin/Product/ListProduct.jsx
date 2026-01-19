@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import apiProductAdmin from "../../../api/admin/apiProductAdmin";
 import apiCategoryAdmin from "../../../api/admin/apiCategoryAdmin";
@@ -8,13 +8,19 @@ import { FaPlus, FaTrash, FaEdit, FaToggleOn, FaToggleOff, FaSearch, FaFilter, F
 
 // Utility to format quantity (Standard Supermarket Logic)
 const formatQuantity = (qty, saleType, unitLabel) => {
+  let value = qty;
+  let unit = unitLabel || (saleType === "WEIGHT" ? "phần" : "đv");
+
   if (saleType === "WEIGHT") {
     if (qty >= 1000) {
-      return (qty / 1000).toFixed(1).replace(/\.0$/, "") + " kg";
+      value = (qty / 1000).toFixed(1).replace(/\.0$/, "");
+      unit = "kg";
+    } else {
+      unit = "g";
     }
-    return qty + " g";
   }
-  return qty + " " + (unitLabel || "đv");
+
+  return { value, unit };
 };
 
 const ListProduct = () => {
@@ -38,7 +44,8 @@ const ListProduct = () => {
   const [currentUser, setCurrentUser] = useState(null);
 
   // Pagination State
-  const [currentPage, setCurrentPage] = useState(0);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentPage = parseInt(searchParams.get("page") || "0", 10);
   const [totalPages, setTotalPages] = useState(0);
   const [size, setSize] = useState(8);
 
@@ -82,6 +89,7 @@ const ListProduct = () => {
       }
       else if (filterCategory || filterBrand || filterStatus || minPrice || maxPrice || hasPromo) {
         data = await apiProductAdmin.filter(
+          null,
           filterCategory || null,
           filterBrand || null,
           filterStatus || null,
@@ -111,13 +119,13 @@ const ListProduct = () => {
   };
 
   const handleSearch = () => {
-    setCurrentPage(0);
+    setSearchParams({ page: 0 });
     loadProducts();
   };
 
   const handleFilter = () => {
     setKeyword("");
-    setCurrentPage(0);
+    setSearchParams({ page: 0 });
     loadProducts();
   };
 
@@ -129,7 +137,7 @@ const ListProduct = () => {
     setMinPrice("");
     setMaxPrice("");
     setHasPromo(false);
-    setCurrentPage(0);
+    setSearchParams({ page: 0 });
     setTimeout(() => {
       loadProducts();
     }, 100);
@@ -137,7 +145,7 @@ const ListProduct = () => {
 
   const handlePageChange = (newPage) => {
     if (newPage >= 0 && newPage < totalPages) {
-      setCurrentPage(newPage);
+      setSearchParams({ page: newPage });
     }
   };
 
@@ -322,9 +330,15 @@ const ListProduct = () => {
 
                       <td className="py-3 px-4">
                         {p.qty > 0 ? (
-                          <div className="font-bold text-gray-800">
-                            {formatQuantity(p.qty, p.saleType, p.unitLabel)}
-                          </div>
+                          (() => {
+                            const { value, unit } = formatQuantity(p.qty, p.saleType, p.unitLabel);
+                            return (
+                              <div className="flex flex-col items-center">
+                                <span className="font-bold text-gray-800 text-base">{value}</span>
+                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter -mt-1">{unit}</span>
+                              </div>
+                            );
+                          })()
                         ) : (
                           <span className="text-red-500 text-xs font-bold bg-red-50 px-2 py-1 rounded">Hết hàng</span>
                         )}
@@ -355,7 +369,7 @@ const ListProduct = () => {
                               </button>
 
                               <Link
-                                to={`/admin/product/edit/${p.id}`}
+                                to={`/admin/product/edit/${p.id}?page=${currentPage}`}
                                 className="text-blue-600 hover:text-blue-800 transition-colors"
                                 title="Chỉnh sửa"
                               >
