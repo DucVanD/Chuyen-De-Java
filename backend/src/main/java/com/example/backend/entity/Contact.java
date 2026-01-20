@@ -33,6 +33,10 @@ public class Contact {
     @Column(name = "order_id")
     private Integer orderId;
 
+    // Mã yêu cầu hỗ trợ (auto-generated)
+    @Column(name = "ticket_code", unique = true, nullable = false, length = 20)
+    private String ticketCode;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     @Builder.Default

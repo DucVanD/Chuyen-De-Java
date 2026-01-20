@@ -16,6 +16,7 @@ public class ContactDto {
 
     private Integer userId;
     private Integer orderId;
+    private String ticketCode;
 
     private ContactType type;
     private String priority;

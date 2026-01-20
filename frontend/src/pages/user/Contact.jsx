@@ -1,15 +1,22 @@
 
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { FaMapMarkerAlt, FaClock, FaPhone, FaEnvelope, FaPaperPlane } from "react-icons/fa";
+import { FaMapMarkerAlt, FaClock, FaPhone, FaEnvelope, FaPaperPlane, FaCopy, FaCheckCircle } from "react-icons/fa";
+import { toast } from "react-toastify";
+import apiContact from "../../api/user/apiContact";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
-    fullName: "",
+    name: "",
     email: "",
     phone: "",
+    title: "",
     content: ""
   });
+
+  const [loading, setLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [ticketCode, setTicketCode] = useState("");
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -19,20 +26,47 @@ const Contact = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Xử lý gửi form liên hệ
-    console.log("Contact form submitted:", formData);
-    // Reset form sau khi gửi
-    setFormData({
-      fullName: "",
-      email: "",
-      phone: "",
-      content: ""
-    });
+  const handleCopyTicketCode = () => {
+    navigator.clipboard.writeText(ticketCode);
+    toast.success("Đã copy mã yêu cầu!");
   };
 
-    return (
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const response = await apiContact.create({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        title: formData.title || "Liên hệ chung",
+        content: formData.content,
+        type: "GENERAL",
+        priority: "NORMAL"
+      });
+
+      // Lấy ticket code từ response
+      setTicketCode(response.data.ticketCode);
+      setShowSuccessModal(true);
+
+      // Reset form
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        title: "",
+        content: ""
+      });
+    } catch (error) {
+      console.error("Error submitting contact:", error);
+      toast.error("Gửi yêu cầu thất bại. Vui lòng thử lại!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
     <>
       <div className="max-w-7xl mx-auto px-4 py-10">
         {/* Breadcrumb */}
@@ -116,18 +150,33 @@ const Contact = () => {
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                     Họ và tên
                   </label>
                   <input
-                    id="fullName"
-                    name="fullName"
+                    id="name"
+                    name="name"
                     type="text"
                     required
-                    value={formData.fullName}
+                    value={formData.name}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     placeholder="Nhập họ và tên"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                    Tiêu đề <span className="text-gray-400 text-xs">(Tùy chọn)</span>
+                  </label>
+                  <input
+                    id="title"
+                    name="title"
+                    type="text"
+                    value={formData.title}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="Nhập tiêu đề (nếu có)"
                   />
                 </div>
 
@@ -181,10 +230,20 @@ const Contact = () => {
 
                 <button
                   type="submit"
-                  className="w-full bg-green-600 text-white py-3 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors font-medium flex items-center justify-center gap-2"
+                  disabled={loading}
+                  className="w-full bg-green-600 text-white py-3 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <FaPaperPlane />
-                  Gửi thông tin
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      Đang gửi...
+                    </>
+                  ) : (
+                    <>
+                      <FaPaperPlane />
+                      Gửi thông tin
+                    </>
+                  )}
                 </button>
               </form>
             </div>
@@ -205,7 +264,7 @@ const Contact = () => {
                   title="Bean Farm Location"
                 ></iframe>
               </div>
-              
+
               {/* Map Info Card */}
               <div className="p-4 border-t border-gray-100">
                 <div className="flex items-start gap-3">
@@ -247,6 +306,80 @@ const Contact = () => {
           </div>
         </div>
       </div>
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 animate-fadeIn backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            {/* Modal Header */}
+            <div className="p-6 bg-gradient-to-r from-green-500 to-green-600 text-white text-center">
+              <div className="flex justify-center mb-3">
+                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center">
+                  <FaCheckCircle className="text-green-500 text-4xl" />
+                </div>
+              </div>
+              <h3 className="text-2xl font-bold">Gửi yêu cầu thành công!</h3>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-4">
+              <p className="text-gray-700 text-center">
+                Yêu cầu hỗ trợ của bạn đã được tiếp nhận thành công.
+              </p>
+
+              {/* Ticket Code Display */}
+              <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-4">
+                <p className="text-sm text-gray-600 text-center mb-2 font-medium">
+                  Mã yêu cầu của bạn:
+                </p>
+                <div className="flex items-center justify-center gap-2">
+                  <code className="text-2xl font-bold text-green-600 font-mono">
+                    {ticketCode}
+                  </code>
+                  <button
+                    onClick={handleCopyTicketCode}
+                    className="p-2 hover:bg-gray-200 rounded-md transition-colors"
+                    title="Copy mã"
+                  >
+                    <FaCopy className="text-gray-600" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Warning Notice */}
+              <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+                <p className="text-sm text-yellow-800 flex items-start gap-2">
+                  <span className="text-lg">⚠️</span>
+                  <span>
+                    <strong>Lưu ý:</strong> Đây là yêu cầu đang chờ xử lý, đơn hàng chỉ được thay đổi sau khi nhân viên xác nhận thành công.
+                  </span>
+                </p>
+              </div>
+
+              {/* Info */}
+              <div className="text-center text-sm text-gray-600 space-y-1">
+                <p>
+                  Nhân viên sẽ kiểm tra và phản hồi cho bạn trong giờ hành chính{" "}
+                  <strong className="text-gray-800">(8:00 – 18:00)</strong>.
+                </p>
+                <p className="text-gray-500 italic">
+                  Cảm ơn bạn đã liên hệ!
+                </p>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-gray-50 flex justify-center">
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

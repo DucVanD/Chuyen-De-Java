@@ -1,6 +1,8 @@
 package com.example.backend.controller.admin;
 
 import com.example.backend.dto.ContactDto;
+import com.example.backend.entity.Contact;
+import com.example.backend.mapper.ContactMapper;
 import com.example.backend.service.ContactService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +21,13 @@ public class AdminContactController {
     @GetMapping
     public ResponseEntity<List<ContactDto>> getAll() {
         return ResponseEntity.ok(contactService.getAllContacts());
+    }
+
+    // ➕ Create new contact (User submit form)
+    @PostMapping
+    public ResponseEntity<ContactDto> create(@RequestBody Contact contact) {
+        Contact saved = contactService.saveContact(contact);
+        return ResponseEntity.ok(ContactMapper.toDto(saved));
     }
 
     // 🔍 Get contact by ID

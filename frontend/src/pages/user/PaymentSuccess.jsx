@@ -121,7 +121,7 @@ const PaymentSuccess = () => {
 
             {(status === "success" || status === "00") ? (
               <Link
-                to="/history"
+                to="/history-bought"
                 className="flex items-center justify-center gap-2 bg-white border-2 border-gray-100 text-gray-700 font-bold py-4 rounded-2xl hover:bg-gray-50 transition-all active:scale-95 group"
               >
                 <FaHistory className="group-hover:rotate-12 transition-transform" />

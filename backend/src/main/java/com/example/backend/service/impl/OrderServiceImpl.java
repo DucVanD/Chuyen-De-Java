@@ -235,7 +235,28 @@ public class OrderServiceImpl implements OrderService {
             order.setPaymentStatus(PaymentStatus.REFUNDED);
         }
 
+        // Cập nhật status
         order.setStatus(newStatus);
+
+        // Cập nhật thông tin khách hàng (nếu có)
+        if (dto.getReceiverName() != null) {
+            order.setReceiverName(dto.getReceiverName());
+        }
+        if (dto.getReceiverEmail() != null) {
+            order.setReceiverEmail(dto.getReceiverEmail());
+        }
+        if (dto.getReceiverPhone() != null) {
+            order.setReceiverPhone(dto.getReceiverPhone());
+        }
+        if (dto.getReceiverAddress() != null) {
+            order.setReceiverAddress(dto.getReceiverAddress());
+        }
+        if (dto.getWard() != null) {
+            order.setWard(dto.getWard());
+        }
+        if (dto.getDistrict() != null) {
+            order.setDistrict(dto.getDistrict());
+        }
 
         Order updated = orderRepository.save(order);
         return OrderMapper.toDto(updated);

@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -72,11 +73,21 @@ public class GeminiServiceImpl implements AiChatService {
 
     @Override
     public ChatResponse chat(String message, List<ChatMessageDto> history) throws Exception {
+
         // Build request with function declarations and history
         Map<String, Object> request = buildGeminiRequest(message, history);
 
-        // Call Gemini API
-        String url = geminiConfig.getApiUrl() + "?key=" + geminiConfig.getApiKey();
+        // 👉 LẤY API KEY 1 LẦN DUY NHẤT
+        String apiKey = geminiConfig.getApiKey();
+
+        // 👉 LOG 4 KÝ TỰ CUỐI (AN TOÀN)
+        System.out.println(">>> Gemini key suffix: " +
+                (apiKey == null || apiKey.length() < 4
+                        ? "NULL/SHORT"
+                        : apiKey.substring(apiKey.length() - 4)));
+
+        // Build URL
+        String url = geminiConfig.getApiUrl() + "?key=" + apiKey;
 
         System.out.println(">>> Calling Gemini API: " + geminiConfig.getModel());
 
@@ -85,35 +96,42 @@ public class GeminiServiceImpl implements AiChatService {
 
         int maxRetries = 5;
         int retryCount = 0;
-        long waitTime = 3000; // 3 seconds initial wait
+        long waitTime = 3000; // 3 seconds
 
         while (true) {
             try {
                 HttpEntity<Map<String, Object>> entity = new HttpEntity<>(request, headers);
-                ResponseEntity<String> response = restTemplate.exchange(url, org.springframework.http.HttpMethod.POST,
-                        entity, String.class);
+
+                ResponseEntity<String> response = restTemplate.exchange(
+                        url,
+                        HttpMethod.POST,
+                        entity,
+                        String.class);
 
                 if (response.getStatusCode().is2xxSuccessful()) {
                     return parseGeminiResponse(response.getBody());
                 } else {
-                    // Handle non-2xx responses if necessary, or rethrow as an exception
-                    throw new Exception("Gemini API returned an error: " + response.getStatusCode());
+                    throw new Exception(
+                            "Gemini API returned error: " + response.getStatusCode());
                 }
+
             } catch (org.springframework.web.client.HttpClientErrorException.TooManyRequests e) {
                 retryCount++;
                 if (retryCount > maxRetries) {
-                    System.err.println(">>> Gemini API Error: Quota exceeded after " + maxRetries + " retries.");
                     throw new Exception(
-                            "Hệ thống AI hiện đang bận do quá nhiều người sử dụng cùng lúc. Bạn vui lòng đợi khoảng 1 phút rồi thử lại nhé!");
+                            "Hệ thống AI đang bận, vui lòng thử lại sau.");
                 }
 
                 System.out.println(
-                        ">>> Gemini Rate Limit (429). Retrying in " + waitTime + "ms... (Attempt " + retryCount + ")");
+                        ">>> Gemini Rate Limit (429). Retrying in "
+                                + waitTime + "ms (attempt " + retryCount + ")");
                 Thread.sleep(waitTime);
                 waitTime *= 2;
+
             } catch (org.springframework.web.client.HttpClientErrorException e) {
-                System.err.println(">>> Gemini API Error: " + e.getResponseBodyAsString());
+                System.err.println(">>> Gemini API Error: " + e.getStatusCode());
                 throw e;
+
             } catch (Exception e) {
                 System.err.println(">>> System Error: " + e.getMessage());
                 throw e;
@@ -375,16 +393,39 @@ public class GeminiServiceImpl implements AiChatService {
     }
 
     private ChatResponse handleSearchProducts(JsonNode args) {
-        String query = args.has("query") ? args.get("query").asText() : "";
+        String query = args.has("query") ? args.get("query").asText().trim() : "";
         BigDecimal minPrice = args.has("minPrice") ? BigDecimal.valueOf(args.get("minPrice").asDouble()) : null;
         BigDecimal maxPrice = args.has("maxPrice") ? BigDecimal.valueOf(args.get("maxPrice").asDouble()) : null;
 
+        // Xử lý từ khóa "tất cả", "all", "danh sách" -> hiển thị tất cả sản phẩm
+        boolean showAll = query.isEmpty() ||
+                query.equalsIgnoreCase("tất cả") ||
+                query.equalsIgnoreCase("tat ca") ||
+                query.equalsIgnoreCase("all") ||
+                query.equalsIgnoreCase("danh sách") ||
+                query.equalsIgnoreCase("danh sach");
+
         List<Product> products = productRepository.findAll().stream()
-                .filter(p -> query.isEmpty() || p.getName().toLowerCase().contains(query.toLowerCase()))
+                .filter(p -> {
+                    if (showAll)
+                        return true;
+
+                    String lowerQuery = query.toLowerCase();
+                    // Tìm kiếm trong tên sản phẩm
+                    boolean matchName = p.getName().toLowerCase().contains(lowerQuery);
+
+                    // Tìm kiếm trong tên danh mục (category)
+                    boolean matchCategory = false;
+                    if (p.getCategory() != null && p.getCategory().getName() != null) {
+                        matchCategory = p.getCategory().getName().toLowerCase().contains(lowerQuery);
+                    }
+
+                    return matchName || matchCategory;
+                })
                 .filter(p -> minPrice == null || p.getSalePrice().compareTo(minPrice) >= 0)
                 .filter(p -> maxPrice == null || p.getSalePrice().compareTo(maxPrice) <= 0)
                 .filter(p -> p.getStatus() == 1) // Only active products
-                .limit(5)
+                .limit(showAll ? 10 : 5) // Hiển thị nhiều hơn khi show all
                 .collect(Collectors.toList());
 
         if (products.isEmpty()) {
@@ -404,17 +445,22 @@ public class GeminiServiceImpl implements AiChatService {
                     "Tôi đã tìm thấy sản phẩm **%s** cho bạn. Bạn có thể xem hình ảnh và chi tiết ở thẻ bên dưới nhé! 🛒",
                     products.get(0).getName()));
         } else {
-            message.append(String.format("Tôi tìm thấy %d sản phẩm phù hợp cho bạn:\n\n", products.size()));
+            if (showAll) {
+                message.append(String.format("Đây là danh sách %d sản phẩm hiện có:\\n\\n", products.size()));
+            } else {
+                message.append(String.format("Tôi tìm thấy %d sản phẩm phù hợp cho bạn:\\n\\n", products.size()));
+            }
+
             for (int i = 0; i < products.size(); i++) {
                 Product p = products.get(i);
                 String priceStr = formatPrice(p.getSalePrice());
                 if (p.getDiscountPrice() != null && p.getDiscountPrice().compareTo(p.getSalePrice()) < 0) {
                     priceStr = String.format("%s (Giảm còn %s)", priceStr, formatPrice(p.getDiscountPrice()));
                 }
-                message.append(String.format("%d. **%s** - Giá: %s\n",
+                message.append(String.format("%d. **%s** - Giá: %s\\n",
                         i + 1, p.getName(), priceStr));
             }
-            message.append("\nBạn có thể xem hình ảnh và click vào thẻ sản phẩm bên dưới để xem chi tiết nhé! 🛒");
+            message.append("\\nBạn có thể xem hình ảnh và click vào thẻ sản phẩm bên dưới để xem chi tiết nhé! 🛒");
         }
 
         return new ChatResponse(message.toString(), productDtos);

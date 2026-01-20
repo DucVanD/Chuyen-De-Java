@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { FaEye, FaTrash, FaReply, FaCheckCircle, FaClock, FaSync, FaTimesCircle, FaExclamationTriangle } from "react-icons/fa";
+import { FaEye, FaTrash, FaReply, FaCheckCircle, FaClock, FaSync, FaTimesCircle, FaExclamationTriangle, FaCopy } from "react-icons/fa";
 import apiContactAdmin from "../../../api/admin/apiContactAdmin";
 import { Link } from "react-router-dom";
 
@@ -121,6 +121,7 @@ const ListContact = () => {
             <table className="w-full text-sm border-collapse text-center">
               <thead>
                 <tr className="bg-gray-50 border-b text-gray-700 uppercase text-xs tracking-wider">
+                  <th className="py-3 px-4 text-left">Mã Ticket</th>
                   <th className="py-3 px-4 text-left">Người gửi</th>
                   <th className="py-3 px-4 text-left">Nội dung</th>
                   <th className="py-3 px-4 text-left">Loại yêu cầu</th>
@@ -133,6 +134,25 @@ const ListContact = () => {
                 {contacts.length > 0 ? (
                   contacts.map((c) => (
                     <tr key={c.id} className="hover:bg-gray-50 transition-colors">
+                      {/* Cột Mã Ticket */}
+                      <td className="py-3 px-4 text-left">
+                        <div className="flex items-center gap-2">
+                          <code className="font-mono text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">
+                            {c.ticketCode}
+                          </code>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(c.ticketCode);
+                              toast.success("Đã copy mã ticket!");
+                            }}
+                            className="text-gray-400 hover:text-gray-600 transition-colors"
+                            title="Copy mã"
+                          >
+                            <FaCopy size={14} />
+                          </button>
+                        </div>
+                      </td>
+
                       {/* Cột Người gửi */}
                       <td className="py-3 px-4 text-left">
                         <div className="font-medium text-gray-900">{c.name}</div>
@@ -163,7 +183,11 @@ const ListContact = () => {
                       {/* Cột Đơn hàng */}
                       <td className="py-3 px-4 font-mono text-xs">
                         {c.orderId ? (
-                          <Link to={`/admin/orders/${c.orderId}`} className="text-indigo-600 hover:underline">
+                          <Link
+                            to={`/admin/order/edit/${c.orderId}`}
+                            onClick={() => localStorage.setItem("fromContactsPage", "true")}
+                            className="text-indigo-600 hover:underline"
+                          >
                             #{c.orderId}
                           </Link>
                         ) : (
@@ -200,7 +224,7 @@ const ListContact = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" className="py-10 text-center text-gray-400 italic">
+                    <td colSpan="7" className="py-10 text-center text-gray-400 italic">
                       Chưa có liên hệ nào
                     </td>
                   </tr>
@@ -220,7 +244,22 @@ const ListContact = () => {
             <div className="p-5 border-b bg-gray-50 flex justify-between items-center">
               <div>
                 <h3 className="text-lg font-bold text-gray-800">Chi tiết liên hệ</h3>
-                <p className="text-xs text-gray-500">Từ: {selectedContact.name} ({selectedContact.email})</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <code className="font-mono text-sm font-bold text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded">
+                    {selectedContact.ticketCode}
+                  </code>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(selectedContact.ticketCode);
+                      toast.success("Đã copy mã ticket!");
+                    }}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    title="Copy mã"
+                  >
+                    <FaCopy size={12} />
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Từ: {selectedContact.name} ({selectedContact.email})</p>
               </div>
               <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
             </div>

@@ -411,15 +411,15 @@ const Detail = () => {
             {/* Scroll Container */}
             <div className="overflow-x-auto scrollbar-none pb-2">
               <div className="
-                grid grid-rows-2 grid-flow-col auto-cols-[280px] gap-4 
-                sm:grid-rows-none sm:grid-cols-2 lg:grid-cols-4 sm:auto-cols-auto
+                flex gap-4 
+                sm:grid sm:grid-cols-2 lg:grid-cols-4
               ">
                 {vouchers.map((v) => {
                   const isSaved = savedCodes.includes(v.voucherCode);
                   return (
                     <div
                       key={v.id}
-                      className="bg-white border-2 border-dashed border-emerald-300 rounded-2xl p-5 transition-all duration-300 hover:shadow-lg hover:border-emerald-500 relative overflow-hidden group"
+                      className="min-w-[280px] flex-shrink-0 sm:min-w-0 bg-white border-2 border-dashed border-emerald-300 rounded-2xl p-5 transition-all duration-300 hover:shadow-lg hover:border-emerald-500 relative overflow-hidden group"
                     >
                       <div className="absolute -right-8 -top-8 w-16 h-16 bg-emerald-50 rounded-full group-hover:scale-150 transition-transform duration-500" />
                       <div className="relative z-10">

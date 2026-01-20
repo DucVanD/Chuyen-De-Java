@@ -76,15 +76,32 @@ const EditOrder = () => {
       await apiOrderAdmin.updateStatus(id, {
         status: order.status, // STRING
         paymentStatus: order.paymentStatus,
+        // Thêm các trường địa chỉ và thông tin khách hàng
+        receiverName: order.receiverName,
+        receiverEmail: order.receiverEmail,
+        receiverPhone: order.receiverPhone,
+        receiverAddress: order.receiverAddress,
+        ward: order.ward,
+        district: order.district,
       });
 
       toast.success("✅ Cập nhật đơn hàng thành công");
       setTimeout(() => {
-        const lp = localStorage.getItem("currentOrderPage");
-        if (!lp || lp === "1" || lp === "0" || lp === "null" || lp === "undefined") {
-          navigate("/admin/orders");
+        // Kiểm tra xem có từ trang liên hệ qua không
+        const fromContacts = localStorage.getItem("fromContactsPage");
+
+        if (fromContacts === "true") {
+          // Xóa flag và quay về trang liên hệ
+          localStorage.removeItem("fromContactsPage");
+          navigate("/admin/contacts");
         } else {
-          navigate(`/admin/orders/${lp}`);
+          // Quay về danh sách đơn hàng như bình thường
+          const lp = localStorage.getItem("currentOrderPage");
+          if (!lp || lp === "1" || lp === "0" || lp === "null" || lp === "undefined") {
+            navigate("/admin/orders");
+          } else {
+            navigate(`/admin/orders/${lp}`);
+          }
         }
       }, 1200);
     } catch (err) {
@@ -109,6 +126,12 @@ const EditOrder = () => {
           Chỉnh sửa đơn hàng #{order.orderCode}
         </h3>
         <div className="flex gap-3">
+          <button
+            onClick={() => navigate("/admin/contacts")}
+            className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded text-sm inline-flex items-center"
+          >
+            <i className="fa fa-envelope mr-1"></i> Về liên hệ
+          </button>
           <button
             onClick={() => {
               const lp = localStorage.getItem("currentOrderPage");
@@ -141,24 +164,78 @@ const EditOrder = () => {
                 Thông tin khách hàng
               </h4>
 
-              {[
-                { label: "Tên", value: order.receiverName },
-                { label: "Email", value: order.receiverEmail },
-                { label: "Điện thoại", value: order.receiverPhone },
-                {
-                  label: "Địa chỉ",
-                  value: `${order.receiverAddress}, ${order.ward}, ${order.district}`,
-                },
-              ].map((item, i) => (
-                <div key={i} className="mb-4">
-                  <label className="block text-sm mb-1">{item.label}</label>
-                  <input
-                    readOnly
-                    value={item.value || ""}
-                    className="w-full p-2 border rounded bg-gray-100"
-                  />
-                </div>
-              ))}
+              {/* Tên người nhận */}
+              <div className="mb-4">
+                <label className="block text-sm mb-1">Tên người nhận</label>
+                <input
+                  type="text"
+                  value={order.receiverName || ""}
+                  onChange={(e) => setOrder({ ...order, receiverName: e.target.value })}
+                  disabled={isLocked}
+                  className={`w-full p-2 border rounded ${isLocked ? "bg-gray-100 cursor-not-allowed" : "bg-white"}`}
+                />
+              </div>
+
+              {/* Email */}
+              <div className="mb-4">
+                <label className="block text-sm mb-1">Email</label>
+                <input
+                  type="email"
+                  value={order.receiverEmail || ""}
+                  onChange={(e) => setOrder({ ...order, receiverEmail: e.target.value })}
+                  disabled={isLocked}
+                  className={`w-full p-2 border rounded ${isLocked ? "bg-gray-100 cursor-not-allowed" : "bg-white"}`}
+                />
+              </div>
+
+              {/* Điện thoại */}
+              <div className="mb-4">
+                <label className="block text-sm mb-1">Điện thoại</label>
+                <input
+                  type="tel"
+                  value={order.receiverPhone || ""}
+                  onChange={(e) => setOrder({ ...order, receiverPhone: e.target.value })}
+                  disabled={isLocked}
+                  className={`w-full p-2 border rounded ${isLocked ? "bg-gray-100 cursor-not-allowed" : "bg-white"}`}
+                />
+              </div>
+
+              {/* Địa chỉ */}
+              <div className="mb-4">
+                <label className="block text-sm mb-1">Địa chỉ</label>
+                <input
+                  type="text"
+                  value={order.receiverAddress || ""}
+                  onChange={(e) => setOrder({ ...order, receiverAddress: e.target.value })}
+                  disabled={isLocked}
+                  className={`w-full p-2 border rounded ${isLocked ? "bg-gray-100 cursor-not-allowed" : "bg-white"}`}
+                  placeholder="Số nhà, tên đường"
+                />
+              </div>
+
+              {/* Phường/Xã */}
+              <div className="mb-4">
+                <label className="block text-sm mb-1">Phường/Xã</label>
+                <input
+                  type="text"
+                  value={order.ward || ""}
+                  onChange={(e) => setOrder({ ...order, ward: e.target.value })}
+                  disabled={isLocked}
+                  className={`w-full p-2 border rounded ${isLocked ? "bg-gray-100 cursor-not-allowed" : "bg-white"}`}
+                />
+              </div>
+
+              {/* Quận/Huyện */}
+              <div className="mb-4">
+                <label className="block text-sm mb-1">Quận/Huyện</label>
+                <input
+                  type="text"
+                  value={order.district || ""}
+                  onChange={(e) => setOrder({ ...order, district: e.target.value })}
+                  disabled={isLocked}
+                  className={`w-full p-2 border rounded ${isLocked ? "bg-gray-100 cursor-not-allowed" : "bg-white"}`}
+                />
+              </div>
 
               <div>
                 <label className="block text-sm mb-1">Tổng tiền</label>

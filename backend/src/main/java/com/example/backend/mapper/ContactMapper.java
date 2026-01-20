@@ -14,6 +14,7 @@ public class ContactMapper {
                 .id(contact.getId())
                 .userId(contact.getUser() != null ? contact.getUser().getId() : null)
                 .orderId(contact.getOrderId())
+                .ticketCode(contact.getTicketCode())
                 .type(contact.getType())
                 .priority(contact.getPriority())
                 .name(contact.getName())

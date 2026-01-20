@@ -6,6 +6,11 @@ const apiContact = {
     return axiosInstance.get("/contacts");
   },
 
+  // Tạo mới contact
+  create: (data) => {
+    return axiosInstance.post("/contacts", data);
+  },
+
   // Xóa
   delete: (id) => {
     return axiosInstance.delete(`/contacts/${id}`);
