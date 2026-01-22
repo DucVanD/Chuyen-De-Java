@@ -1,0 +1,11 @@
+# Ignore files for Docker build
+.git
+.gitignore
+.mvn
+target
+*.md
+*.log
+.env
+.vscode
+.idea
+*.iml
