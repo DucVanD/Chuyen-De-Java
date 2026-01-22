@@ -60,7 +60,7 @@ public class Product {
     @Column(length = 500, nullable = false)
     private String description;
 
-    @Column(nullable = false, columnDefinition = "LONGTEXT")
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String detail;
 
     @Builder.Default

@@ -38,7 +38,7 @@ public class Post {
     @Column(length = 500)
     private String description; // Mô tả ngắn (Sapo)
 
-    @Column(nullable = false, columnDefinition = "LONGTEXT")
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String content; // Nội dung bài viết
 
     @Enumerated(EnumType.STRING)
