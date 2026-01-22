@@ -5,6 +5,7 @@ import apiProductAdmin from "../../../api/admin/apiProductAdmin";
 import apiCategoryAdmin from "../../../api/admin/apiCategoryAdmin";
 import apiBrandAdmin from "../../../api/admin/apiBrandAdmin";
 import { FaPlus, FaTrash, FaEdit, FaToggleOn, FaToggleOff, FaSearch, FaFilter, FaRedo } from "react-icons/fa";
+import { getImageUrl } from "../../../api/config";
 
 // Utility to format quantity (Standard Supermarket Logic)
 const formatQuantity = (qty, saleType, unitLabel) => {
@@ -300,7 +301,7 @@ const ListProduct = () => {
                         <div className="flex items-center gap-3">
                           <div className="w-12 h-12 rounded-lg border border-gray-200 overflow-hidden bg-white shrink-0">
                             <img
-                              src={p.image || "https://placehold.co/100"}
+                              src={getImageUrl(p.image, 'product')}
                               alt={p.name}
                               className="w-full h-full object-cover"
                             />

@@ -11,7 +11,7 @@ import {
   FaHeadset,
 } from "react-icons/fa";
 import apiPost from "../../api/user/apiPost";
-import { imageURL } from "../../api/config";
+import { getImageUrl } from "../../api/config";
 
 const Post = () => {
   const [posts, setPosts] = useState([]);
@@ -116,7 +116,7 @@ const Post = () => {
                     {/* Ảnh bài viết */}
                     <div className="md:w-1/3">
                       <img
-                        src={post.image || "/assets/images/no-image.jpg"}
+                        src={getImageUrl(post.image, 'post')}
                         alt={post.title}
                         className="w-full h-48 object-cover rounded-md"
                       />
@@ -245,7 +245,7 @@ const Post = () => {
                     className="flex gap-3 hover:bg-gray-50 p-2 rounded transition-colors"
                   >
                     <img
-                      src={post.image || "/assets/images/no-image.jpg"}
+                      src={getImageUrl(post.image, 'post')}
                       alt={post.title}
                       className="w-16 h-16 object-cover rounded"
                     />
@@ -306,7 +306,7 @@ const Post = () => {
           </div>
         ))}
       </div> */}
-       <section className="mt-16 pt-10 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 px-2 sm:px-0">
+      <section className="mt-16 pt-10 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 px-2 sm:px-0">
         {[
           { t: "Vận chuyển miễn phí", s: "Hóa đơn trên 3 triệu" },
           { t: "Đổi trả miễn phí", s: "Trong vòng 7 ngày" },
@@ -318,7 +318,7 @@ const Post = () => {
             className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4 flex items-center gap-4 hover:shadow-md transition-shadow cursor-default"
           >
             <div className="h-10 w-10 flex-shrink-0 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-sm">
-               <FaCheck className="text-sm" />
+              <FaCheck className="text-sm" />
             </div>
             <div>
               <div className="text-sm font-bold text-emerald-800 uppercase tracking-wide">

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaArrowLeft, FaSave, FaEdit, FaCamera, FaTag, FaLayerGroup, FaPercentage, FaBoxOpen } from "react-icons/fa";
+import { getImageUrl } from "../../../api/config";
 import { Editor } from "@tinymce/tinymce-react";
 
 import apiProductAdmin from "../../../api/admin/apiProductAdmin";
@@ -579,7 +580,7 @@ const EditProduct = () => {
               <div className="flex flex-col items-center">
                 <div className="relative w-full aspect-square bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden">
                   {form.image ? (
-                    <img src={form.image} alt="Preview" className="w-full h-full object-contain p-2" />
+                    <img src={getImageUrl(form.image, 'product')} alt="Preview" className="w-full h-full object-contain p-2" />
                   ) : (
                     <div className="text-center text-gray-400">
                       <FaCamera size={40} className="mx-auto mb-2 opacity-50" />

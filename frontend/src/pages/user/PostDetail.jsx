@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { FaCalendarAlt, FaUser, FaTag } from "react-icons/fa";
 import apiPost from "../../api/user/apiPost";
-import { imageURL } from "../../api/config";
+import { getImageUrl } from "../../api/config";
 import { FaSearch, FaEye } from "react-icons/fa";
 
 // import {
@@ -11,11 +11,7 @@ import { FaSearch, FaEye } from "react-icons/fa";
 //   FaMoneyBillWave,
 //   FaHeadset,
 // } from "react-icons/fa";
-// ✅ Hàm xử lý thumbnail thống nhất
-const getThumbnail = (image) => {
-    if (!image) return "/assets/images/no-image.jpg";
-    return image;
-};
+// Xoá getThumbnail cũ, dùng getImageUrl trực tiếp
 
 const DetailPost = () => {
     const { slug } = useParams();
@@ -84,7 +80,7 @@ const DetailPost = () => {
                 <article className="lg:col-span-3 bg-white rounded-xl shadow p-6">
                     {/* ✅ Thumbnail hiển thị chuẩn */}
                     <img
-                        src={getThumbnail(post.image)}
+                        src={getImageUrl(post.image, 'post')}
                         alt={post.title}
                         className="w-full rounded-xl object-cover mb-6"
                     />
@@ -162,7 +158,7 @@ const DetailPost = () => {
                                             className="flex gap-3 hover:bg-gray-50 p-2 rounded transition-colors"
                                         >
                                             <img
-                                                src={post.image || "/assets/images/no-image.jpg"}
+                                                src={getImageUrl(post.image, 'post')}
                                                 alt={post.title}
                                                 className="w-16 h-16 object-cover rounded shadow-sm"
                                             />

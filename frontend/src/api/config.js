@@ -4,8 +4,16 @@
 
 export const getImageUrl = (imageName, type = 'product') => {
     if (!imageName) return "/placeholder.png";
-    if (imageName.startsWith("http")) return imageName;
-    return `${imageURL}/${type}/${imageName}`;
+
+    // Trim and cast to string to handle any edge cases
+    const path = String(imageName).trim();
+
+    // Check if it's already an absolute URL (http://, https://, blob:, data:, etc.)
+    if (/^([a-z0-9+.-]+):?\/\//i.test(path)) {
+        return path;
+    }
+
+    return `${imageURL}/${type}/${path}`;
 };
 
 // export const apiURL = "https://chuyen-de-thuc-tap.onrender.com/api";
