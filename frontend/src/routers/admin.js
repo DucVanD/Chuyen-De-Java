@@ -11,7 +11,7 @@ import TrashCat from "../pages/admin/Category/TrashCat";
 // product
 import ListProduct from "../pages/admin/Product/ListProduct";
 import DelProduct from "../pages/admin/Product/DelProduct";
-import EditProduct from "../pages/admin/Product/Editproduct";
+import EditProduct from "../pages/admin/Product/EditProduct";
 import AddProduct from "../pages/admin/Product/AddProduct";
 import TrashProduct from "../pages/admin/Product/TrashProduct";
 
@@ -28,7 +28,7 @@ import AddPage from "../pages/admin/post/AddPage";
 // topic
 import ListTopic from "../pages/admin/Topic/ListTopic";
 import EditTopic from "../pages/admin/Topic/EditTopic";
-import AddTopic from "../pages/admin/Topic/Addtopic";
+import AddTopic from "../pages/admin/Topic/AddTopic";
 
 // brand
 import ListBrand from "../pages/admin/Brand/ListBrand";
