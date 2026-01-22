@@ -138,6 +138,13 @@ const EditCat = () => {
   =============================== */
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // ✅ Client-side validation
+    if (!category.name?.trim()) {
+      toast.error("❌ Tên danh mục không được để trống");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -207,6 +214,7 @@ const EditCat = () => {
                 name="name"
                 value={category.name}
                 onChange={handleChange}
+                required
                 className="w-full border p-2 mb-4"
               />
 

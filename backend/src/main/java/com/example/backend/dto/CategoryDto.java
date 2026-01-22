@@ -26,6 +26,7 @@ public class CategoryDto {
     private String slug;
     private String image;
     private String imagePublicId;
+    @Size(max = 1000, message = "Mô tả không được quá 1000 ký tự")
     private String description;
     private Integer status;
     private Integer parentId;

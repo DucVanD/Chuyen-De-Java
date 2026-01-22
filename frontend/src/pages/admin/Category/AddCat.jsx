@@ -87,6 +87,13 @@ const AddCat = () => {
   =============================== */
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // ✅ Client-side validation
+    if (!formData.name.trim()) {
+      toast.error("❌ Tên danh mục không được để trống");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -108,7 +115,8 @@ const AddCat = () => {
       setTimeout(() => navigate("/admin/categories"), 1000);
     } catch (err) {
       console.error(err);
-      toast.error("❌ Thêm danh mục thất bại");
+      const message = err.response?.data?.message || "Thêm danh mục thất bại";
+      toast.error(`❌ ${message}`);
     } finally {
       setLoading(false);
     }

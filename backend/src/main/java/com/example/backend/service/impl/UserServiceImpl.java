@@ -5,6 +5,7 @@ import com.example.backend.dto.UserDto;
 import com.example.backend.entity.Order;
 import com.example.backend.entity.User;
 import com.example.backend.entity.enums.OrderStatus;
+import com.example.backend.exception.BusinessException;
 import com.example.backend.mapper.UserMapper;
 import com.example.backend.repository.UserRepository;
 import com.example.backend.service.UserService;
@@ -73,14 +74,14 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto getById(Integer id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new BusinessException("Người dùng không tồn tại"));
         return UserMapper.toDto(user);
     }
 
     @Override
     public UserDto getByEmail(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new BusinessException("Người dùng không tồn tại"));
         return UserMapper.toDto(user);
     }
 
@@ -88,11 +89,11 @@ public class UserServiceImpl implements UserService {
     public UserDto create(UserDto dto, String rawPassword) {
 
         if (userRepository.existsByEmail(dto.getEmail())) {
-            throw new RuntimeException("Email already exists");
+            throw new BusinessException("Email đã tồn tại");
         }
 
         if (userRepository.existsByPhone(dto.getPhone())) {
-            throw new RuntimeException("Phone already exists");
+            throw new BusinessException("Số điện thoại đã tồn tại");
         }
 
         String encodedPassword = passwordEncoder.encode(rawPassword);
@@ -108,10 +109,18 @@ public class UserServiceImpl implements UserService {
     public UserDto update(Integer id, UserDto dto) {
 
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new BusinessException("Người dùng không tồn tại"));
 
         user.setName(dto.getName());
-        user.setPhone(dto.getPhone());
+
+        // Check phone uniqueness if changed
+        if (dto.getPhone() != null && !dto.getPhone().equals(user.getPhone())) {
+            if (userRepository.existsByPhone(dto.getPhone())) {
+                throw new BusinessException("Số điện thoại đã tồn tại");
+            }
+            user.setPhone(dto.getPhone());
+        }
+
         user.setAddress(dto.getAddress());
 
         // Handle Avatar update and Cloudinary cleanup
@@ -142,7 +151,7 @@ public class UserServiceImpl implements UserService {
     @org.springframework.transaction.annotation.Transactional
     public void delete(Integer id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new BusinessException("Người dùng không tồn tại"));
 
         if (user.getAvatarPublicId() != null) {
             try {
@@ -158,7 +167,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void lock(Integer id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new BusinessException("Người dùng không tồn tại"));
 
         user.setStatus(0);
         userRepository.save(user);
@@ -167,7 +176,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void unlock(Integer id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new BusinessException("Người dùng không tồn tại"));
 
         user.setStatus(1);
         userRepository.save(user);

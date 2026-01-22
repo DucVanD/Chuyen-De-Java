@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaEye, FaEyeSlash, FaTimesCircle } from "react-icons/fa";
-import apiAuth from "../../api/apiAuth"; // ⚠️ dùng API CHUNG /auth/login
+import apiAuth from "../../api/apiAuth";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -31,36 +31,45 @@ const AdminLogin = () => {
   // =========================
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
 
+    // 🔹 Client-side granular check
+    if (!form.email) {
+      toast.error("Email không được để trống");
+      return;
+    }
+
+    // Kiểm tra định dạng email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(form.email)) {
+      toast.error("Email không đúng định dạng");
+      return;
+    }
+
+    if (!form.password) {
+      toast.error("Mật khẩu không được để trống");
+    }
+    setLoading(true);
     try {
       const res = await apiAuth.login(form);
       const { user, token } = res;
 
-      // ❌ Không phải ADMIN / STAFF → cấm vào admin
-      if (!["ADMIN", "STAFF"].includes(user.role)) {
-        toast.error("❌ Tài khoản không có quyền truy cập trang quản trị!");
+      // 🔐 CHECK ROLE (ADMIN / STAFF)
+      if (user.role !== "ADMIN" && user.role !== "STAFF") {
+        toast.error("Tài khoản không có quyền truy cập Admin");
         return;
       }
 
-      // ✅ Lưu riêng cho ADMIN
+      // 👉 Lưu riêng cho Admin
       localStorage.setItem("adminToken", token);
       localStorage.setItem("adminUser", JSON.stringify(user));
 
-      toast.success("✅ Đăng nhập quản trị thành công!");
-      navigate("/admin/dashboard");
-    } catch (error) {
-      if (error.response) {
-        if (error.response.status === 401) {
-          toast.error("❌ Sai email hoặc mật khẩu!");
-        } else if (error.response.status === 403) {
-          toast.error("❌ Không có quyền truy cập!");
-        } else {
-          toast.error("❌ Lỗi hệ thống, vui lòng thử lại!");
-        }
-      } else {
-        toast.error("❌ Không thể kết nối tới máy chủ!");
-      }
+      toast.success("Đăng nhập Admin thành công!");
+      navigate("/admin");
+    } catch (err) {
+      // ✅ ĐỒNG BỘ BACKEND MESSAGE
+      const message =
+        err.response?.data?.message || "Đăng nhập thất bại";
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -82,7 +91,7 @@ const AdminLogin = () => {
           🛒 Siêu Thị Mini – Admin
         </h2>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} noValidate>
           {/* EMAIL */}
           <div className="mb-5 relative">
             <label className="block text-gray-700 font-medium mb-2">
@@ -95,7 +104,6 @@ const AdminLogin = () => {
               value={form.email}
               onChange={handleChange}
               className="w-full border border-gray-300 p-3 rounded-lg pr-10 focus:ring-2 focus:ring-amber-500 outline-none"
-              required
             />
             {form.email && (
               <FaTimesCircle
@@ -117,7 +125,6 @@ const AdminLogin = () => {
               value={form.password}
               onChange={handleChange}
               className="w-full border border-gray-300 p-3 rounded-lg pr-12 focus:ring-2 focus:ring-pink-400 outline-none"
-              required
             />
             {form.password && (
               <div className="absolute right-3 top-11 flex gap-2">
@@ -146,7 +153,7 @@ const AdminLogin = () => {
               type="button"
               className="text-sm text-indigo-700 hover:text-pink-500"
               onClick={() =>
-                toast.info("Vui lòng liên hệ ADMIN để đặt lại mật khẩu")
+                toast.info("Vui lòng liên hệ Super Admin để đặt lại mật khẩu")
               }
             >
               Quên mật khẩu?

@@ -48,11 +48,28 @@ const Registered = () => {
   // Xử lý Submit Form (Logic chính)
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
 
     try {
       // ================= LOGIN LOGIC =================
       if (activeTab === "login") {
+        if (!formData.email) {
+          toast.error("Email không được để trống");
+          return;
+        }
+
+        // Kiểm tra định dạng email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+          toast.error("Email không đúng định dạng");
+          return;
+        }
+
+        if (!formData.password) {
+          toast.error("Mật khẩu không được để trống");
+          return;
+        }
+
+        setLoading(true);
         const res = await apiAuth.login({
           email: formData.email,
           password: formData.password,
@@ -67,19 +84,40 @@ const Registered = () => {
 
         dispatch(loginSuccess({ user: res.user, token: res.token }));
         toast.success("Đăng nhập thành công!");
-        
+
         // Quay lại trang trước đó hoặc về trang chủ
         navigate(location.state?.from || "/");
-      } 
-      
+      }
+
       // ================= REGISTER LOGIC =================
       else {
-        if (formData.password !== formData.confirmPassword) {
-          toast.error("Mật khẩu và xác nhận không khớp!");
-          setLoading(false);
+        if (!formData.name) {
+          toast.error("Họ và tên không được để trống");
+          return;
+        }
+        if (!formData.email) {
+          toast.error("Email không được để trống");
+          return;
+        }
+        if (!formData.phone) {
+          toast.error("Số điện thoại không được để trống");
+          return;
+        }
+        if (!formData.password) {
+          toast.error("Mật khẩu không được để trống");
+          return;
+        }
+        if (!formData.confirmPassword) {
+          toast.error("Vui lòng xác nhận mật khẩu");
           return;
         }
 
+        if (formData.password !== formData.confirmPassword) {
+          toast.error("Mật khẩu và xác nhận không khớp!");
+          return;
+        }
+
+        setLoading(true);
         // Gọi API Đăng ký
         await apiAuth.register({
           name: formData.name,
@@ -139,11 +177,10 @@ const Registered = () => {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`pb-2 text-base font-medium border-b-2 transition-colors ${
-                  activeTab === tab
-                    ? "border-green-500 text-green-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700"
-                }`}
+                className={`pb-2 text-base font-medium border-b-2 transition-colors ${activeTab === tab
+                  ? "border-green-500 text-green-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700"
+                  }`}
               >
                 {tab === "login" ? "ĐĂNG NHẬP" : "ĐĂNG KÝ"}
               </button>
@@ -299,19 +336,18 @@ const Registered = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full py-2 mt-4 rounded-md font-semibold text-white transition-all ${
-                  loading
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-green-500 hover:bg-green-600 focus:ring-2 focus:ring-green-400"
-                }`}
+                className={`w-full py-2 mt-4 rounded-md font-semibold text-white transition-all ${loading
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-green-500 hover:bg-green-600 focus:ring-2 focus:ring-green-400"
+                  }`}
               >
                 {loading
                   ? activeTab === "login"
                     ? "Đang đăng nhập..."
                     : "Đang đăng ký..."
                   : activeTab === "login"
-                  ? "Đăng nhập"
-                  : "Đăng ký"}
+                    ? "Đăng nhập"
+                    : "Đăng ký"}
               </button>
 
               {/* Forgot Password Link */}

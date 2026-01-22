@@ -11,7 +11,7 @@ import TrashCat from "../pages/admin/Category/TrashCat";
 // product
 import ListProduct from "../pages/admin/Product/ListProduct";
 import DelProduct from "../pages/admin/Product/DelProduct";
-import EditProduct from "../pages/admin/Product/EditProduct";
+import EditProduct from "../pages/admin/Product/Editproduct";
 import AddProduct from "../pages/admin/Product/AddProduct";
 import TrashProduct from "../pages/admin/Product/TrashProduct";
 

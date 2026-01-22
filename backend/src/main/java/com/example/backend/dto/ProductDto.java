@@ -38,7 +38,11 @@ public class ProductDto {
     private String slug;
     private String image;
     private String imagePublicId;
+
+    @Size(max = 1000, message = "Mô tả không được quá 1000 ký tự")
     private String description;
+
+    @Size(max = 5000, message = "Chi tiết không được quá 5000 ký tự")
     private String detail; // Detail có thể null
 
     @Min(value = 0, message = "Số lượng không được âm")

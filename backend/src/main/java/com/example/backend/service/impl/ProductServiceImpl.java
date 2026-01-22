@@ -138,9 +138,33 @@ public class ProductServiceImpl implements ProductService {
     // =====================
     @Override
     public ProductDto create(ProductDto dto) {
-        // Validation Logic
-        if (dto.getDiscountPrice() != null && dto.getSalePrice().compareTo(dto.getDiscountPrice()) < 0) {
-            throw new IllegalArgumentException("Giá khuyến mãi không được lớn hơn giá bán");
+        // 1. Check category exists
+        if (!categoryRepository.existsById(dto.getCategoryId())) {
+            throw new com.example.backend.exception.BusinessException("Danh mục không tồn tại");
+        }
+
+        // 2. Check brand exists
+        if (!brandRepository.existsById(dto.getBrandId())) {
+            throw new com.example.backend.exception.BusinessException("Thương hiệu không tồn tại");
+        }
+
+        // 3. Check duplicate name
+        if (productRepository.existsByName(dto.getName())) {
+            throw new com.example.backend.exception.BusinessException("Tên sản phẩm đã tồn tại");
+        }
+
+        // 4. Check price logic: sale >= cost
+        if (dto.getCostPrice() != null && dto.getSalePrice() != null) {
+            if (dto.getSalePrice().compareTo(dto.getCostPrice()) < 0) {
+                throw new com.example.backend.exception.BusinessException("Giá bán không được nhỏ hơn giá nhập");
+            }
+        }
+
+        // 5. Check price logic: discount <= sale
+        if (dto.getDiscountPrice() != null && dto.getSalePrice() != null) {
+            if (dto.getDiscountPrice().compareTo(dto.getSalePrice()) > 0) {
+                throw new com.example.backend.exception.BusinessException("Giá giảm không được lớn hơn giá bán");
+            }
         }
 
         Category category = categoryRepository.findById(dto.getCategoryId())
@@ -170,9 +194,33 @@ public class ProductServiceImpl implements ProductService {
     // =====================
     @Override
     public ProductDto update(Integer id, ProductDto dto) {
-        // Validation Logic
-        if (dto.getDiscountPrice() != null && dto.getSalePrice().compareTo(dto.getDiscountPrice()) < 0) {
-            throw new IllegalArgumentException("Giá khuyến mãi không được lớn hơn giá bán");
+        // 1. Check category exists
+        if (!categoryRepository.existsById(dto.getCategoryId())) {
+            throw new com.example.backend.exception.BusinessException("Danh mục không tồn tại");
+        }
+
+        // 2. Check brand exists
+        if (!brandRepository.existsById(dto.getBrandId())) {
+            throw new com.example.backend.exception.BusinessException("Thương hiệu không tồn tại");
+        }
+
+        // 3. Check duplicate name (exclude current product)
+        if (productRepository.existsByNameAndIdNot(dto.getName(), id)) {
+            throw new com.example.backend.exception.BusinessException("Tên sản phẩm đã tồn tại");
+        }
+
+        // 4. Check price logic: sale >= cost
+        if (dto.getCostPrice() != null && dto.getSalePrice() != null) {
+            if (dto.getSalePrice().compareTo(dto.getCostPrice()) < 0) {
+                throw new com.example.backend.exception.BusinessException("Giá bán không được nhỏ hơn giá nhập");
+            }
+        }
+
+        // 5. Check price logic: discount <= sale
+        if (dto.getDiscountPrice() != null && dto.getSalePrice() != null) {
+            if (dto.getDiscountPrice().compareTo(dto.getSalePrice()) > 0) {
+                throw new com.example.backend.exception.BusinessException("Giá giảm không được lớn hơn giá bán");
+            }
         }
 
         Product product = productRepository.findById(id)

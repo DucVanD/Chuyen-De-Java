@@ -3,6 +3,7 @@ package com.example.backend.service.impl;
 import com.example.backend.config.CloudinaryService;
 import com.example.backend.dto.CategoryDto;
 import com.example.backend.entity.Category;
+import com.example.backend.exception.BusinessException;
 import com.example.backend.mapper.CategoryMapper;
 import com.example.backend.repository.CategoryRepository;
 import com.example.backend.repository.ProductRepository;
@@ -58,6 +59,11 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryDto create(CategoryDto dto) {
         Objects.requireNonNull(dto, "CategoryDto must not be null");
 
+        // ✅ Kiểm tra trùng tên
+        if (categoryRepository.existsByName(dto.getName())) {
+            throw new BusinessException("Tên danh mục đã tồn tại");
+        }
+
         if (dto.getSlug() == null || dto.getSlug().isBlank()) {
             String baseSlug = generateSlugFromName(dto.getName());
             dto.setSlug(generateUniqueSlug(baseSlug, null));
@@ -71,7 +77,7 @@ public class CategoryServiceImpl implements CategoryService {
             Integer parentId = dto.getParentId();
             Category parent = categoryRepository
                     .findById(parentId)
-                    .orElseThrow(() -> new RuntimeException("Parent category not found"));
+                    .orElseThrow(() -> new BusinessException("Danh mục cha không tồn tại"));
             category.setParent(parent);
         }
 
@@ -86,7 +92,12 @@ public class CategoryServiceImpl implements CategoryService {
         Objects.requireNonNull(dto, "CategoryDto must not be null");
 
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Category not found"));
+                .orElseThrow(() -> new BusinessException("Danh mục không tồn tại"));
+
+        // ✅ Kiểm tra trùng tên (trừ chính nó)
+        if (categoryRepository.existsByNameAndIdNot(dto.getName(), id)) {
+            throw new BusinessException("Tên danh mục đã tồn tại");
+        }
 
         if (dto.getSlug() == null || dto.getSlug().isBlank()) {
             String baseSlug = generateSlugFromName(dto.getName());
@@ -114,13 +125,13 @@ public class CategoryServiceImpl implements CategoryService {
 
         if (dto.getParentId() != null) {
             if (dto.getParentId().equals(id)) {
-                throw new IllegalArgumentException("Danh mục không thể là cha của chính nó");
+                throw new BusinessException("Danh mục không thể là cha của chính nó");
             }
             if (isDescendant(id, dto.getParentId())) {
-                throw new IllegalArgumentException("Không thể set danh mục con làm cha (tạo vòng lặp)");
+                throw new BusinessException("Không thể set danh mục con làm cha (tạo vòng lặp)");
             }
             Category parent = categoryRepository.findById(dto.getParentId())
-                    .orElseThrow(() -> new RuntimeException("Parent category not found"));
+                    .orElseThrow(() -> new BusinessException("Danh mục cha không tồn tại"));
             category.setParent(parent);
         } else {
             category.setParent(null);
@@ -136,16 +147,16 @@ public class CategoryServiceImpl implements CategoryService {
         Objects.requireNonNull(id, "Category ID must not be null");
 
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Category not found"));
+                .orElseThrow(() -> new BusinessException("Danh mục không tồn tại"));
 
         long productCount = productRepository.countByCategoryId(id);
         if (productCount > 0) {
-            throw new IllegalStateException("Không thể xóa danh mục đang có sản phẩm.");
+            throw new BusinessException("Không thể xóa danh mục đang có sản phẩm.");
         }
 
         long childCount = categoryRepository.countByParentId(id);
         if (childCount > 0) {
-            throw new IllegalStateException("Không thể xóa danh mục cha đang có danh mục con.");
+            throw new BusinessException("Không thể xóa danh mục cha đang có danh mục con.");
         }
 
         try {

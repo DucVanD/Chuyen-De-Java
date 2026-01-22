@@ -13,6 +13,11 @@ public interface CategoryRepository extends JpaRepository<Category, Integer> {
     // ✅ Kiểm tra slug tồn tại (trừ category hiện tại khi update)
     boolean existsBySlugAndIdNot(String slug, Integer id);
 
+    // ✅ Kiểm tra tên trùng lặp
+    boolean existsByName(String name);
+
+    boolean existsByNameAndIdNot(String name, Integer id);
+
     // ✅ Đếm số danh mục con
     long countByParentId(Integer parentId);
 

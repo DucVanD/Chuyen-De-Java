@@ -10,12 +10,13 @@ import com.cloudinary.Cloudinary;
 
 @Configuration
 public class CloudinaryConfig {
+
     @Bean
     public Cloudinary cloudinary() {
         Map<String, String> config = new HashMap<>();
-        config.put("cloud_name", "dh42pzbxa"); // Thay bằng tên cloud của bạn
-        config.put("api_key", "276569191544755");       // Thay bằng API Key
-        config.put("api_secret", "GWWOotJlJmqwY5o01gaD6pHSkXQ"); // Thay bằng API Secret
+        config.put("cloud_name", System.getenv("CLOUDINARY_CLOUD_NAME"));
+        config.put("api_key", System.getenv("CLOUDINARY_API_KEY"));
+        config.put("api_secret", System.getenv("CLOUDINARY_API_SECRET"));
         return new Cloudinary(config);
     }
 }
