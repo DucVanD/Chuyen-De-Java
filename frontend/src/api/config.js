@@ -8,8 +8,9 @@ export const getImageUrl = (imageName, type = 'product') => {
     // Trim and cast to string to handle any edge cases
     const path = String(imageName).trim();
 
-    // Check if it's already an absolute URL (http://, https://, blob:, data:, etc.)
-    if (/^([a-z0-9+.-]+):?\/\//i.test(path)) {
+    // Check if it's already an absolute URL (http:, https:, blob:, data:, ftp:, etc.)
+    // Accept any scheme followed by ':' (covers blob:, data:, http:, https:, etc.)
+    if (/^[a-z][a-z0-9+.-]*:/i.test(path)) {
         return path;
     }
 
