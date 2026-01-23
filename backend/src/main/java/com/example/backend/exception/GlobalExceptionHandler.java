@@ -42,7 +42,7 @@ public class GlobalExceptionHandler {
 
                 return ResponseEntity.status(400).body(java.util.Map.of(
                                 "status", 400,
-                                "error", "Validation Error",
+                                "error", "Lỗi dữ liệu",
                                 "message", errorMessage));
         }
 
@@ -52,7 +52,7 @@ public class GlobalExceptionHandler {
                         BusinessException e) {
                 return ResponseEntity.status(400).body(java.util.Map.of(
                                 "status", 400,
-                                "error", "Business Error",
+                                "error", "Lỗi nghiệp vụ",
                                 "message", e.getMessage()));
         }
 
@@ -63,9 +63,9 @@ public class GlobalExceptionHandler {
                         java.util.NoSuchElementException e) {
                 return ResponseEntity.status(404).body(java.util.Map.of(
                                 "status", 404,
-                                "error", "Not Found",
+                                "error", "Không tìm thấy",
                                 "message",
-                                "Dữ liệu không tồn tại trong hệ thống (Ví dụ: Email chưa được tạo trong Database)"));
+                                "Dữ liệu không tồn tại trong hệ thống"));
         }
 
         // 3. Xử lý lỗi phân quyền (Khi User cố tình vào API của Admin)
@@ -74,7 +74,7 @@ public class GlobalExceptionHandler {
                         org.springframework.security.access.AccessDeniedException e) {
                 return ResponseEntity.status(403).body(java.util.Map.of(
                                 "status", 403,
-                                "error", "Forbidden",
+                                "error", "Truy cập bị từ chối",
                                 "message", "Bạn không có quyền truy cập vào chức năng này!"));
         }
 
@@ -83,7 +83,7 @@ public class GlobalExceptionHandler {
         public ResponseEntity<java.util.Map<String, Object>> handleGeneralException(Exception e) {
                 return ResponseEntity.status(500).body(java.util.Map.of(
                                 "status", 500,
-                                "error", "Internal Server Error",
+                                "error", "Lỗi hệ thống",
                                 "message", "Đã có lỗi xảy ra: " + e.getMessage()));
         }
 }

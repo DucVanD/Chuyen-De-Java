@@ -52,14 +52,15 @@ public interface AuthService {
     void verifyCode(String email, String code);
 
     /**
-     * Reset password with verified OTP
+     * Refresh access token using refresh token
      * 
-     * @param email       User's email address
-     * @param code        Verified OTP code
-     * @param newPassword New password
-     * @throws com.example.backend.exception.BusinessException if code invalid or
-     *                                                         password policy
-     *                                                         violated
+     * @param refreshToken The refresh token from cookie
+     * @return Map containing new Access Token and user data
+     */
+    Map<String, Object> refresh(String refreshToken);
+
+    /**
+     * Reset password with verified OTP
      */
     void resetPassword(String email, String code, String newPassword);
 }

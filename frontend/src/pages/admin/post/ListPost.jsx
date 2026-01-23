@@ -10,6 +10,7 @@ const ListPost = () => {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
+  const isAdmin = JSON.parse(localStorage.getItem("adminUser"))?.role === "ADMIN";
 
   // Lấy danh sách bài viết
   const fetchPosts = async (page = 1) => {
@@ -70,20 +71,22 @@ const ListPost = () => {
         <h3 className="text-2xl font-semibold text-gray-800 mb-4 sm:mb-0">
           Danh sách bài viết
         </h3>
-        <div className="flex space-x-3">
-          <Link
-            to="/admin/post/add"
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded inline-flex items-center transition duration-200"
-          >
-            <i className="fas fa-plus mr-2"></i> Thêm bài viết
-          </Link>
-          <Link
-            to="/admin/posts/trash"
-            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded flex items-center transition duration-200"
-          >
-            <FaTrash className="mr-2" /> Thùng rác
-          </Link>
-        </div>
+        {isAdmin && (
+          <div className="flex space-x-3">
+            <Link
+              to="/admin/post/add"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded inline-flex items-center transition duration-200"
+            >
+              <i className="fas fa-plus mr-2"></i> Thêm bài viết
+            </Link>
+            <Link
+              to="/admin/posts/trash"
+              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded flex items-center transition duration-200"
+            >
+              <FaTrash className="mr-2" /> Thùng rác
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Table */}
@@ -108,7 +111,7 @@ const ListPost = () => {
                   Trạng thái
                 </th>
                 <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Chức năng
+                  Hành động
                 </th>
               </tr>
             </thead>

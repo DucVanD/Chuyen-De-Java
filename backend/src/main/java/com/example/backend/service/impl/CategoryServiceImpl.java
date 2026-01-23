@@ -50,7 +50,7 @@ public class CategoryServiceImpl implements CategoryService {
         Objects.requireNonNull(id, "Category ID must not be null");
 
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Category not found"));
+                .orElseThrow(() -> new BusinessException("Không tìm thấy danh mục"));
         return CategoryMapper.toDto(category);
     }
 

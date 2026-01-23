@@ -20,13 +20,13 @@ public class AdminStockMovementController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<List<StockMovementDto>> getAll() {
         return ResponseEntity.ok(stockMovementService.getAll());
     }
 
     @GetMapping("/page")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<org.springframework.data.domain.Page<StockMovementDto>> getPage(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -35,19 +35,19 @@ public class AdminStockMovementController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<StockMovementDto> getById(@PathVariable Integer id) {
         return ResponseEntity.ok(stockMovementService.getById(id));
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<StockMovementDto> create(@RequestBody com.example.backend.dto.StockMovementDto dto) {
         return ResponseEntity.ok(stockMovementService.create(dto));
     }
 
     @GetMapping("/last-import-price/{productId}")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<BigDecimal> getLastImportPrice(
             @PathVariable Integer productId) {
         return ResponseEntity.ok(
@@ -55,7 +55,7 @@ public class AdminStockMovementController {
     }
 
     @GetMapping("/last-supplier/{productId}")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Integer> getLastSupplierId(
             @PathVariable Integer productId) {
         return ResponseEntity.ok(
@@ -63,7 +63,7 @@ public class AdminStockMovementController {
     }
 
     @GetMapping("/by-type/{type}")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<List<StockMovementDto>> getByMovementType(
             @PathVariable String type) {
         return ResponseEntity.ok(stockMovementService.getByMovementType(type));

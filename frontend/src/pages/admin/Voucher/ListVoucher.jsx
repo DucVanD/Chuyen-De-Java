@@ -9,6 +9,14 @@ const ListVoucher = () => {
     const [vouchers, setVouchers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState("all"); // all, active, inactive
+    const [currentUser, setCurrentUser] = useState(null);
+
+    useEffect(() => {
+        const stored = localStorage.getItem("adminUser");
+        if (stored) setCurrentUser(JSON.parse(stored));
+    }, []);
+
+    const isAdmin = currentUser?.role === "ADMIN";
 
     useEffect(() => {
         fetchVouchers();
@@ -70,12 +78,14 @@ const ListVoucher = () => {
             {/* Header */}
             <div className="p-6 flex justify-between items-center border-b">
                 <h3 className="text-2xl font-semibold">Quản lý Voucher</h3>
-                <button
-                    onClick={() => navigate("/admin/voucher/add")}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded flex items-center gap-2"
-                >
-                    <FaPlus /> Thêm Voucher
-                </button>
+                {isAdmin && (
+                    <button
+                        onClick={() => navigate("/admin/voucher/add")}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded flex items-center gap-2"
+                    >
+                        <FaPlus /> Thêm Voucher
+                    </button>
+                )}
             </div>
 
             {/* Filter */}
@@ -117,7 +127,7 @@ const ListVoucher = () => {
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Đơn tối thiểu</th>
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sử dụng</th>
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thao tác</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hành động</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y">
@@ -163,18 +173,24 @@ const ListVoucher = () => {
                                     <td className="px-4 py-3">{getStatusBadge(voucher)}</td>
                                     <td className="px-4 py-3">
                                         <div className="flex gap-2">
-                                            <button
-                                                onClick={() => navigate(`/admin/voucher/edit/${voucher.id}`)}
-                                                className="text-blue-600 hover:text-blue-800"
-                                            >
-                                                <FaEdit />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(voucher.id)}
-                                                className="text-red-600 hover:text-red-800"
-                                            >
-                                                <FaTrash />
-                                            </button>
+                                            {isAdmin ? (
+                                                <>
+                                                    <button
+                                                        onClick={() => navigate(`/admin/voucher/edit/${voucher.id}`)}
+                                                        className="text-blue-600 hover:text-blue-800"
+                                                    >
+                                                        <FaEdit />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(voucher.id)}
+                                                        className="text-red-600 hover:text-red-800"
+                                                    >
+                                                        <FaTrash />
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <span className="text-xs text-gray-400 italic">No permission</span>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>

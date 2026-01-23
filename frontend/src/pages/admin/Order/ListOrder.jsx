@@ -33,6 +33,13 @@ const ListOrder = () => {
     CANCELLED: { text: "Đã hủy", color: "bg-red-100 text-red-800" },
   };
 
+  const paymentStatusLabels = {
+    UNPAID: { text: "Chưa thanh toán", color: "bg-gray-100 text-gray-700" },
+    PAID: { text: "Đã thanh toán", color: "bg-green-100 text-green-700" },
+    FAILED: { text: "Thất bại", color: "bg-red-100 text-red-700" },
+    REFUNDED: { text: "Đã hoàn tiền", color: "bg-purple-100 text-purple-700" },
+  };
+
   // 🔹 Lấy danh sách đơn hàng
   const fetchOrders = async (pageIdx = 0) => {
     setLoading(true);
@@ -106,7 +113,8 @@ const ListOrder = () => {
       try {
         await apiOrderAdmin.delete(id);
         toast.success("✅ Đã xóa đơn hàng thành công!");
-        setTimeout(() => fetchOrders(currentPage), 1000);
+        // Cập nhật lại danh sách ngay lập tức tại trang hiện tại
+        fetchOrders(currentPage - 1);
       } catch (error) {
         const message = error.response?.data?.message || "Đã xảy ra lỗi. Không thể xóa đơn hàng.";
         toast.error("⚠️ " + message);
@@ -122,7 +130,10 @@ const ListOrder = () => {
           Danh sách đơn hàng
         </h3>
         <div className="flex space-x-3">
-          <button className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded flex items-center transition duration-200">
+          <button
+            onClick={() => navigate("/admin/orders/trash")}
+            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded flex items-center transition duration-200"
+          >
             <FaTrash className="mr-2" /> Thùng rác
           </button>
         </div>
@@ -206,6 +217,7 @@ const ListOrder = () => {
               <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Khách hàng</th>
               <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Tổng tiền</th>
               <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Thanh toán</th>
+              <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase">TT Thanh toán</th>
               <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
               <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Chức năng</th>
             </tr>
@@ -229,6 +241,13 @@ const ListOrder = () => {
                       })}
                     </td>
                     <td className="px-4 py-3 text-sm">{order.paymentMethod}</td>
+                    <td className="px-4 py-3 text-sm">
+                      <span
+                        className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${paymentStatusLabels[order.paymentStatus]?.color || 'bg-gray-100'}`}
+                      >
+                        {paymentStatusLabels[order.paymentStatus]?.text || order.paymentStatus}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 text-sm">
                       <span
                         className={`px-3 py-1 text-xs font-semibold rounded-full ${status.color}`}

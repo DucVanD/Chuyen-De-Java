@@ -7,6 +7,7 @@ import com.example.backend.entity.Product;
 import com.example.backend.entity.Voucher;
 import com.example.backend.entity.enums.OrderStatus;
 import com.example.backend.entity.enums.PaymentStatus;
+import com.example.backend.exception.BusinessException;
 import com.example.backend.repository.OrderRepository;
 import com.example.backend.repository.ProductRepository;
 import com.example.backend.repository.VoucherRepository;
@@ -34,7 +35,7 @@ public class VNPayServiceImpl implements VNPayService {
     @Transactional
     public String createPaymentUrl(Integer orderId, HttpServletRequest request) throws Exception {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
+                .orElseThrow(() -> new BusinessException("Không tìm thấy đơn hàng với ID: " + orderId));
 
         // Tạo vnp_TxnRef unique
         String vnpTxnRef = "ORDER" + orderId + "_" + System.currentTimeMillis();
@@ -106,7 +107,7 @@ public class VNPayServiceImpl implements VNPayService {
             Integer orderId = Integer.parseInt(orderIdStr);
 
             Order order = orderRepository.findById(orderId)
-                    .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
+                    .orElseThrow(() -> new BusinessException("Không tìm thấy đơn hàng với ID: " + orderId));
 
             System.out.println("=== VNPay Callback Debug ===");
             System.out.println("TxnRef: " + vnpTxnRef);
@@ -128,7 +129,7 @@ public class VNPayServiceImpl implements VNPayService {
                 order.setPaymentStatus(PaymentStatus.PAID);
                 orderRepository.save(order);
 
-                result.put("status", "success");
+                result.put("status", "thành công");
                 result.put("message", "Thanh toán thành công");
                 result.put("orderId", String.valueOf(orderId));
 
@@ -176,7 +177,7 @@ public class VNPayServiceImpl implements VNPayService {
 
                 orderRepository.save(order);
 
-                result.put("status", "cancelled");
+                result.put("status", "đã_hủy");
                 result.put("message", "Thanh toán đã bị hủy");
                 result.put("orderId", String.valueOf(orderId));
                 result.put("reason", "Người dùng hủy thanh toán hoặc thanh toán thất bại");

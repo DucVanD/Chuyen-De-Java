@@ -2,10 +2,16 @@ package com.example.backend.controller.user;
 
 import com.example.backend.dto.OrderDto;
 import com.example.backend.service.OrderService;
+import com.example.backend.entity.enums.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.CollectionModel;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -19,30 +25,24 @@ public class OrderController {
 
     @GetMapping
     @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
-    public ResponseEntity<List<OrderDto>> getAll() {
-        return ResponseEntity.ok(orderService.getAll());
+    public ResponseEntity<CollectionModel<EntityModel<OrderDto>>> getAll() {
+        List<EntityModel<OrderDto>> orders = orderService.getAll().stream()
+                .map(this::toModel)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(CollectionModel.of(orders,
+                linkTo(methodOn(OrderController.class).getAll()).withSelfRel()));
     }
 
     @GetMapping("/{id}")
-    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
-    public ResponseEntity<OrderDto> getById(@PathVariable Integer id) {
-        return ResponseEntity.ok(orderService.getById(id));
+    public ResponseEntity<EntityModel<OrderDto>> getById(@PathVariable Integer id) {
+        OrderDto dto = orderService.getById(id);
+        return ResponseEntity.ok(toModel(dto));
     }
 
     @PostMapping
-    public ResponseEntity<?> create(@RequestBody OrderDto dto) {
+    public ResponseEntity<EntityModel<OrderDto>> create(@RequestBody OrderDto dto) {
         OrderDto createdOrder = orderService.create(dto);
-
-        // If payment method is VNPAY, return order info for payment URL generation
-        if (dto.getPaymentMethod() == com.example.backend.entity.enums.PaymentMethod.VNPAY) {
-            return ResponseEntity.ok(java.util.Map.of(
-                    "status", "success",
-                    "order", createdOrder,
-                    "message", "Order created, proceed to payment"));
-        }
-
-        // For COD/BANK, return order directly
-        return ResponseEntity.ok(createdOrder);
+        return ResponseEntity.ok(toModel(createdOrder));
     }
 
     @PutMapping("/{id}/status")
@@ -90,6 +90,39 @@ public class OrderController {
         if (max_total != null)
             filters.put("max_total", max_total);
 
-        return ResponseEntity.ok(orderService.getUserOrders(userId, page, filters));
+        java.util.Map<String, Object> result = orderService.getUserOrders(userId, page, filters);
+
+        // Wrap orders in EntityModel to add HATEOAS links
+        if (result.get("data") instanceof java.util.Map) {
+            java.util.Map<String, Object> data = (java.util.Map<String, Object>) result.get("data");
+            if (data.get("orders") instanceof java.util.List) {
+                java.util.List<OrderDto> orderDtos = (java.util.List<OrderDto>) data.get("orders");
+                java.util.List<EntityModel<OrderDto>> orderModels = orderDtos.stream()
+                        .map(this::toModel)
+                        .collect(Collectors.toList());
+                data.put("orders", orderModels);
+            }
+        }
+
+        return ResponseEntity.ok(result);
+    }
+
+    private EntityModel<OrderDto> toModel(OrderDto dto) {
+        EntityModel<OrderDto> model = EntityModel.of(dto);
+        model.add(linkTo(methodOn(OrderController.class).getById(dto.getId())).withSelfRel());
+
+        // Cancel link if PENDING
+        if (dto.getStatus() == OrderStatus.PENDING) {
+            model.add(linkTo(methodOn(OrderController.class).cancel(dto.getId(), "Reason"))
+                    .withRel("cancel_order"));
+        }
+
+        // Pay link if VNPAY and UNPAID
+        if (dto.getPaymentMethod() == PaymentMethod.VNPAY && dto.getPaymentStatus() == PaymentStatus.UNPAID) {
+            model.add(linkTo(methodOn(VNPayController.class).createPayment(dto.getId(), null))
+                    .withRel("payment_url"));
+        }
+
+        return model;
     }
 }

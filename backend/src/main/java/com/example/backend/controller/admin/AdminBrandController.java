@@ -25,19 +25,19 @@ public class AdminBrandController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public BrandDto getById(@PathVariable Integer id) {
         return brandService.getById(id);
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public BrandDto create(@Valid @RequestBody BrandDto dto) {
         return brandService.create(dto);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public BrandDto update(@PathVariable Integer id, @Valid @RequestBody BrandDto dto) {
         return brandService.update(id, dto);
     }

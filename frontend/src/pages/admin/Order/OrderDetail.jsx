@@ -60,6 +60,13 @@ const DetailOrder = () => {
     CANCELLED: { text: "Đã hủy", color: "bg-red-100 text-red-800" },
   };
 
+  const paymentStatusLabels = {
+    UNPAID: { text: "Chưa thanh toán", color: "bg-gray-100 text-gray-700" },
+    PAID: { text: "Đã thanh toán", color: "bg-green-100 text-green-700" },
+    FAILED: { text: "Thanh toán thất bại", color: "bg-red-100 text-red-700" },
+    REFUNDED: { text: "Đã hoàn tiền", color: "bg-purple-100 text-purple-700" },
+  };
+
   // Hàm lấy text hiển thị
   const getStatusText = (status) => statusLabels[status]?.text || "Không xác định";
 
@@ -182,6 +189,14 @@ const DetailOrder = () => {
                         ? "Thanh toán VNPAY"
                         : "Chuyển khoản ngân hàng"}
                   </p>
+                  <div className="mt-2 text-xs">
+                    Trạng thái:{" "}
+                    <span
+                      className={`px-2 py-0.5 rounded-full font-bold ${paymentStatusLabels[order.paymentStatus]?.color || 'bg-gray-100'}`}
+                    >
+                      {paymentStatusLabels[order.paymentStatus]?.text || order.paymentStatus}
+                    </span>
+                  </div>
                 </div>
 
 

@@ -17,151 +17,106 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
-@EnableMethodSecurity
+@EnableMethodSecurity // Cho phép phân quyền chi tiết trên từng hàm dùng @PreAuthorize
 @RequiredArgsConstructor
 public class SecurityConfig {
 
         private final JwtFilter jwtFilter;
         private final CustomUserDetailsService userDetailsService;
 
-        // 1️⃣ Encode password
+        /**
+         * 1. Cấu hình băm mật khẩu:
+         * Sử dụng BCrypt - thuật toán mạnh mẽ tự động thêm "muối" (salt) để chống Brute
+         * Force.
+         */
         @Bean
         public PasswordEncoder passwordEncoder() {
                 return new BCryptPasswordEncoder();
         }
 
-        // ⚠️ GIAI ĐOẠN 1: Dùng InMemoryUserDetailsManager (chạy trên RAM, mất khi tắt
-        // app)
-        // Giảng viên yêu cầu có phần này trước khi chuyển sang Database
-
-        // @Bean
-        // public org.springframework.security.provisioning.InMemoryUserDetailsManager
-        // userDetailsService() {
-
-        // org.springframework.security.core.userdetails.UserDetails admin =
-        // org.springframework.security.core.userdetails.User
-        // .withUsername("admin@gmail.com")
-        // .password(passwordEncoder().encode("123456"))
-        // .roles("ADMIN")
-        // .build();
-
-        // org.springframework.security.core.userdetails.UserDetails user =
-        // org.springframework.security.core.userdetails.User
-        // .withUsername("user@gmail.com")
-        // .password(passwordEncoder().encode("123456"))
-        // .roles("CUSTOMER")
-        // .build();
-
-        // return new
-        // org.springframework.security.provisioning.InMemoryUserDetailsManager(admin,
-        // user);
-        // }
-
+        /**
+         * 2. Quản lý xác thực (Authentication Provider):
+         * Kết nối giữa Service lấy User từ DB và cơ chế băm mật khẩu.
+         */
         @Bean
         public DaoAuthenticationProvider authenticationProvider() {
                 DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-
-                // 🧪 CHẾ ĐỘ TEST (IN-MEMORY): Để test Postman với admin@gmail.com
-                // provider.setUserDetailsService(userDetailsService());
-
-                // 🏠 CHẾ ĐỘ THỰC TẾ (DATABASE): Khi nào dùng Web thật thì đổi sang dòng dưới
-                provider.setUserDetailsService(userDetailsService);
-
-                provider.setPasswordEncoder(passwordEncoder());
+                provider.setUserDetailsService(userDetailsService); // Load user từ database
+                provider.setPasswordEncoder(passwordEncoder()); // So sánh pass đã băm
                 return provider;
         }
 
-        // 3️⃣ AuthenticationManager
+        /**
+         * 3. Bean quản lý Authentication:
+         * Dùng để gọi lệnh đăng nhập từ AuthController.
+         */
         @Bean
         public AuthenticationManager authenticationManager(
                         AuthenticationConfiguration config) throws Exception {
                 return config.getAuthenticationManager();
         }
 
-        // 4️⃣ Security rules + JWT Filter
+        /**
+         * 4. "Bức tường lửa" SecurityFilterChain:
+         * Đây là nơi định nghĩa toàn bộ quy tắc ra-vào hệ thống.
+         */
         @Bean
         public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
                 http
-                                .cors(cors -> {
-                                })
+                                // Bật CORS hỗ trợ các request từ Frontend
+                                .cors(org.springframework.security.config.Customizer.withDefaults())
+
+                                // Tắt bảo vệ CSRF vì chúng ta dùng JWT (Authentication không qua Cookie)
                                 .csrf(csrf -> csrf.disable())
+
+                                // Cấu hình chế độ Stateless: Không dùng Session (mỗi request là độc lập qua
+                                // Token)
                                 .sessionManagement(session -> session
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
                                 .authenticationProvider(authenticationProvider())
-                                // 🛠️ THÊM CẤU HÌNH XỬ LÝ LỖI Ở LỚP SECURITY
+
+                                // 🛠️ XỬ LÝ LỖI TRẢ VỀ JSON (Tùy chỉnh để Frontend dễ xử lý)
                                 .exceptionHandling(ex -> ex
-                                                // Lỗi 403: Đã đăng nhập nhưng không đủ quyền
+                                                // Lỗi 403: Đã login nhưng Token không có ROLE phù hợp
                                                 .accessDeniedHandler((request, response, accessDeniedException) -> {
                                                         response.setContentType("application/json;charset=UTF-8");
                                                         response.setStatus(403);
                                                         response.getWriter().write(
-                                                                        "{\"status\": 403, \"error\": \"Forbidden\", \"message\": \"Bạn không có quyền vào thư mục Admin!\"}");
+                                                                        "{\"status\": 403, \"error\": \"Truy cập bị từ chối\", \"message\": \"Bạn không có quyền truy cập vào mục này!\"}");
                                                 })
-                                                // Lỗi 401: Chưa đăng nhập hoặc Token hết hạn
+                                                // Lỗi 401: Token sai, hết hạn hoặc chưa đăng nhập
                                                 .authenticationEntryPoint((request, response, authException) -> {
                                                         response.setContentType("application/json;charset=UTF-8");
                                                         response.setStatus(401);
                                                         response.getWriter().write(
-                                                                        "{\"status\": 401, \"error\": \"Unauthorized\", \"message\": \"Vui lòng đăng nhập để lấy Token!\"}");
+                                                                        "{\"status\": 401, \"error\": \"Xác thực thất bại\", \"message\": \"Phiên làm việc hết hạn, vui lòng đăng nhập lại!\"}");
                                                 }))
+
+                                // 🔐 ĐỊNH NGHĨA QUY TẮC PHÂN QUYỀN (ACCESS CONTROL)
                                 .authorizeHttpRequests(auth -> auth
-                                                .requestMatchers("/api/auth/**").permitAll()
+                                                // Các link công khai ai cũng vào được
+                                                .requestMatchers("/api/auth/**", "/api/chat/**", "/api/vnpay/callback")
+                                                .permitAll()
 
-                                                // ✅ Forgot Password endpoints (public for password reset flow)
-                                                .requestMatchers("/api/auth/forgot-password").permitAll()
-                                                .requestMatchers("/api/auth/verify-code").permitAll()
-                                                .requestMatchers("/api/auth/reset-password").permitAll()
-
-                                                // ✅ AI Chatbot (public for customer support)
-                                                .requestMatchers("/api/chat/**").permitAll()
-
-                                                // ✅ VNPay callback (public for payment gateway redirect)
-                                                .requestMatchers("/api/vnpay/callback").permitAll()
-
-                                                // ✅ Public GET requests (Xem sản phẩm, tin tức, v.v.)
+                                                // Cho phép khách xem sản phẩm, bài viết mà không cần login
                                                 .requestMatchers(org.springframework.http.HttpMethod.GET,
                                                                 "/api/products/**", "/api/categories/**",
                                                                 "/api/brands/**",
-                                                                "/api/post/**", "/api/topic/**", "/api/suppliers/**")
+                                                                "/api/post/**", "/api/topic/**", "/api/suppliers/**",
+                                                                "/api/vouchers/active")
                                                 .permitAll()
 
-                                                // ✅ Voucher: Khách được xem mã active và check mã
-                                                .requestMatchers(org.springframework.http.HttpMethod.GET,
-                                                                "/api/vouchers/active", "/api/vouchers/code/**")
-                                                .permitAll()
-
-                                                // ✅ Required authentication for specific actions
-                                                .requestMatchers("/api/upload/user").authenticated()
-
-                                                // 🔐 Admin/Staff only for sensitive areas
+                                                // Chặn API Admin: Chỉ cho phép ADMIN hoặc STAFF (Nhân viên)
                                                 .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "STAFF")
+
+                                                // Các API upload ảnh cho Admin
                                                 .requestMatchers("/api/upload/**").hasAnyRole("ADMIN", "STAFF")
 
-                                                // 🔐 Restrict modifications on ALL core entities (Voucher, Supplier,
-                                                // v.v.)
-                                                .requestMatchers(org.springframework.http.HttpMethod.POST,
-                                                                "/api/products/**", "/api/categories/**",
-                                                                "/api/brands/**",
-                                                                "/api/vouchers/**", "/api/suppliers/**", "/api/post/**",
-                                                                "/api/topic/**")
-                                                .hasAnyRole("ADMIN", "STAFF")
-
-                                                .requestMatchers(org.springframework.http.HttpMethod.PUT,
-                                                                "/api/products/**", "/api/categories/**",
-                                                                "/api/brands/**",
-                                                                "/api/vouchers/**", "/api/suppliers/**", "/api/post/**",
-                                                                "/api/topic/**")
-                                                .hasAnyRole("ADMIN", "STAFF")
-
-                                                .requestMatchers(org.springframework.http.HttpMethod.DELETE,
-                                                                "/api/products/**", "/api/categories/**",
-                                                                "/api/brands/**",
-                                                                "/api/vouchers/**", "/api/suppliers/**", "/api/post/**",
-                                                                "/api/topic/**")
-                                                .hasAnyRole("ADMIN", "STAFF")
-
+                                                // Mọi request còn lại đều phải login mới được vào
                                                 .anyRequest().authenticated())
-                                // 🔥 GẮN JWT FILTER
+
+                                // 🔥 QUAN TRỌNG: Gắn lớp lọc JWT trước khi kiểm tra User/Pass
                                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
                 return http.build();

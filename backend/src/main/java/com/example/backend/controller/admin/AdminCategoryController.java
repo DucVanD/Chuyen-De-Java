@@ -26,7 +26,7 @@ public class AdminCategoryController {
     }
 
     @GetMapping("/page")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Page<CategoryDto>> getPage(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "8") int size) {
@@ -35,19 +35,19 @@ public class AdminCategoryController {
 
     // 🔥 THIẾU CÁI NÀY
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public CategoryDto getById(@PathVariable Integer id) {
         return categoryService.getById(id);
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public CategoryDto create(@Valid @RequestBody CategoryDto dto) {
         return categoryService.create(dto);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public CategoryDto update(
             @PathVariable Integer id,
             @Valid @RequestBody CategoryDto dto) {
@@ -55,7 +55,7 @@ public class AdminCategoryController {
     }
 
     @PutMapping("/{id}/status")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public void toggleStatus(@PathVariable Integer id) {
         categoryService.toggleStatus(id);
     }

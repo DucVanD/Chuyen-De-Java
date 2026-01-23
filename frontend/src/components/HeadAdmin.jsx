@@ -10,9 +10,8 @@ const HeaderAdmin = () => {
   // ✅ Lấy thông tin admin từ localStorage (CHỈ ĐỂ HIỂN THỊ)
   useEffect(() => {
     const userData = localStorage.getItem("adminUser");
-    const token = localStorage.getItem("adminToken");
 
-    if (!userData || !token) {
+    if (!userData) {
       navigate("/admin/login");
       return;
     }
@@ -21,14 +20,17 @@ const HeaderAdmin = () => {
       setAdmin(JSON.parse(userData));
     } catch {
       localStorage.removeItem("adminUser");
-      localStorage.removeItem("adminToken");
       navigate("/admin/login");
     }
   }, [navigate]);
 
-  // 🔒 LOGOUT (JWT → chỉ cần xóa token)
-  const handleLogout = () => {
-    localStorage.removeItem("adminToken");
+  // 🔒 LOGOUT (JWT Cookie → gọi API để xóa cookie)
+  const handleLogout = async () => {
+    try {
+      await apiAuth.logout();
+    } catch (err) {
+      console.error("Logout error", err);
+    }
     localStorage.removeItem("adminUser");
     toast.success("Đăng xuất thành công!");
     navigate("/admin/login");

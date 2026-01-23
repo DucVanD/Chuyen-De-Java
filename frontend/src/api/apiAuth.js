@@ -17,11 +17,8 @@ const apiAuth = {
   login: (data) =>
     axiosInstance.post("/auth/login", data).then((res) => res.data),
 
-  logout: () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("adminToken");
-    localStorage.removeItem("adminUser");
+  logout: async () => {
+    await axiosInstance.post("/auth/logout");
   },
 
   // Forgot Password Flow

@@ -14,6 +14,7 @@ import "react-toastify/dist/ReactToastify.css";
 // Import API và Redux Action
 import apiAuth from "../../api/apiAuth"; // Sử dụng apiAuth từ code logic
 import { loginSuccess } from "../../Redux/authSlice";
+import { clearCart } from "../../Redux/cartSlice";
 
 const Registered = () => {
   const navigate = useNavigate();
@@ -82,7 +83,7 @@ const Registered = () => {
           return;
         }
 
-        dispatch(loginSuccess({ user: res.user, token: res.token }));
+        dispatch(loginSuccess({ user: res.user })); // Token đã có trong Cookie
         toast.success("Đăng nhập thành công!");
 
         // Quay lại trang trước đó hoặc về trang chủ

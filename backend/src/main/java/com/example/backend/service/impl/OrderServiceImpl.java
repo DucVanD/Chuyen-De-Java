@@ -6,6 +6,7 @@ import com.example.backend.entity.enums.PaymentStatus;
 import com.example.backend.dto.OrderDto;
 import com.example.backend.entity.*;
 import com.example.backend.mapper.OrderMapper;
+import com.example.backend.exception.BusinessException;
 import com.example.backend.repository.*;
 import com.example.backend.service.OrderService;
 
@@ -68,6 +69,9 @@ public class OrderServiceImpl implements OrderService {
                 predicates.add(cb.equal(root.get("paymentMethod"), paymentMethod));
             }
 
+            // ✅ Lọc các đơn hàng chưa bị xóa mềm
+            predicates.add(cb.isNull(root.get("deletedAt")));
+
             return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
         };
 
@@ -77,7 +81,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderDto getById(Integer id) {
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new BusinessException("Không tìm thấy đơn hàng"));
 
         OrderDto dto = OrderMapper.toDto(order);
 
@@ -105,7 +109,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderDto create(OrderDto dto) {
 
         User user = userRepository.findById(dto.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new BusinessException("Người dùng không tồn tại"));
 
         Voucher voucher = null;
         // Handle voucherCode from frontend
@@ -133,7 +137,8 @@ public class OrderServiceImpl implements OrderService {
                     .map(detailDto -> {
                         Product product = productRepository.findById(detailDto.getProductId())
                                 .orElseThrow(
-                                        () -> new RuntimeException("Product not found: " + detailDto.getProductId()));
+                                        () -> new BusinessException(
+                                                "Sản phẩm không tồn tại: " + detailDto.getProductId()));
 
                         // Deduct product quantity (WEIGHT: grams, PACKAGE: units)
                         int currentQty = product.getQty() != null ? product.getQty() : 0;
@@ -146,9 +151,9 @@ public class OrderServiceImpl implements OrderService {
                         }
 
                         if (currentQty < deductQty) {
-                            throw new RuntimeException("Insufficient stock for product: " + product.getName()
-                                    + " (" + product.getSaleType() + "). Available: " + currentQty
-                                    + ", Requested: " + deductQty);
+                            throw new BusinessException("Sản phẩm " + product.getName()
+                                    + " không đủ hàng trong kho. Hiện có: " + currentQty
+                                    + ", Yêu cầu: " + deductQty);
                         }
 
                         product.setQty(currentQty - deductQty);
@@ -206,7 +211,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderDto updateStatus(Integer id, OrderDto dto) {
 
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new BusinessException("Không tìm thấy đơn hàng"));
 
         OrderStatus currentStatus = order.getStatus();
         OrderStatus newStatus = dto.getStatus();
@@ -267,7 +272,7 @@ public class OrderServiceImpl implements OrderService {
     public void cancel(Integer id, String reason) {
 
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new BusinessException("Không tìm thấy đơn hàng"));
 
         OrderStatus currentStatus = order.getStatus();
 
@@ -339,23 +344,61 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public void delete(Integer id) {
-        orderRepository.deleteById(id);
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("Không tìm thấy đơn hàng"));
+
+        // ✅ Thực hiện XÓA MỀM (Soft Delete)
+        // Điều này giúp giữ lại dữ liệu cho báo cáo và tránh lỗi Foreign Key Constraint
+        order.setDeletedAt(java.time.LocalDateTime.now());
+        orderRepository.save(order);
+    }
+
+    @Override
+    public List<OrderDto> getTrash() {
+        return orderRepository.findAll().stream()
+                .filter(o -> o.getDeletedAt() != null)
+                .sorted((o1, o2) -> o2.getDeletedAt().compareTo(o1.getDeletedAt()))
+                .map(OrderMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public void restore(Integer id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("Không tìm thấy đơn hàng trong thùng rác"));
+        order.setDeletedAt(null);
+        orderRepository.save(order);
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public void permanentDelete(Integer id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("Không tìm thấy đơn hàng để xóa vĩnh viễn"));
+
+        if (order.getDeletedAt() == null) {
+            throw new BusinessException("Chỉ có thể xóa vĩnh viễn đơn hàng đã nằm trong thùng rác");
+        }
+
+        // cascade delete will handle stockMovements and orderDetails due to previous
+        // fix
+        orderRepository.delete(order);
     }
 
     @Override
     public Integer getUserIdByUsername(String username) {
         // Username is actually email in this system
         com.example.backend.entity.User user = userRepository.findByEmail(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new BusinessException("Người dùng không tồn tại"));
         return user.getId();
     }
 
     @Override
     public java.util.Map<String, Object> getUserOrders(Integer userId, int page,
             java.util.Map<String, Object> filters) {
-        // Get all orders for this user
-        java.util.List<com.example.backend.entity.Order> allOrders = orderRepository.findAll().stream()
-                .filter(o -> o.getUser().getId().equals(userId))
+        // Get orders for this specific user directly from database (Optimized)
+        java.util.List<com.example.backend.entity.Order> allOrders = orderRepository.findByUserId(userId).stream()
                 .sorted((o1, o2) -> o2.getId().compareTo(o1.getId()))
                 .collect(java.util.stream.Collectors.toList());
 

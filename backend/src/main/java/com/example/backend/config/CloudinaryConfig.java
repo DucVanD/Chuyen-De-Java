@@ -11,6 +11,12 @@ import com.cloudinary.Cloudinary;
 @Configuration
 public class CloudinaryConfig {
 
+    /**
+     * Cấu hình Bean Cloudinary để quản lý hình ảnh trên đám mây.
+     * Các thông tin nhạy cảm (Cloud Name, API Key, API Secret) được lấy từ biến môi
+     * trường (.env)
+     * để đảm bảo tính bảo mật, không lộ mã nguồn.
+     */
     @Bean
     public Cloudinary cloudinary() {
         Map<String, String> config = new HashMap<>();

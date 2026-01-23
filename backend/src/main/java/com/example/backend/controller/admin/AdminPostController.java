@@ -18,13 +18,13 @@ public class AdminPostController {
     private final PostService postService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public List<PostDto> getAll() {
         return postService.getAll();
     }
 
     @GetMapping("/page")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Page<PostDto>> getPage(
             @RequestParam(required = false) com.example.backend.entity.enums.PostType type,
             @RequestParam(defaultValue = "0") int page,
@@ -35,25 +35,25 @@ public class AdminPostController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public PostDto getById(@PathVariable Integer id) {
         return postService.getById(id);
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public PostDto create(@RequestBody PostDto dto) {
         return postService.create(dto);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public PostDto update(@PathVariable Integer id, @RequestBody PostDto dto) {
         return postService.update(id, dto);
     }
 
     @PutMapping("/{id}/status")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public void toggleStatus(@PathVariable Integer id) {
         postService.toggleStatus(id);
     }

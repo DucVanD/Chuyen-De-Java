@@ -1,12 +1,46 @@
-# React + Vite
+# 🛒 Siêu Thị Mini - Frontend Admin & Customer
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Dự án Frontend được xây dựng bằng **React + Vite**, cung cấp giao diện quản trị (Admin) và cửa hàng (Customer) hiện đại, mượt mà.
 
-Currently, two official plugins are available:
+## 🚀 Tính năng nổi bật
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Dashboard Admin**: Quản lý toàn diện Sản phẩm, Danh mục, Đơn hàng, Voucher.
+- **Phân quyền người dùng**: Hệ thống Authorization chi tiết cho ADMIN và STAFF.
+- **Thanh toán trực tuyến**: Tích hợp cổng thanh toán VNPay.
+- **Hỗ trợ khách hàng AI**: Chatbot thông minh sử dụng Google Gemini AI.
+- **Responsive Design**: Tương thích hoàn hảo trên mọi thiết bị (Mobile, Tablet, Desktop).
+- **Tìm kiếm & Lọc**: Hệ thống lọc sản phẩm và bài viết nâng cao.
 
-## Expanding the ESLint configuration
+## 🛠 Công nghệ sử dụng
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- **Core**: React 18, Vite.
+- **Styling**: Tailwind CSS (Lucide Icons, FontAwesome).
+- **State Management**: Redux Toolkit.
+- **API Client**: Axios.
+- **Notifications**: React-Toastify.
+- **Authentication**: JWT (JSON Web Token).
+
+## 📦 Cài đặt & Chạy ứng dụng
+
+1. **Cài đặt dependencies**:
+   ```bash
+   npm install
+   ```
+2. **Cấu hình môi trường**:
+   - Tạo file `.env` (dựa trên `.env.example`) và điền các URL API Backend.
+3. **Chạy ở chế độ Development**:
+   ```bash
+   npm run dev
+   ```
+4. **Build sản xuất**:
+   ```bash
+   npm run build
+   ```
+
+## 🏗 Cấu trúc thư mục
+
+- `src/api`: Cấu hình Axios và các module gọi API.
+- `src/components`: Các component dùng chung (Layout, Sidebar, Navbar).
+- `src/pages`: Giao diện chính phân theo từng module quản lý.
+- `src/routers`: Cấu hình routing cho ứng dụng.
+- `src/Redux`: Quản lý logic global state.

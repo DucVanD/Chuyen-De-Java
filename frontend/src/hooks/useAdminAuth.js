@@ -6,22 +6,20 @@ export default function useAdminAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("adminToken");
-    if (!token) {
+    const user = localStorage.getItem("adminUser");
+    if (!user) {
       setLoading(false);
       return;
     }
 
     apiAdmin
-      .getMe()
-      .then((res) => {
-        if (res.status && res.user.roles === "admin") {
-          setAdmin(res.user);
-        } else {
-          localStorage.removeItem("adminToken");
-        }
+      .getUsers() // Tạm dùng getUsers để check quyền nếu không có getMe
+      .then(() => {
+        setAdmin(JSON.parse(user));
       })
-      .catch(() => localStorage.removeItem("adminToken"))
+      .catch(() => {
+        localStorage.removeItem("adminUser");
+      })
       .finally(() => setLoading(false));
   }, []);
 

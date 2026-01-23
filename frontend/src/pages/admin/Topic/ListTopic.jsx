@@ -18,6 +18,14 @@ const ListTopic = () => {
   const [topics, setTopics] = useState([]);
   const [currentPage, setCurrentPage] = useState(Number(page) || 1);
   const [lastPage, setLastPage] = useState(1);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("adminUser");
+    if (stored) setCurrentUser(JSON.parse(stored));
+  }, []);
+
+  const isAdmin = currentUser?.role === "ADMIN";
 
   // ✅ Lấy danh sách chủ đề
   const fetchTopics = async (page = 1) => {
@@ -75,20 +83,22 @@ const ListTopic = () => {
         <h3 className="text-2xl font-semibold text-gray-800 mb-3 sm:mb-0">
           Danh sách chủ đề
         </h3>
-        <div className="flex space-x-3">
-          <Link
-            to="/admin/topic/add"
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded flex items-center transition duration-200"
-          >
-            <FaPlus className="mr-2" /> Thêm mới
-          </Link>
-          <Link
-            to="/admin/trashTopic"
-            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded flex items-center transition duration-200"
-          >
-            <FaTrash className="mr-2" /> Thùng rác
-          </Link>
-        </div>
+        {isAdmin && (
+          <div className="flex space-x-3">
+            <Link
+              to="/admin/topic/add"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded flex items-center transition duration-200"
+            >
+              <FaPlus className="mr-2" /> Thêm mới
+            </Link>
+            <Link
+              to="/admin/trashTopic"
+              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded flex items-center transition duration-200"
+            >
+              <FaTrash className="mr-2" /> Thùng rác
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Table */}
@@ -111,7 +121,7 @@ const ListTopic = () => {
                   Trạng thái
                 </th>
                 <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Chức năng
+                  Hành động
                 </th>
               </tr>
             </thead>
@@ -143,46 +153,52 @@ const ListTopic = () => {
                     </td>
                     <td>
                       <div className="flex items-center justify-center space-x-3">
-                        <Link
-                          to="#"
-                          onClick={() => handleToggleStatus(topic.id)}
-                          className="text-green-500 hover:text-green-700"
-                        >
-                          {topic.status ? (
-                            <FaToggleOn className="text-xl" />
-                          ) : (
-                            <FaToggleOff className="text-xl" />
-                          )}
-                        </Link>
+                        {isAdmin ? (
+                          <>
+                            <Link
+                              to="#"
+                              onClick={() => handleToggleStatus(topic.id)}
+                              className="text-green-500 hover:text-green-700"
+                            >
+                              {topic.status ? (
+                                <FaToggleOn className="text-xl" />
+                              ) : (
+                                <FaToggleOff className="text-xl" />
+                              )}
+                            </Link>
 
-                        <Link
-                          to="#"
-                          className="text-indigo-500 hover:text-indigo-700"
-                        >
-                          <FaEye className="text-lg" />
-                        </Link>
+                            <Link
+                              to="#"
+                              className="text-indigo-500 hover:text-indigo-700"
+                            >
+                              <FaEye className="text-lg" />
+                            </Link>
 
-                        <Link
-                          onClick={() =>
-                            localStorage.setItem(
-                              "currentTopicPage",
-                              currentPage
-                            )
-                          }
-                          to={`/admin/topic/edit/${topic.id}`}
-                          className="text-blue-600 hover:text-blue-800 text-lg"
-                          title="Chỉnh sửa chủ đề"
-                        >
-                          <FaEdit />
-                        </Link>
+                            <Link
+                              onClick={() =>
+                                localStorage.setItem(
+                                  "currentTopicPage",
+                                  currentPage
+                                )
+                              }
+                              to={`/admin/topic/edit/${topic.id}`}
+                              className="text-blue-600 hover:text-blue-800 text-lg"
+                              title="Chỉnh sửa chủ đề"
+                            >
+                              <FaEdit />
+                            </Link>
 
-                        <Link
-                          to="#"
-                          onClick={() => handleDelete(topic.id)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <FaTrash className="text-lg" />
-                        </Link>
+                            <Link
+                              to="#"
+                              onClick={() => handleDelete(topic.id)}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              <FaTrash className="text-lg" />
+                            </Link>
+                          </>
+                        ) : (
+                          <span className="text-xs text-gray-400 italic">No permission</span>
+                        )}
                       </div>
                     </td>
                   </tr>

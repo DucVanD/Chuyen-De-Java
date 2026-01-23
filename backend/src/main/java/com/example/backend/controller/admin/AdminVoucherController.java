@@ -12,18 +12,20 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/admin/vouchers")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
+
 public class AdminVoucherController {
 
     private final VoucherService voucherService;
 
     // 📋 Get all vouchers
+    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
     @GetMapping
     public ResponseEntity<List<VoucherDto>> getAll() {
         return ResponseEntity.ok(voucherService.getAll());
     }
 
     // 🔍 Get voucher by ID
+    @PreAuthorize("hasAnyRole('ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<VoucherDto> getById(@PathVariable Integer id) {
         return ResponseEntity.ok(voucherService.getById(id));
@@ -36,6 +38,7 @@ public class AdminVoucherController {
     }
 
     // ✏️ Update voucher
+    @PreAuthorize("hasAnyRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<VoucherDto> update(
             @PathVariable Integer id,
@@ -44,6 +47,7 @@ public class AdminVoucherController {
     }
 
     // 🗑️ Delete voucher
+    @PreAuthorize("hasAnyRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
         voucherService.delete(id);

@@ -23,6 +23,13 @@ public interface OrderService {
 
     void delete(Integer id);
 
+    // Trash management
+    List<OrderDto> getTrash();
+
+    void restore(Integer id);
+
+    void permanentDelete(Integer id);
+
     // User order history
     java.util.Map<String, Object> getUserOrders(Integer userId, int page, java.util.Map<String, Object> filters);
 

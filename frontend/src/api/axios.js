@@ -6,36 +6,16 @@ import { apiURL } from "./config";
 const axiosInstance = axios.create({
   baseURL: apiURL,
   timeout: 20000, // tăng lên 20s vì Render cold-start chậm
+  withCredentials: true, // ✅ Quan trọng: Cho phép gửi/nhận Cookie
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
   },
 });
 
-// ✅ Interceptor: tự động gắn Bearer Token từ localStorage
+// ✅ Interceptor: Request (Dùng Cookie nên không cần gắn Header Authorization)
 axiosInstance.interceptors.request.use(
   (config) => {
-    // ✅ Support both user token and admin token (admin stores under `adminToken`)
-    const userToken = localStorage.getItem("token");
-    const adminToken = localStorage.getItem("adminToken");
-
-    let token = userToken;
-
-    // ✅ Logic chọn token thông minh:
-    // Nếu request là API Admin hoặc Upload (trừ avatar User) -> Ưu tiên Admin Token
-    const isAdminRequest = config.url.includes("/admin") ||
-      (config.url.includes("/upload") && !config.url.includes("/upload/user"));
-
-    if (isAdminRequest && adminToken) {
-      token = adminToken;
-    } else if (!token && adminToken) {
-      // Fallback: nếu không có user token thì dùng tạm admin token
-      token = adminToken;
-    }
-
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
     return config;
   },
   (error) => Promise.reject(error)
@@ -51,15 +31,38 @@ axiosInstance.enableJson = () => {
   axiosInstance.defaults.headers["Content-Type"] = "application/json";
 };
 
-// === Retry khi timeout (Render bị ngủ) ===
+// === Response Interceptor: Xử lý Refresh Token & Retry ===
 axiosInstance.interceptors.response.use(
   (res) => res,
   async (error) => {
-    if (error.code === "ECONNABORTED" && !error.config._retry) {
-      error.config._retry = true;
-      console.warn("⏳ Retry request sau khi Render khởi động lại...");
-      return axiosInstance.request(error.config);
+    const originalRequest = error.config;
+
+    // 1. Nếu lỗi 401 (Unauthorized) - Thử Refresh Token
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      try {
+        // Gọi endpoint refresh (Backend sẽ đọc refreshToken từ cookie)
+        await axios.post(`${apiURL}/auth/refresh`, {}, { withCredentials: true });
+
+        // Nếu refresh thành công, thực hiện lại request gốc
+        return axiosInstance(originalRequest);
+      } catch (refreshError) {
+        // Nếu refresh cũng fail -> Token hết hạn hoàn toàn -> Logout sạch sẽ
+        console.error("Phiên làm việc hết hạn, vui lòng đăng nhập lại.");
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+        window.location.href = "/registered"; // Chuyển về trang đăng nhập/đăng ký
+        return Promise.reject(refreshError);
+      }
     }
+
+    // 2. Retry khi timeout (Render bị ngủ)
+    if (error.code === "ECONNABORTED" && !originalRequest._retry) {
+      originalRequest._retry = true;
+      console.warn("⏳ Retry request sau khi Render khởi động lại...");
+      return axiosInstance.request(originalRequest);
+    }
+
     return Promise.reject(error);
   }
 );

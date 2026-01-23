@@ -80,7 +80,7 @@ const TrashProduct = () => {
               <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Danh mục</th>
               <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Thương hiệu</th>
               <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Giá</th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Chức năng</th>
+              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">

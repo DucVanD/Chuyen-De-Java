@@ -3,17 +3,35 @@ import { apiURL } from "./config";
 
 const axiosAdmin = axios.create({
   baseURL: apiURL,
+  withCredentials: true, // ✅ Cho phép gửi/nhận Cookie
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-axiosAdmin.interceptors.request.use((config) => {
-  const token = localStorage.getItem("adminToken");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+// ✅ Response Interceptor: Xử lý Refresh Token cho Admin
+axiosAdmin.interceptors.response.use(
+  (res) => res,
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Nếu lỗi 401 (Unauthorized) - Thử Refresh Token
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      try {
+        // Gọi endpoint refresh
+        await axios.post(`${apiURL}/auth/refresh`, {}, { withCredentials: true });
+
+        // Nếu refresh thành công, thực hiện lại request gốc
+        return axiosAdmin(originalRequest);
+      } catch (refreshError) {
+        console.error("Phiên quản trị hết hạn, vui lòng đăng nhập lại.");
+        return Promise.reject(refreshError);
+      }
+    }
+
+    return Promise.reject(error);
   }
-  return config;
-});
+);
 
 export default axiosAdmin;

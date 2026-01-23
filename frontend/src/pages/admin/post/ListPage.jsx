@@ -10,6 +10,14 @@ const ListPage = () => {
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const [lastPage, setLastPage] = useState(1);
+    const [currentUser, setCurrentUser] = useState(null);
+
+    useEffect(() => {
+        const stored = localStorage.getItem("adminUser");
+        if (stored) setCurrentUser(JSON.parse(stored));
+    }, []);
+
+    const isAdmin = currentUser?.role === "ADMIN";
 
     const fetchPages = async (page = 1) => {
         try {
@@ -66,20 +74,22 @@ const ListPage = () => {
                 <h3 className="text-2xl font-semibold text-gray-800 mb-4 sm:mb-0">
                     Danh sách trang đơn
                 </h3>
-                <div className="flex space-x-3">
-                    <Link
-                        to="/admin/page/add"
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded inline-flex items-center transition duration-200"
-                    >
-                        <FaPlus className="mr-2" /> Thêm trang
-                    </Link>
-                    <Link
-                        to="/admin/posts/trash"
-                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded flex items-center transition duration-200"
-                    >
-                        <FaTrash className="mr-2" /> Thùng rác
-                    </Link>
-                </div>
+                {isAdmin && (
+                    <div className="flex space-x-3">
+                        <Link
+                            to="/admin/page/add"
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded inline-flex items-center transition duration-200"
+                        >
+                            <FaPlus className="mr-2" /> Thêm trang
+                        </Link>
+                        <Link
+                            to="/admin/posts/trash"
+                            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded flex items-center transition duration-200"
+                        >
+                            <FaTrash className="mr-2" /> Thùng rác
+                        </Link>
+                    </div>
+                )}
             </div>
 
             {/* Table */}
@@ -96,7 +106,7 @@ const ListPage = () => {
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tiêu đề</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mô tả</th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Chức năng</th>
+                                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200">
@@ -135,22 +145,28 @@ const ListPage = () => {
                                             </td>
                                             <td className="px-4 py-3 text-center">
                                                 <div className="flex items-center justify-center space-x-3">
-                                                    <button
-                                                        onClick={() => handleToggleStatus(item.id)}
-                                                        className={`${item.status === 1 ? 'text-green-500 hover:text-green-700' : 'text-gray-400 hover:text-gray-600'}`}
-                                                        title="Đổi trạng thái"
-                                                    >
-                                                        {item.status === 1 ? <FaToggleOn className="text-xl" /> : <FaToggleOff className="text-xl" />}
-                                                    </button>
-                                                    <Link to={`/page/${item.slug}`} target="_blank" className="text-indigo-500 hover:text-indigo-700" title="Xem trên web">
-                                                        <FaEye className="text-lg" />
-                                                    </Link>
-                                                    <Link to={`/admin/page/edit/${item.id}`} className="text-blue-500 hover:text-blue-700" title="Chỉnh sửa">
-                                                        <FaEdit className="text-lg" />
-                                                    </Link>
-                                                    <button onClick={() => handleDelete(item.id)} className="text-red-500 hover:text-red-700" title="Xóa">
-                                                        <FaTrash className="text-lg" />
-                                                    </button>
+                                                    {isAdmin ? (
+                                                        <>
+                                                            <button
+                                                                onClick={() => handleToggleStatus(item.id)}
+                                                                className={`${item.status === 1 ? 'text-green-500 hover:text-green-700' : 'text-gray-400 hover:text-gray-600'}`}
+                                                                title="Đổi trạng thái"
+                                                            >
+                                                                {item.status === 1 ? <FaToggleOn className="text-xl" /> : <FaToggleOff className="text-xl" />}
+                                                            </button>
+                                                            <Link to={`/page/${item.slug}`} target="_blank" className="text-indigo-500 hover:text-indigo-700" title="Xem trên web">
+                                                                <FaEye className="text-lg" />
+                                                            </Link>
+                                                            <Link to={`/admin/page/edit/${item.id}`} className="text-blue-500 hover:text-blue-700" title="Chỉnh sửa">
+                                                                <FaEdit className="text-lg" />
+                                                            </Link>
+                                                            <button onClick={() => handleDelete(item.id)} className="text-red-500 hover:text-red-700" title="Xóa">
+                                                                <FaTrash className="text-lg" />
+                                                            </button>
+                                                        </>
+                                                    ) : (
+                                                        <span className="text-xs text-gray-400 italic">No permission</span>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>

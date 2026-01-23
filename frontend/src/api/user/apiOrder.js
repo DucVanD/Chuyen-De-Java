@@ -82,6 +82,21 @@ const apiOrder = {
     return res.data;
   },
 
+  // === ADMIN TRASH MANAGEMENT ===
+  getTrash: async () => {
+    const res = await axiosInstance.get("/admin/orders/trash");
+    return res.data;
+  },
+
+  restore: async (id) => {
+    const res = await axiosInstance.post(`/admin/orders/${id}/restore`);
+    return res.data;
+  },
+
+  permanentDelete: async (id) => {
+    const res = await axiosInstance.delete(`/admin/orders/${id}/permanent`);
+    return res.data;
+  },
 };
 
 export default apiOrder;

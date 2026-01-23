@@ -49,6 +49,7 @@ const Dashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [selectedDate, setSelectedDate] = useState(() => {
     const now = new Date();
     const offset = now.getTimezoneOffset() * 60000;
@@ -143,6 +144,12 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
+    // Determine admin status from localStorage
+    const storedAdmin = localStorage.getItem("adminUser");
+    if (storedAdmin) {
+      const user = JSON.parse(storedAdmin);
+      setIsAdmin(user.role === "ADMIN");
+    }
     fetchDashboardData(selectedDate);
   }, [selectedDate]);
 
@@ -181,16 +188,18 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className={cardStyle}>
-          <div>
-            <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider">Doanh thu ngày</p>
-            <h2 className="text-2xl font-bold text-gray-800">{summary.total_revenue}</h2>
+      <div className={`grid grid-cols-1 sm:grid-cols-2 ${isAdmin ? 'lg:grid-cols-4' : 'lg:grid-cols-2'} gap-6`}>
+        {isAdmin && (
+          <div className={cardStyle}>
+            <div>
+              <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider">Doanh thu ngày</p>
+              <h2 className="text-2xl font-bold text-gray-800">{summary.total_revenue}</h2>
+            </div>
+            <div className="p-3 rounded-full bg-orange-100 text-orange-600">
+              <DollarSign size={24} />
+            </div>
           </div>
-          <div className="p-3 rounded-full bg-orange-100 text-orange-600">
-            <DollarSign size={24} />
-          </div>
-        </div>
+        )}
 
         <div className={cardStyle}>
           <div>
@@ -212,47 +221,51 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className={cardStyle}>
-          <div>
-            <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider">Khách hàng</p>
-            <h2 className="text-2xl font-bold text-gray-800">{summary.total_users}</h2>
+        {isAdmin && (
+          <div className={cardStyle}>
+            <div>
+              <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider">Khách hàng</p>
+              <h2 className="text-2xl font-bold text-gray-800">{summary.total_users}</h2>
+            </div>
+            <div className="p-3 rounded-full bg-blue-100 text-blue-600">
+              <Users size={24} />
+            </div>
           </div>
-          <div className="p-3 rounded-full bg-blue-100 text-blue-600">
-            <Users size={24} />
-          </div>
-        </div>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Top Products Chart */}
-        <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-              <TrendingUp size={20} className="text-indigo-600" /> Top sản phẩm doanh thu cao
-            </h2>
+      <div className={`grid grid-cols-1 ${isAdmin ? 'lg:grid-cols-3' : 'lg:grid-cols-1'} gap-6`}>
+        {/* Top Products Chart - Only for ADMIN */}
+        {isAdmin && (
+          <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <TrendingUp size={20} className="text-indigo-600" /> Top sản phẩm doanh thu cao
+              </h2>
+            </div>
+            <div className="h-80 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={top_products}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} tickFormatter={(val) => val >= 1000000 ? `${val / 1000000}M` : `${val / 1000}K`} />
+                  <Tooltip
+                    formatter={currencyFormatter}
+                    cursor={{ fill: 'transparent' }}
+                    contentStyle={{ backgroundColor: "rgba(255, 255, 255, 0.95)", borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
+                  />
+                  <Bar dataKey="revenue" fill="url(#colorGradient)" radius={[6, 6, 0, 0]} barSize={40} />
+                  <defs>
+                    <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#6366f1" stopOpacity={1} />
+                      <stop offset="100%" stopColor="#a855f7" stopOpacity={0.8} />
+                    </linearGradient>
+                  </defs>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
-          <div className="h-80 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={top_products}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} tickFormatter={(val) => val >= 1000000 ? `${val / 1000000}M` : `${val / 1000}K`} />
-                <Tooltip
-                  formatter={currencyFormatter}
-                  cursor={{ fill: 'transparent' }}
-                  contentStyle={{ backgroundColor: "rgba(255, 255, 255, 0.95)", borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
-                />
-                <Bar dataKey="revenue" fill="url(#colorGradient)" radius={[6, 6, 0, 0]} barSize={40} />
-                <defs>
-                  <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#6366f1" stopOpacity={1} />
-                    <stop offset="100%" stopColor="#a855f7" stopOpacity={0.8} />
-                  </linearGradient>
-                </defs>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        )}
 
         {/* Low Stock List */}
         <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 flex flex-col">
@@ -309,7 +322,7 @@ const Dashboard = () => {
               <tr className="border-b border-gray-100">
                 <th className="pb-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Mã đơn hàng</th>
                 <th className="pb-3 text-xs font-semibold text-gray-400 uppercase tracking-wider text-center">Số lượng món</th>
-                <th className="pb-3 text-xs font-semibold text-gray-400 uppercase tracking-wider text-center">Thành tiền</th>
+                {isAdmin && <th className="pb-3 text-xs font-semibold text-gray-400 uppercase tracking-wider text-center">Thành tiền</th>}
                 <th className="pb-3 text-xs font-semibold text-gray-400 uppercase tracking-wider text-right">Giờ xuất</th>
                 <th className="pb-3 text-xs font-semibold text-gray-400 uppercase tracking-wider text-right">Thao tác</th>
               </tr>
@@ -332,9 +345,11 @@ const Dashboard = () => {
                     <td className="py-4 text-center text-gray-800 font-medium text-sm">
                       {exp.itemsCount} mặt hàng
                     </td>
-                    <td className="py-4 text-center font-bold text-green-600 text-sm">
-                      {new Intl.NumberFormat("vi-VN").format(exp.totalAmount)}₫
-                    </td>
+                    {isAdmin && (
+                      <td className="py-4 text-center font-bold text-green-600 text-sm">
+                        {new Intl.NumberFormat("vi-VN").format(exp.totalAmount)}₫
+                      </td>
+                    )}
                     <td className="py-4 text-right text-xs text-gray-500">
                       {new Date(exp.createdAt).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' })}
                     </td>

@@ -18,13 +18,13 @@ public class AdminTopicController {
     private final TopicService topicService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public List<TopicDto> getAll() {
         return topicService.getAll();
     }
 
     @GetMapping("/page")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Page<TopicDto>> getPage(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "8") int size) {
@@ -32,25 +32,25 @@ public class AdminTopicController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public TopicDto getById(@PathVariable Integer id) {
         return topicService.getById(id);
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public TopicDto create(@RequestBody TopicDto dto) {
         return topicService.create(dto);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public TopicDto update(@PathVariable Integer id, @RequestBody TopicDto dto) {
         return topicService.update(id, dto);
     }
 
     @PutMapping("/{id}/status")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public void toggleStatus(@PathVariable Integer id) {
         topicService.toggleStatus(id);
     }

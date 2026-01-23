@@ -89,9 +89,12 @@ public class Order {
     @Column(name = "cancel_reason")
     private String cancelReason;
 
-    // Quan hệ 1-N với chi tiết đơn hàng (Để lấy list sản phẩm từ đơn hàng)
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<OrderDetail> orderDetails;
+
+    // Quan hệ 1-N với biến động kho (Để tự động xóa/nullify khi xóa đơn hàng)
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<StockMovement> stockMovements;
 
     // Auditing
     @CreatedBy

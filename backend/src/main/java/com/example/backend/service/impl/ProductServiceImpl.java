@@ -30,16 +30,19 @@ public class ProductServiceImpl implements ProductService {
     private final CategoryRepository categoryRepository;
     private final BrandRepository brandRepository;
     private final CloudinaryService cloudinaryService;
+    private final com.example.backend.repository.OrderDetailRepository orderDetailRepository;
 
     public ProductServiceImpl(
             ProductRepository productRepository,
             CategoryRepository categoryRepository,
             BrandRepository brandRepository,
-            CloudinaryService cloudinaryService) {
+            CloudinaryService cloudinaryService,
+            com.example.backend.repository.OrderDetailRepository orderDetailRepository) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.brandRepository = brandRepository;
         this.cloudinaryService = cloudinaryService;
+        this.orderDetailRepository = orderDetailRepository;
     }
 
     // =====================
@@ -122,14 +125,15 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductDto getById(Integer id) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new com.example.backend.exception.BusinessException("Không tìm thấy sản phẩm"));
         return ProductMapper.toDto(product);
     }
 
     @Override
     public ProductDto getBySlug(String slug) {
         Product product = productRepository.findBySlug(slug)
-                .orElseThrow(() -> new ResourceNotFoundException("Product with slug '" + slug + "' not found"));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Không tìm thấy sản phẩm với đường dẫn '" + slug + "'"));
         return ProductMapper.toDto(product);
     }
 
@@ -168,10 +172,10 @@ public class ProductServiceImpl implements ProductService {
         }
 
         Category category = categoryRepository.findById(dto.getCategoryId())
-                .orElseThrow(() -> new RuntimeException("Category not found"));
+                .orElseThrow(() -> new com.example.backend.exception.BusinessException("Danh mục không tồn tại"));
 
         Brand brand = brandRepository.findById(dto.getBrandId())
-                .orElseThrow(() -> new RuntimeException("Brand not found"));
+                .orElseThrow(() -> new com.example.backend.exception.BusinessException("Thương hiệu không tồn tại"));
 
         Product product = ProductMapper.toEntity(dto, category, brand);
 
@@ -224,13 +228,13 @@ public class ProductServiceImpl implements ProductService {
         }
 
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new com.example.backend.exception.BusinessException("Không tìm thấy sản phẩm"));
 
         Category category = categoryRepository.findById(dto.getCategoryId())
-                .orElseThrow(() -> new RuntimeException("Category not found"));
+                .orElseThrow(() -> new com.example.backend.exception.BusinessException("Danh mục không tồn tại"));
 
         Brand brand = brandRepository.findById(dto.getBrandId())
-                .orElseThrow(() -> new RuntimeException("Brand not found"));
+                .orElseThrow(() -> new com.example.backend.exception.BusinessException("Thương hiệu không tồn tại"));
 
         product.setName(dto.getName());
 
@@ -281,7 +285,15 @@ public class ProductServiceImpl implements ProductService {
     public void delete(Integer id) {
 
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new com.example.backend.exception.BusinessException("Không tìm thấy sản phẩm"));
+
+        // 🔎 CHECK VALIDATION: Sản phẩm đã có trong lịch sử mua hàng thì không được xóa
+        long orderCount = orderDetailRepository.countByProductId(id);
+        if (orderCount > 0) {
+            throw new com.example.backend.exception.BusinessException(
+                    "Không thể xóa sản phẩm này vì đã có trong lịch sử đơn hàng. " +
+                            "Bạn nên 'Ẩn' sản phẩm hoặc đưa vào 'Thùng rác' thay vì xóa vĩnh viễn.");
+        }
 
         // 1️⃣ XÓA ẢNH CLOUDINARY
         try {

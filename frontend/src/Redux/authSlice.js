@@ -6,20 +6,20 @@ const authSlice = createSlice({
   name: "auth",
   initialState: {
     user: savedUser,
-    token: localStorage.getItem("token") || null,
+    token: savedUser ? "is-logged-in" : null, // ✅ Dùng giả lập để UI không bị break nếu check token
   },
   reducers: {
     loginSuccess: (state, action) => {
       state.user = action.payload.user;
-      state.token = action.payload.token;
+      state.token = "is-logged-in";
       localStorage.setItem("user", JSON.stringify(action.payload.user));
-      localStorage.setItem("token", action.payload.token);
+      // localStorage.setItem("token", action.payload.token); // ❌ Bỏ lưu token vào localStorage
     },
     logout: (state) => {
       state.user = null;
       state.token = null;
       localStorage.removeItem("user");
-      localStorage.removeItem("token");
+      // localStorage.removeItem("token"); // ❌ Bỏ xóa token khỏi localStorage
     },
     updateUser: (state, action) => {
       state.user = {

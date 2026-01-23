@@ -9,6 +9,10 @@ import lombok.Getter;
 @Getter
 public class GeminiConfig {
 
+    /**
+     * Lấy cấu hình cho Google Gemini AI từ file application.properties.
+     */
+
     @Value("${gemini.api.key}")
     private String apiKey;
 

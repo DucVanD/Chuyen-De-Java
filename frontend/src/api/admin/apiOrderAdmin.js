@@ -22,6 +22,16 @@ const apiOrderAdmin = {
     // Delete order (admin only)
     delete: (id) =>
         axiosInstance.delete(`/admin/orders/${id}`).then(res => res.data),
+
+    // Trash management
+    getTrash: () =>
+        axiosInstance.get("/admin/orders/trash").then(res => res.data),
+
+    restore: (id) =>
+        axiosInstance.post(`/admin/orders/${id}/restore`).then(res => res.data),
+
+    permanentDelete: (id) =>
+        axiosInstance.delete(`/admin/orders/${id}/permanent`).then(res => res.data),
 };
 
 export default apiOrderAdmin;

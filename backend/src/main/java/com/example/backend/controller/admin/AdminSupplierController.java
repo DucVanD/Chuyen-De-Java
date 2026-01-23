@@ -26,7 +26,7 @@ public class AdminSupplierController {
     }
 
     @GetMapping("/page")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Page<SupplierDto>> getPage(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
@@ -34,19 +34,19 @@ public class AdminSupplierController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<SupplierDto> getById(@PathVariable Integer id) {
         return ResponseEntity.ok(supplierService.getById(id));
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<SupplierDto> create(@RequestBody SupplierDto dto) {
         return ResponseEntity.ok(supplierService.create(dto));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<SupplierDto> update(@PathVariable Integer id, @RequestBody SupplierDto dto) {
         return ResponseEntity.ok(supplierService.update(id, dto));
     }

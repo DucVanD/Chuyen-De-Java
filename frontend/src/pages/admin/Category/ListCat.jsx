@@ -1,30 +1,52 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import apiCategoryAdmin from "../../../api/admin/apiCategoryAdmin";
-import { FaPlus, FaTrash, FaEdit, FaToggleOn, FaToggleOff, FaMinusSquare, FaPlusSquare } from "react-icons/fa";
+import {
+  FaPlus,
+  FaTrash,
+  FaEdit,
+  FaToggleOn,
+  FaToggleOff,
+  FaMinusSquare,
+  FaPlusSquare
+} from "react-icons/fa";
 
 const ListCat = () => {
-  const [categories, setCategories] = useState([]); // Flat list gốc
-  const [treeData, setTreeData] = useState([]); // Dữ liệu dạng cây đã filter
+  const [categories, setCategories] = useState([]);
+  const [treeData, setTreeData] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // States cho filter & search
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all"); // all, active, inactive
-
-  // State quản lý expand/collapse (lưu set các ID đang mở)
+  const [filterStatus, setFilterStatus] = useState("all");
   const [expandedRows, setExpandedRows] = useState(new Set());
 
-  // Load ALL data (không phân trang) để dựng cây
+  /* ===============================
+      USER & PERMISSION
+  =============================== */
+  const [currentUser, setCurrentUser] = useState(null);
+  const role = currentUser?.role;
+  const isAdmin = role === "ADMIN";
+  const isStaff = role === "ADMIN" || role === "STAFF";
+
+  /* ===============================
+      LOAD USER
+  =============================== */
+  useEffect(() => {
+    const userStr = localStorage.getItem("adminUser");
+    if (userStr) setCurrentUser(JSON.parse(userStr));
+  }, []);
+
+  /* ===============================
+      LOAD DATA
+  =============================== */
   const loadData = async () => {
     setLoading(true);
     try {
       const res = await apiCategoryAdmin.getAll();
       setCategories(res);
-      // Mặc định KHÔNG expand (collapsed)
       setExpandedRows(new Set());
-    } catch (err) {
+    } catch {
       toast.error("Lỗi tải dữ liệu!");
     } finally {
       setLoading(false);
@@ -34,20 +56,12 @@ const ListCat = () => {
   useEffect(() => { loadData(); }, []);
 
   /* ===============================
-      TREE LOGIC: BUILD & FILTER
+      TREE LOGIC
   =============================== */
-
-  // 1. Hàm build tree từ flat list
   const buildTree = (cats) => {
     const map = {};
     const roots = [];
-
-    // Init map
-    cats.forEach(c => {
-      map[c.id] = { ...c, children: [] };
-    });
-
-    // Link parent-child
+    cats.forEach(c => (map[c.id] = { ...c, children: [] }));
     cats.forEach(c => {
       if (c.parentId && map[c.parentId]) {
         map[c.parentId].children.push(map[c.id]);
@@ -55,291 +69,246 @@ const ListCat = () => {
         roots.push(map[c.id]);
       }
     });
-
     return roots;
   };
 
-  // 2. Hàm filter trên tree (đệ quy)
-  // Giữ lại node nếu: (node thoả mãn filter) HOẶC (có con thoả mãn filter)
   const filterNodes = (nodes, search, status) => {
     return nodes.reduce((acc, node) => {
-      // Check điều kiện node hiện tại
-      const matchesSearch = node.name.toLowerCase().includes(search.toLowerCase());
-      const matchesStatus = status === "all" ||
+      const matchSearch = node.name.toLowerCase().includes(search.toLowerCase());
+      const matchStatus =
+        status === "all" ||
         (status === "active" && node.status === 1) ||
         (status === "inactive" && node.status === 0);
 
-      const isSelfMatch = matchesSearch && matchesStatus;
-
-      // Filter đệ quy con
-      const filteredChildren = filterNodes(node.children || [], search, status);
-
-      // Giữ node nếu: self match HOẶC có con match
-      if (isSelfMatch || filteredChildren.length > 0) {
-        acc.push({ ...node, children: filteredChildren });
+      const children = filterNodes(node.children || [], search, status);
+      if ((matchSearch && matchStatus) || children.length > 0) {
+        acc.push({ ...node, children });
       }
-
       return acc;
     }, []);
   };
 
-  // Effect để update treeData khi categories/search/filter thay đổi
   useEffect(() => {
     const roots = buildTree(categories);
     const filtered = filterNodes(roots, searchTerm, filterStatus);
     setTreeData(filtered);
 
-    // Nếu đang search, tự động expand hết để thấy kết quả
     if (searchTerm) {
-      const allIds = categories.map(c => c.id);
-      setExpandedRows(new Set(allIds));
+      setExpandedRows(new Set(categories.map(c => c.id)));
     }
   }, [categories, searchTerm, filterStatus]);
 
-  // Toggle expand/collapse
   const toggleExpand = (id) => {
     const newSet = new Set(expandedRows);
-    if (newSet.has(id)) newSet.delete(id);
-    else newSet.add(id);
+    newSet.has(id) ? newSet.delete(id) : newSet.add(id);
     setExpandedRows(newSet);
   };
 
-  /* TOGGLE STATUS */
+  /* ===============================
+      ADMIN ACTIONS ONLY
+  =============================== */
   const handleToggleStatus = async (cat) => {
+    if (!isAdmin) return;
     try {
-      // Sử dụng đúng hàm toggleStatus đã định nghĩa trong API
       await apiCategoryAdmin.toggleStatus(cat.id);
-
-      const newStatus = cat.status === 1 ? 0 : 1;
-      toast.success(newStatus === 1 ? "Đã hiện danh mục" : "Đã ẩn danh mục");
-
-      // Reload lại data
+      toast.success(cat.status === 1 ? "Đã ẩn danh mục" : "Đã hiện danh mục");
       loadData();
     } catch {
       toast.error("Lỗi cập nhật trạng thái");
     }
   };
 
-  /* ===============================
-      DELETE CATEGORY
-  =============================== */
   const handleDelete = async (id) => {
-    // Confirm trước khi xóa
-    if (!window.confirm("Bạn có chắc chắn muốn xóa danh mục này?")) {
-      return;
-    }
-
+    if (!isAdmin) return;
+    if (!window.confirm("Xóa danh mục này?")) return;
     try {
       await apiCategoryAdmin.delete(id);
-      toast.success("✅ Xóa danh mục thành công!");
-
-      // Reload lại data
+      toast.success("Đã xóa danh mục");
       loadData();
     } catch (err) {
-      // ✅ HIỂN THỊ THÔNG BÁO LỖI RÕ RÀNG
-      const errorMsg = err.response?.data?.message || err.response?.data || "Xóa danh mục thất bại";
-      toast.error("❌ " + errorMsg, {
-        autoClose: 5000,
-        position: "top-right"
-      });
-      console.error("Delete error:", err.response?.data);
+      toast.error(err.response?.data?.message || "Xóa thất bại");
     }
   };
 
-  // Pagination States
+  /* ===============================
+      PAGINATION
+  =============================== */
   const [searchParams, setSearchParams] = useSearchParams();
   const page = parseInt(searchParams.get("page") || "0", 10);
-  const [rowsPerPage] = useState(5);
+  const rowsPerPage = 5;
 
-  // Pagination Logic (Client-side)
   const totalPages = Math.ceil(treeData.length / rowsPerPage);
   const currentData = treeData.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
 
-  // Reset page khi search/filter query thay đổi
   useEffect(() => {
     setSearchParams({ page: 0 });
   }, [searchTerm, filterStatus]);
 
   /* ===============================
-      RENDER HELPER: RECURSIVE ROW
+      RENDER ROW
   =============================== */
   const renderRow = (node, level = 0) => {
-    const hasChildren = node.children && node.children.length > 0;
+    const hasChildren = node.children?.length > 0;
     const isExpanded = expandedRows.has(node.id);
-    const paddingLeft = level * 40 + 20; // 40px mỗi cấp
+    const paddingLeft = level * 40 + 20;
 
     return (
-      <>
-        {/* Main Row */}
-        <tr key={node.id} className="hover:bg-gray-50 transition-colors border-b">
-          {/* 1. ID */}
-          <td className="py-4 px-4 text-gray-500">{node.id}</td>
+      <React.Fragment key={node.id}>
+        <tr className="border-b hover:bg-gray-50">
+          <td className="px-4 py-2 text-gray-500">{node.id}</td>
 
-          {/* 2. Image */}
-          <td className="py-2 px-4">
+          <td className="px-4 py-2">
             <img
-              src={node.image || "https://placehold.co/150x100?text=No+Image"}
-              className="h-10 w-14 object-cover border rounded mx-auto"
+              src={node.image || "https://placehold.co/100x70"}
+              className="h-10 w-14 object-cover rounded mx-auto"
               alt={node.name}
             />
           </td>
 
-          {/* 3. Name (Tree Logic) */}
-          <td className="py-2 px-4 text-left">
-            <div style={{ paddingLeft: `${paddingLeft}px` }} className="flex items-center">
-              {hasChildren && (
-                <button
-                  onClick={() => toggleExpand(node.id)}
-                  className="mr-2 text-gray-500 hover:text-indigo-600 focus:outline-none"
-                >
+          <td className="px-4 py-2">
+            <div style={{ paddingLeft }} className="flex items-center">
+              {hasChildren ? (
+                <button onClick={() => toggleExpand(node.id)} className="mr-2 text-gray-500">
                   {isExpanded ? <FaMinusSquare /> : <FaPlusSquare />}
                 </button>
+              ) : (
+                <span className="w-6 mr-2"></span>
               )}
-              {!hasChildren && <span className="w-6 mr-2"></span>} {/* Spacer */}
-
-              <span className={`font-medium ${level === 0 ? 'text-gray-900 font-bold' : 'text-gray-700'}`}>
-                {node.name}
-              </span>
+              <span className="font-medium">{node.name}</span>
             </div>
           </td>
 
-          {/* 4. Product Count (New) */}
-          <td className="py-2 px-4">
-            <span className="bg-indigo-100 text-indigo-700 py-1 px-3 rounded-full text-xs font-bold">
-              {node.productCount || 0} sản phẩm
-            </span>
+          <td className="px-4 py-2 text-center">
+            {node.productCount || 0}
           </td>
 
-          {/* 5. Status */}
-          <td className="py-2 px-4">
-            {node.status === 1 ? (
-              <span className="px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-700">Active</span>
+          <td className="px-4 py-2">
+            {node.status === 1 ? "Active" : "Inactive"}
+          </td>
+
+          <td className="px-4 py-2 text-center">
+            {isAdmin ? (
+              <div className="flex justify-center gap-3">
+                <button onClick={() => handleToggleStatus(node)}>
+                  {node.status === 1 ? <FaToggleOn /> : <FaToggleOff />}
+                </button>
+                <Link to={`/admin/category/edit/${node.id}`}>
+                  <FaEdit />
+                </Link>
+                <button onClick={() => handleDelete(node.id)}>
+                  <FaTrash />
+                </button>
+              </div>
             ) : (
-              <span className="px-2 py-1 text-xs font-semibold rounded bg-gray-200 text-gray-600">Inactive</span>
+              <span className="text-xs text-gray-400 italic">View only</span>
             )}
-          </td>
-
-          {/* 6. Action */}
-          <td className="py-2 px-4">
-            <div className="flex justify-center items-center gap-3">
-              <button onClick={() => handleToggleStatus(node)} className="text-gray-500 hover:text-green-600 transition-colors" title="Bật/Tắt">
-                {node.status === 1 ? <FaToggleOn size={22} /> : <FaToggleOff size={22} />}
-              </button>
-              <Link
-                to={`/admin/category/edit/${node.id}?page=${page}`}
-                className="text-blue-500 hover:text-blue-700 transition-colors"
-                title="Sửa"
-              >
-                <FaEdit size={18} />
-              </Link>
-              <button onClick={() => handleDelete(node.id)} className="text-red-500 hover:text-red-700 transition-colors" title="Xóa">
-                <FaTrash size={16} />
-              </button>
-            </div>
           </td>
         </tr>
 
-        {/* Recursive Children Rendering */}
-        {hasChildren && isExpanded && node.children.map(child => (
-          <React.Fragment key={child.id}>
-            {renderRow(child, level + 1)}
-          </React.Fragment>
-        ))}
-      </>
+        {hasChildren && isExpanded && node.children.map(c => renderRow(c, level + 1))}
+      </React.Fragment >
     );
   };
 
+  /* ===============================
+      RENDER
+  =============================== */
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden min-h-[500px]">
-      {/* HEADER */}
-      <div className="p-6 flex justify-between items-center border-b">
-        <h3 className="text-2xl font-semibold text-gray-800">Quản lý Danh mục</h3>
-        <Link to="/admin/category/add" className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded flex items-center shadow-sm transition-all">
-          <FaPlus className="mr-2" /> Thêm mới
-        </Link>
+    <div className="bg-white rounded shadow min-h-[500px]">
+      <div className="p-6 flex justify-between border-b">
+        <h3 className="text-xl font-semibold">Quản lý Danh mục</h3>
+
+        {isAdmin && (
+          <Link
+            to="/admin/category/add"
+            className="bg-indigo-600 text-white px-4 py-2 rounded flex items-center"
+          >
+            <FaPlus className="mr-2" /> Thêm mới
+          </Link>
+        )}
       </div>
 
-      {/* CONTENT */}
-      <div className="p-6">
-
-        {/* FILTER BAR */}
-        <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between">
-          <div className="flex gap-4 flex-1">
-            {/* Search */}
-            <input
-              type="text"
-              placeholder="🔍 Tìm kiếm danh mục..."
-              className="border px-4 py-2 rounded w-full md:w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-
-            {/* Filter Status */}
-            <select
-              className="border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-            >
-              <option value="all">Tất cả trạng thái</option>
-              <option value="active">Đang hiển thị</option>
-              <option value="inactive">Đang ẩn</option>
-            </select>
-          </div>
-
-          {/* Show Total Count */}
-          <div className="text-gray-500 self-center">
-            Tổng: <span className="font-bold text-gray-800">{treeData.length}</span> danh mục gốc
-          </div>
+      {/* Search & Filter */}
+      <div className="p-6 bg-gray-50 border-b flex flex-wrap gap-4 items-center">
+        <div className="flex-1 min-w-[300px] relative">
+          <input
+            type="text"
+            placeholder="Tìm kiếm danh mục..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+          />
+          <i className="fas fa-search absolute left-3 top-3 text-gray-400"></i>
         </div>
 
-        {loading ? <p className="text-center py-10 text-gray-500">Đang tải dữ liệu...</p> : (
-          <>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm border-collapse text-left">
-                <thead>
-                  <tr className="bg-gray-50 border-b text-gray-700 uppercase text-xs tracking-wider">
-                    <th className="py-3 px-4 w-16">ID</th>
-                    <th className="py-3 px-4 w-24">Hình ảnh</th>
-                    <th className="py-3 px-4">Tên danh mục</th>
-                    <th className="py-3 px-4 w-32 text-center">Sản phẩm</th>
-                    <th className="py-3 px-4 w-32">Trạng thái</th>
-                    <th className="py-3 px-4 w-40 text-center">Chức năng</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {currentData.length > 0 ? (
-                    currentData.map((node) => renderRow(node))
-                  ) : (
-                    <tr><td colSpan="6" className="py-10 text-center text-gray-400">Không tìm thấy dữ liệu</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white transition-all"
+        >
+          <option value="all">Tất cả trạng thái</option>
+          <option value="active">Đang hiện</option>
+          <option value="inactive">Đang ẩn</option>
+        </select>
+      </div>
 
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <div className="flex justify-center gap-4 mt-6">
-                <button
-                  disabled={page === 0}
-                  onClick={() => setSearchParams({ page: page - 1 })}
-                  className="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50 transition-colors"
-                >
-                  ← Trước
-                </button>
-                <span className="flex items-center text-gray-600">Trang {page + 1} / {totalPages}</span>
-                <button
-                  disabled={page === totalPages - 1}
-                  onClick={() => setSearchParams({ page: page + 1 })}
-                  className="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50 transition-colors"
-                >
-                  Sau →
-                </button>
-              </div>
-            )}
-          </>
+      <div className="p-6">
+        {loading ? (
+          <p className="text-center text-gray-400">Đang tải...</p>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 border-b">
+              <tr>
+                <th className="px-4 py-2">ID</th>
+                <th className="px-4 py-2">Ảnh</th>
+                <th className="px-4 py-2">Tên</th>
+                <th className="px-4 py-2">SP</th>
+                <th className="px-4 py-2">Trạng thái</th>
+                <th className="px-4 py-2">Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentData.length > 0 ? (
+                currentData.map(node => renderRow(node))
+              ) : (
+                <tr>
+                  <td colSpan="6" className="py-8 text-center text-gray-400">
+                    Không có dữ liệu
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         )}
+
+        {/* PAGINATION */}
+        {totalPages > 1 && (
+          <div className="flex justify-center gap-4 mt-6">
+            <button
+              disabled={page === 0}
+              onClick={() => setSearchParams({ page: page - 1 })}
+              className="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50 transition-colors"
+            >
+              ← Trước
+            </button>
+
+            <span className="flex items-center text-gray-600">
+              Trang {page + 1} / {totalPages}
+            </span>
+
+            <button
+              disabled={page >= totalPages - 1}
+              onClick={() => setSearchParams({ page: page + 1 })}
+              className="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50 transition-colors"
+            >
+              Sau →
+            </button>
+          </div>
+        )}
+
       </div>
     </div>
   );
 };
+
 export default ListCat;

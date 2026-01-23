@@ -13,21 +13,29 @@ import java.util.Date;
 public class JwtService {
 
     // 🔐 Key phải >= 256 bit cho HS256
-    private static final String SECRET =
-            "CHANGE_ME_256_BIT_SECRET_CHANGE_ME_256_BIT_SECRET";
+    private static final String SECRET = "CHANGE_ME_256_BIT_SECRET_CHANGE_ME_256_BIT_SECRET";
 
-    private final SecretKey key =
-            Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
+    private final SecretKey key = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
 
-    // ✅ Tạo token
-    public String generateToken(User user) {
+    // ✅ Tạo Access Token (Ngắn hạn - 15 phút)
+    public String generateAccessToken(User user) {
         return Jwts.builder()
                 .setSubject(user.getEmail())
                 .claim("role", user.getRole().name())
                 .setIssuedAt(new Date())
                 .setExpiration(
-                        new Date(System.currentTimeMillis() + 24 * 60 * 60 * 1000)
-                ) // 1 ngày
+                        new Date(System.currentTimeMillis() + 15 * 60 * 1000))
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    // ✅ Tạo Refresh Token (Dài hạn - 7 ngày)
+    public String generateRefreshToken(User user) {
+        return Jwts.builder()
+                .setSubject(user.getEmail())
+                .setIssuedAt(new Date())
+                .setExpiration(
+                        new Date(System.currentTimeMillis() + 7L * 24 * 60 * 60 * 1000))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -37,12 +45,23 @@ public class JwtService {
         return getClaims(token).getSubject();
     }
 
-    // ✅ Check token hợp lệ
+    // ✅ Check token hợp lệ (vẫn còn hạn và đúng chữ ký)
     public boolean isTokenValid(String token) {
         try {
             getClaims(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    // ✅ Check token đã hết hạn chưa (hỗ trợ refresh logic)
+    public boolean isTokenExpired(String token) {
+        try {
+            return getClaims(token).getExpiration().before(new Date());
+        } catch (ExpiredJwtException e) {
+            return true;
+        } catch (Exception e) {
             return false;
         }
     }

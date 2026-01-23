@@ -34,19 +34,28 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
 
           {/* ADMIN (Protected) */}
-          {/* <Route
+          <Route
             path="/admin"
             element={
               <AdminPrivateRoute>
                 <LayoutAdmin />
               </AdminPrivateRoute>
             }
-          > */}
-          <Route path="/admin" element={<LayoutAdmin />}>
-
+          >
             {Adminroute.map((router, index) => {
               const Page = router.component;
-              return <Route key={index} path={router.path} element={<Page />} />;
+              const allowedRoles = router.role ? [router.role] : ["ADMIN", "STAFF"];
+              return (
+                <Route
+                  key={index}
+                  path={router.path}
+                  element={
+                    <AdminPrivateRoute requiredRoles={allowedRoles}>
+                      <Page />
+                    </AdminPrivateRoute>
+                  }
+                />
+              );
             })}
           </Route>
         </Routes>

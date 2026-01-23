@@ -30,6 +30,7 @@ import { TbBrandShopee } from "react-icons/tb";
 import apiCategory from "../api/user/apiCategory";
 import { getImageUrl } from "../api/config";
 import { logout } from "../Redux/authSlice";
+import { clearCart } from "../Redux/cartSlice";
 import logo from "/src/assets/images/logo.png"; // Đảm bảo đường dẫn đúng
 
 const HeaderUser = () => {
@@ -83,6 +84,7 @@ const HeaderUser = () => {
    const handleLogout = () => {
       if (window.confirm("Bạn có chắc muốn đăng xuất?")) {
          dispatch(logout());
+         dispatch(clearCart()); // Sửa: Dọn dẹp giỏ hàng khi thoát để bảo mật
          toast.success("Đăng xuất thành công!", { theme: "colored" });
          navigate("/");
          setShowUserMenu(false);

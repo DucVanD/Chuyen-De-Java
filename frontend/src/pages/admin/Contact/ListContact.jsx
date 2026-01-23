@@ -14,6 +14,10 @@ const ListContact = () => {
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
 
+  const adminUser = JSON.parse(localStorage.getItem("adminUser"));
+  const isAdmin = adminUser?.role === "ADMIN";
+  const isStaff = adminUser?.role === "ADMIN" || adminUser?.role === "STAFF";
+
   // Mappings cho UI
   const statusLabels = {
     OPEN: { text: "Mới tiếp nhận", color: "bg-blue-100 text-blue-700", icon: <FaClock /> },
@@ -203,21 +207,29 @@ const ListContact = () => {
                       {/* Cột Hành động */}
                       <td className="py-3 px-4">
                         <div className="flex justify-center items-center gap-3">
-                          <button
-                            onClick={() => handleOpenModal(c)}
-                            className="text-blue-600 hover:text-blue-800 transition-colors tooltip"
-                            title="Xem & Trả lời"
-                          >
-                            {c.status === "RESOLVED" ? <FaEye size={18} /> : <FaReply size={18} />}
-                          </button>
+                          {isStaff ? (
+                            <>
+                              <button
+                                onClick={() => handleOpenModal(c)}
+                                className="text-blue-600 hover:text-blue-800 transition-colors tooltip"
+                                title="Xem & Trả lời"
+                              >
+                                {c.status === "RESOLVED" ? <FaEye size={18} /> : <FaReply size={18} />}
+                              </button>
 
-                          <button
-                            onClick={() => handleDelete(c.id)}
-                            className="text-red-600 hover:text-red-800 transition-colors"
-                            title="Xóa"
-                          >
-                            <FaTrash size={16} />
-                          </button>
+                              {isAdmin && (
+                                <button
+                                  onClick={() => handleDelete(c.id)}
+                                  className="text-red-600 hover:text-red-800 transition-colors"
+                                  title="Xóa"
+                                >
+                                  <FaTrash size={16} />
+                                </button>
+                              )}
+                            </>
+                          ) : (
+                            <span className="text-xs text-gray-400 italic">No permission</span>
+                          )}
                         </div>
                       </td>
                     </tr>

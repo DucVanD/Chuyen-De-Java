@@ -61,11 +61,36 @@ public class AuthServiceImpl implements AuthService {
             throw new BusinessException("Email hoặc mật khẩu không đúng");
         }
 
-        // Generate token
-        String token = jwtService.generateToken(user);
+        // Generate tokens
+        String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
 
         return Map.of(
-                "token", token,
+                "accessToken", accessToken,
+                "refreshToken", refreshToken,
+                "user", UserMapper.toDto(user));
+    }
+
+    @Override
+    public Map<String, Object> refresh(String refreshToken) {
+        if (!jwtService.isTokenValid(refreshToken)) {
+            throw new BusinessException("Refresh token không hợp lệ hoặc đã hết hạn");
+        }
+
+        String email = jwtService.extractEmail(refreshToken);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BusinessException("Người dùng không tồn tại"));
+
+        if (user.getStatus() == 0) {
+            throw new BusinessException("Tài khoản đã bị khóa");
+        }
+
+        String newAccessToken = jwtService.generateAccessToken(user);
+        String newRefreshToken = jwtService.generateRefreshToken(user);
+
+        return Map.of(
+                "accessToken", newAccessToken,
+                "refreshToken", newRefreshToken,
                 "user", UserMapper.toDto(user));
     }
 

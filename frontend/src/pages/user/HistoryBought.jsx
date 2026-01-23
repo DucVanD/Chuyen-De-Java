@@ -102,6 +102,10 @@ const HistoryBought = () => {
             created_at: new Date(order.createdAt).toLocaleString("vi-VN"),
             payment: order.paymentMethod,
             paymentStatus: order.paymentStatus, // Add payment status
+            // Normalize HATEOAS links (Handle both Array and Object, and both naming conventions)
+            _links: Array.isArray(order.links || order._links)
+              ? (order.links || order._links).reduce((acc, link) => ({ ...acc, [link.rel]: link }), {})
+              : (order.links || order._links),
             // Keep as numbers for logic, format in render
             subtotal: order.subtotal || 0,
             discount_amount: order.discountAmount || 0,
@@ -131,7 +135,17 @@ const HistoryBought = () => {
       }
     } catch (err) {
       console.error("❌ Lỗi khi lấy lịch sử:", err);
-      setUserData(null);
+      // Chỉ set null nếu chưa có dữ liệu (lần đầu tải)
+      if (!userData) {
+        setUserData(null);
+      }
+
+      const errorMsg = err.response?.data?.message || err.message || "Lỗi kết nối Server";
+      if (err.response?.status === 401) {
+        toast.error("Phiên đăng nhập hết hạn. Đang tải lại...");
+      } else {
+        toast.error("Không thể tải lịch sử đơn hàng: " + errorMsg);
+      }
     } finally {
       setLoading(false);
     }
@@ -502,8 +516,18 @@ const HistoryBought = () => {
                     </button>
                   )}
 
-                  {/* Cancel Button - Only for pending/confirmed orders */}
-                  {[1, 2].includes(order.status) && (
+                  {/* HATEOAS: Thanh toán ngay button (if payment_url link exists) */}
+                  {order._links?.payment_url && (
+                    <button
+                      onClick={() => window.location.href = order._links.payment_url.href}
+                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm transition flex items-center gap-1"
+                    >
+                      💳 Thanh toán ngay
+                    </button>
+                  )}
+
+                  {/* HATEOAS: Cancel Button (if cancel_order link exists) */}
+                  {order._links?.cancel_order && (
                     <button
                       onClick={() => openCancelModal(order)}
                       className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm transition"

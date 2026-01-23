@@ -222,7 +222,7 @@ public class UserServiceImpl implements UserService {
                             .lastOrderDate(lastOrderDate)
                             .averageOrderValue(averageOrderValue)
                             .createdAt(user.getCreatedAt())
-                            .status(user.getStatus() == 1 ? "Active" : "Locked")
+                            .status(user.getStatus() == 1 ? "Đang hoạt động" : "Bị khóa")
                             .build();
                 })
                 .collect(Collectors.toList());

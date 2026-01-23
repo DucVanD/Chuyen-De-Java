@@ -39,6 +39,7 @@ import EditBrand from "../pages/admin/Brand/EditBrand";
 import ListOrder from "../pages/admin/Order/ListOrder";
 import EditOrder from "../pages/admin/Order/EditOrder";
 import OrderDetail from "../pages/admin/Order/OrderDetail";
+import TrashOrder from "../pages/admin/Order/TrashOrder";
 
 
 // user
@@ -96,42 +97,43 @@ const AdminRoute = [
   { path: "product/trash/:page?", component: TrashProduct },
 
   // post
-  { path: "posts/:page?", component: ListPost },
-  { path: "post/add", component: AddPost },
-  { path: "post/edit/:id", component: EditPost },
+  { path: "posts/:page?", component: ListPost, role: "ADMIN" },
+  { path: "post/add", component: AddPost, role: "ADMIN" },
+  { path: "post/edit/:id", component: EditPost, role: "ADMIN" },
 
   // pages
-  { path: "pages/:page?", component: ListPage },
-  { path: "page/add", component: AddPage },
-  { path: "page/edit/:id", component: EditPage },
+  { path: "pages/:page?", component: ListPage, role: "ADMIN" },
+  { path: "page/add", component: AddPage, role: "ADMIN" },
+  { path: "page/edit/:id", component: EditPage, role: "ADMIN" },
 
   // topic
-  { path: "topics/:page?", component: ListTopic },
-  { path: "topic/add", component: AddTopic },
-  { path: "topic/edit/:id", component: EditTopic },
+  { path: "topics/:page?", component: ListTopic, role: "ADMIN" },
+  { path: "topic/add", component: AddTopic, role: "ADMIN" },
+  { path: "topic/edit/:id", component: EditTopic, role: "ADMIN" },
 
   // brand
-  { path: "brands/:page?", component: ListBrand },
-  { path: "brand/add", component: AddBrand },
-  { path: "brand/edit/:id", component: EditBrand },
+  { path: "brands/:page?", component: ListBrand, role: "ADMIN" },
+  { path: "brand/add", component: AddBrand, role: "ADMIN" },
+  { path: "brand/edit/:id", component: EditBrand, role: "ADMIN" },
   // order
   { path: "orders/:page?", component: ListOrder },
   { path: "order/edit/:id", component: EditOrder },
   { path: "order/detail/:id", component: OrderDetail },
+  { path: "orders/trash", component: TrashOrder },
 
   // user
-  { path: "users/:page?", component: ListUser },
-  { path: "user/detail/:id", component: UserDetail },
-  { path: "user/add", component: AddUser },
-  { path: "user/edit/:id", component: EditUser },
+  { path: "users/:page?", component: ListUser, role: "ADMIN" },
+  { path: "user/detail/:id", component: UserDetail, role: "ADMIN" },
+  { path: "user/add", component: AddUser, role: "ADMIN" },
+  { path: "user/edit/:id", component: EditUser, role: "ADMIN" },
 
   // employee 
-  { path: "employees", component: EmployeeManagement },
+  { path: "employees", component: EmployeeManagement, role: "ADMIN" },
 
   // supplier
-  { path: "suppliers/:page?", component: ListSupplier },
-  { path: "supplier/add", component: AddSupplier },
-  { path: "supplier/edit/:id", component: EditSupplier },
+  { path: "suppliers/:page?", component: ListSupplier, role: "ADMIN" },
+  { path: "supplier/add", component: AddSupplier, role: "ADMIN" },
+  { path: "supplier/edit/:id", component: EditSupplier, role: "ADMIN" },
 
   // voucher
   { path: "vouchers", component: ListVoucher },
@@ -139,15 +141,15 @@ const AdminRoute = [
   { path: "voucher/edit/:id", component: EditVoucher },
 
   // inventory
-  { path: "inventory", component: Inventory },
-  { path: "inventory/import", component: FormNhapKho },
-  { path: "inventory/export", component: ListOrderExport },
-  { path: "inventory/adjust", component: FormDieuChinh },
+  { path: "inventory", component: Inventory, role: "ADMIN" },
+  { path: "inventory/import", component: FormNhapKho, role: "ADMIN" },
+  { path: "inventory/export", component: ListOrderExport, role: "ADMIN" },
+  { path: "inventory/adjust", component: FormDieuChinh, role: "ADMIN" },
   // Contact
   { path: "contacts", component: ListContact },
 
   // Customer
-  { path: "customers", component: ListCustomer },
+  { path: "customers", component: ListCustomer, role: "ADMIN" },
 ];
 
 export default AdminRoute;

@@ -175,6 +175,7 @@ const ListProduct = () => {
     new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
 
   const isAdmin = currentUser?.role === "ADMIN";
+  const isStaff = currentUser?.role === "ADMIN" || currentUser?.role === "STAFF";
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden min-h-[600px]">

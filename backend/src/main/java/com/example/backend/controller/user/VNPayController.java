@@ -7,6 +7,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.hateoas.EntityModel;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+
 import java.util.Map;
 
 @RestController
@@ -21,19 +25,25 @@ public class VNPayController {
      * POST /api/vnpay/create-payment?orderId=123
      */
     @PostMapping("/create-payment")
-    public ResponseEntity<?> createPayment(
+    public ResponseEntity<EntityModel<Map<String, Object>>> createPayment(
             @RequestParam Integer orderId,
             HttpServletRequest request) {
         try {
             String paymentUrl = vnPayService.createPaymentUrl(orderId, request);
-            return ResponseEntity.ok(Map.of(
+            Map<String, Object> data = Map.of(
                     "status", "success",
                     "paymentUrl", paymentUrl,
-                    "message", "Tạo URL thanh toán thành công"));
+                    "message", "Tạo URL thanh toán thành công");
+
+            EntityModel<Map<String, Object>> model = EntityModel.of(data);
+            model.add(linkTo(methodOn(OrderController.class).getById(orderId)).withRel("view_order"));
+
+            return ResponseEntity.ok(model);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+            Map<String, Object> error = Map.of(
                     "status", "error",
-                    "message", e.getMessage()));
+                    "message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(EntityModel.of(error));
         }
     }
 
@@ -49,7 +59,7 @@ public class VNPayController {
         String message = result.get("message");
         String orderId = result.get("orderId");
 
-        boolean isSuccess = "success".equals(status);
+        boolean isSuccess = "thành công".equals(status);
         String statusColor = isSuccess ? "#10b981" : "#ef4444";
         String statusIcon = isSuccess ? "✓" : "✗";
         String statusText = isSuccess ? "Thanh toán thành công!" : "Thanh toán thất bại!";

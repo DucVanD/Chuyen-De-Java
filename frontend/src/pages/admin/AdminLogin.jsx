@@ -51,7 +51,7 @@ const AdminLogin = () => {
     setLoading(true);
     try {
       const res = await apiAuth.login(form);
-      const { user, token } = res;
+      const { user } = res;
 
       // 🔐 CHECK ROLE (ADMIN / STAFF)
       if (user.role !== "ADMIN" && user.role !== "STAFF") {
@@ -59,8 +59,7 @@ const AdminLogin = () => {
         return;
       }
 
-      // 👉 Lưu riêng cho Admin
-      localStorage.setItem("adminToken", token);
+      // 👉 Lưu thông tin Admin (Token được xử lý bằng Cookie)
       localStorage.setItem("adminUser", JSON.stringify(user));
 
       toast.success("Đăng nhập Admin thành công!");

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
 import apiOrder from "../../api/user/apiOrder";
@@ -38,6 +38,26 @@ const wards = {
   "Thủ Đức": ["Linh Trung", "Hiệp Bình Chánh"],
 };
 
+// --- InputField Component (moved outside to prevent re-creation) ---
+const InputField = ({ label, name, icon: Icon, placeholder, value, onChange, errors }) => (
+  <div className="mb-4">
+    <div className="relative">
+      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+        <Icon />
+      </div>
+      <input
+        name={name}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className={`w-full pl-10 pr-3 py-3 border rounded-xl text-sm outline-none transition-all ${errors?.[name] ? "border-red-500 bg-red-50" : "border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-500"
+          }`}
+      />
+    </div>
+    {errors?.[name] && <p className="text-red-500 text-xs mt-1 ml-1">{errors[name]}</p>}
+  </div>
+);
+
 const Checkout = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -60,19 +80,27 @@ const Checkout = () => {
   const [errors, setErrors] = useState({}); // ✅ State lưu lỗi validation
   const [loading, setLoading] = useState(false);
 
+  // Ref to track if form has been initialized with user data
+  const formInitialized = useRef(false);
+
   useEffect(() => {
     if (!user) {
       toast.info("Vui lòng đăng nhập để tiến hành thanh toán!", { toastId: "checkout-auth" });
       navigate("/registered");
       return;
     }
-    setForm((prev) => ({
-      ...prev,
-      email: user.email || "",
-      name: user.name || "",
-      phone: user.phone || "",
-      address: user.address || "",
-    }));
+
+    // Only populate form once when user data is available
+    if (user && !formInitialized.current) {
+      setForm((prev) => ({
+        ...prev,
+        email: user.email || "",
+        name: user.name || "",
+        phone: user.phone || "",
+        address: user.address || "",
+      }));
+      formInitialized.current = true;
+    }
   }, [user, navigate]);
 
   const handleChange = (e) => {
@@ -157,10 +185,20 @@ const Checkout = () => {
 
       // Handle VNPay payment
       if (form.payment === "vnpay") {
-        // Backend returns { status, order, message } for VNPay
-        if (res?.order?.id) {
+        // Backend now returns OrderDto (EntityModel) directly, or { status, order, message } in older version
+        const order = res?.order || res;
+
+        if (order?.id) {
           try {
-            const paymentRes = await apiOrder.createVnpayPayment(res.order.id);
+            // Get payment URL from HATEOAS link if available, otherwise call API
+            const hateoasPaymentUrl = (order._links || order.links)?.payment_url?.href;
+
+            if (hateoasPaymentUrl) {
+              window.location.href = hateoasPaymentUrl;
+              return;
+            }
+
+            const paymentRes = await apiOrder.createVnpayPayment(order.id);
             if (paymentRes?.paymentUrl) {
               // Redirect to VNPay payment page
               window.location.href = paymentRes.paymentUrl;
@@ -201,26 +239,6 @@ const Checkout = () => {
     }
   };
 
-  // --- UI Components ---
-  const InputField = ({ label, name, icon: Icon, placeholder }) => (
-    <div className="mb-4">
-      <div className="relative">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-          <Icon />
-        </div>
-        <input
-          name={name}
-          value={form[name]}
-          onChange={handleChange}
-          placeholder={placeholder}
-          className={`w-full pl-10 pr-3 py-3 border rounded-xl text-sm outline-none transition-all ${errors[name] ? "border-red-500 bg-red-50" : "border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-500"
-            }`}
-        />
-      </div>
-      {errors[name] && <p className="text-red-500 text-xs mt-1 ml-1">{errors[name]}</p>}
-    </div>
-  );
-
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       {/* 1. STEPPER */}
@@ -253,11 +271,11 @@ const Checkout = () => {
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <InputField name="name" icon={FaUser} placeholder="Họ và tên" />
-              <InputField name="phone" icon={FaPhone} placeholder="Số điện thoại" />
+              <InputField name="name" icon={FaUser} placeholder="Họ và tên" value={form.name} onChange={handleChange} errors={errors} />
+              <InputField name="phone" icon={FaPhone} placeholder="Số điện thoại" value={form.phone} onChange={handleChange} errors={errors} />
             </div>
-            <InputField name="email" icon={FaEnvelope} placeholder="Địa chỉ Email" />
-            <InputField name="address" icon={FaMapMarkerAlt} placeholder="Địa chỉ (Số nhà, tên đường)" />
+            <InputField name="email" icon={FaEnvelope} placeholder="Địa chỉ Email" value={form.email} onChange={handleChange} errors={errors} />
+            <InputField name="address" icon={FaMapMarkerAlt} placeholder="Địa chỉ (Số nhà, tên đường)" value={form.address} onChange={handleChange} errors={errors} />
 
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>

@@ -5,13 +5,19 @@ import apiOrderAdmin from "../../../api/admin/apiOrderAdmin";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-/* ===== MAP LABEL TRẠNG THÁI ===== */
 const ORDER_STATUS_LABELS = {
   PENDING: "Đang chờ xác nhận",
   CONFIRMED: "Đã xác nhận",
   SHIPPING: "Đang giao hàng",
   COMPLETED: "Đã giao",
   CANCELLED: "Đã hủy",
+};
+
+const PAYMENT_STATUS_LABELS = {
+  UNPAID: "Chưa thanh toán",
+  PAID: "Đã thanh toán",
+  FAILED: "Thanh toán thất bại",
+  REFUNDED: "Đã hoàn tiền",
 };
 
 const EditOrder = () => {
@@ -280,6 +286,24 @@ const EditOrder = () => {
                     ⚠️ Đơn hàng đã hoàn tất hoặc đã hủy – không thể chỉnh sửa
                   </p>
                 )}
+              </div>
+
+              {/* Trạng thái thanh toán */}
+              <div className="mb-4">
+                <label className="block text-sm mb-1">Trạng thái thanh toán</label>
+                <select
+                  value={order.paymentStatus}
+                  onChange={(e) =>
+                    setOrder({ ...order, paymentStatus: e.target.value })
+                  }
+                  className="w-full p-2 border rounded bg-white"
+                >
+                  {Object.entries(PAYMENT_STATUS_LABELS).map(([val, label]) => (
+                    <option key={val} value={val}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="mb-4">

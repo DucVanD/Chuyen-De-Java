@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import java.util.Map;
 
 @RestController
@@ -19,7 +21,55 @@ public class AuthController {
 
         @PostMapping("/login")
         public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDto req) {
-                return ResponseEntity.ok(authService.login(req));
+                Map<String, Object> result = authService.login(req);
+                String accessToken = (String) result.get("accessToken");
+                String refreshToken = (String) result.get("refreshToken");
+
+                if (accessToken == null || refreshToken == null) {
+                        return ResponseEntity.status(500).body(Map.of("message", "Token generation failed"));
+                }
+
+                ResponseCookie accessCookie = createCookie("accessToken", accessToken, 15 * 60);
+                ResponseCookie refreshCookie = createCookie("refreshToken", refreshToken, 7 * 24 * 60 * 60);
+
+                return ResponseEntity.ok()
+                                .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
+                                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                                .body(Map.of("status", true, "user", result.get("user")));
+        }
+
+        @PostMapping("/refresh")
+        public ResponseEntity<?> refresh(@CookieValue(name = "refreshToken", required = false) String refreshToken) {
+                if (refreshToken == null) {
+                        return ResponseEntity.status(401).body(Map.of("message", "Refresh token missing"));
+                }
+
+                Map<String, Object> result = authService.refresh(refreshToken);
+                String newAccessToken = (String) result.get("accessToken");
+                String newRefreshToken = (String) result.get("refreshToken");
+
+                if (newAccessToken == null || newRefreshToken == null) {
+                        return ResponseEntity.status(500).body(Map.of("message", "Token generation failed"));
+                }
+
+                ResponseCookie accessCookie = createCookie("accessToken", newAccessToken, 15 * 60);
+                ResponseCookie refreshCookie = createCookie("refreshToken", newRefreshToken, 7 * 24 * 60 * 60);
+
+                return ResponseEntity.ok()
+                                .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
+                                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                                .body(Map.of("status", true, "user", result.get("user")));
+        }
+
+        @PostMapping("/logout")
+        public ResponseEntity<?> logout() {
+                ResponseCookie accessCookie = createCookie("accessToken", "", 0);
+                ResponseCookie refreshCookie = createCookie("refreshToken", "", 0);
+
+                return ResponseEntity.ok()
+                                .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
+                                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                                .body(Map.of("status", true, "message", "Đã đăng xuất"));
         }
 
         @PostMapping("/register")
@@ -27,6 +77,16 @@ public class AuthController {
                 return ResponseEntity.ok(Map.of(
                                 "status", true,
                                 "user", authService.register(req)));
+        }
+
+        private ResponseCookie createCookie(String name, String value, long maxAge) {
+                return ResponseCookie.from(name, value)
+                                .httpOnly(true)
+                                .secure(false) // Changed back to false for local HTTP compatibility
+                                .path("/")
+                                .maxAge(maxAge)
+                                .sameSite("Lax") // Changed back to Lax
+                                .build();
         }
 
         @PostMapping("/forgot-password")

@@ -45,13 +45,13 @@ public class AdminUserController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public UserDto create(@RequestParam String password, @Valid @RequestBody UserDto dto) {
         return userService.create(dto, password);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public UserDto update(
             @PathVariable Integer id,
             @Valid @RequestBody UserDto dto) {
@@ -70,13 +70,13 @@ public class AdminUserController {
     }
 
     @PutMapping("/{id}/lock")
-    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public void lock(@PathVariable Integer id) {
         userService.lock(id);
     }
 
     @PutMapping("/{id}/unlock")
-    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public void unlock(@PathVariable Integer id) {
         userService.unlock(id);
     }
