@@ -11,8 +11,9 @@ import LayoutUser from "./components/LayoutUser.jsx";
 import Adminroute from "./routers/admin.js";
 import LayoutAdmin from "./components/LayoutAdmin.jsx";
 import AdminPrivateRoute from "./components/AdminPrivateRoute.jsx";
-import AdminLogin from "./pages/admin/AdminLogin"; // 👈 THÊM DÒNG NÀY/
+import AdminLogin from "./pages/admin/AdminLogin";
 import ForgotPassword from "./pages/auth/ForgotPassword";
+import UserPrivateRoute from "./components/UserPrivateRoute.jsx";
 
 function App() {
   return (
@@ -23,6 +24,21 @@ function App() {
           <Route path="/" element={<LayoutUser />}>
             {Userroute.map((router, index) => {
               const Page = router.component;
+              const isPrivate = ["/profile", "/history-bought/:page?"].includes(router.path);
+
+              if (isPrivate) {
+                return (
+                  <Route
+                    key={index}
+                    path={router.path}
+                    element={
+                      <UserPrivateRoute>
+                        <Page />
+                      </UserPrivateRoute>
+                    }
+                  />
+                );
+              }
               return <Route key={index} path={router.path} element={<Page />} />;
             })}
           </Route>

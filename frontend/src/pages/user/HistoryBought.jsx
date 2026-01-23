@@ -48,6 +48,12 @@ const HistoryBought = () => {
   const user = JSON.parse(localStorage.getItem("user"));
   const userId = user?.id;
 
+  useEffect(() => {
+    if (!user) {
+      navigate("/registered");
+    }
+  }, [user, navigate]);
+
   // States
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);

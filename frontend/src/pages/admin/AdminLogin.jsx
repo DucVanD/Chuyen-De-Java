@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaEye, FaEyeSlash, FaTimesCircle } from "react-icons/fa";
 import apiAuth from "../../api/apiAuth";
@@ -11,6 +11,18 @@ const AdminLogin = () => {
     email: "",
     password: "",
   });
+
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("expired") === "true") {
+      toast.info("Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại!", {
+        toastId: "admin-session-expired",
+      });
+      navigate("/admin/login", { replace: true });
+    }
+  }, [location, navigate]);
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);

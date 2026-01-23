@@ -51,7 +51,7 @@ axiosInstance.interceptors.response.use(
         console.error("Phiên làm việc hết hạn, vui lòng đăng nhập lại.");
         localStorage.removeItem("user");
         localStorage.removeItem("token");
-        window.location.href = "/registered"; // Chuyển về trang đăng nhập/đăng ký
+        window.location.href = "/registered?expired=true"; // Chuyển về trang đăng nhập/đăng ký với cờ thông báo
         return Promise.reject(refreshError);
       }
     }

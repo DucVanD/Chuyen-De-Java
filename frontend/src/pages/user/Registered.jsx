@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   FaFacebookF,
@@ -20,6 +20,18 @@ const Registered = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
+
+  // Kiểm tra phiên làm việc hết hạn
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("expired") === "true") {
+      toast.info("Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại!", {
+        toastId: "session-expired",
+      });
+      // Xóa query param để tránh hiện lại khi nhấn F5
+      navigate("/registered", { replace: true });
+    }
+  }, [location, navigate]);
 
   // State quản lý UI và Dữ liệu
   const [activeTab, setActiveTab] = useState("login"); // 'login' hoặc 'register'

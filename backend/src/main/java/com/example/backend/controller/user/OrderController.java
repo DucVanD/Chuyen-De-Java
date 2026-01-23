@@ -10,6 +10,8 @@ import org.springframework.hateoas.CollectionModel;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -36,6 +38,13 @@ public class OrderController {
     @GetMapping("/{id}")
     public ResponseEntity<EntityModel<OrderDto>> getById(@PathVariable Integer id) {
         OrderDto dto = orderService.getById(id);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        // Security check: Only allow the owner or ADMIN/STAFF to view the order
+        if (!isAdminOrStaff(authentication) && !dto.getUserId().equals(getUserId(authentication))) {
+            return ResponseEntity.status(403).build();
+        }
+
         return ResponseEntity.ok(toModel(dto));
     }
 
@@ -57,6 +66,16 @@ public class OrderController {
     public ResponseEntity<?> cancel(
             @PathVariable Integer id,
             @RequestParam String reason) {
+        OrderDto dto = orderService.getById(id);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        // Security check: Only the owner can cancel their own order (unless it's an
+        // admin)
+        if (!isAdminOrStaff(authentication) && !dto.getUserId().equals(getUserId(authentication))) {
+            return ResponseEntity.status(403)
+                    .body(java.util.Map.of("status", false, "message", "Bạn không có quyền hủy đơn hàng này"));
+        }
+
         orderService.cancel(id, reason);
         return ResponseEntity.ok(java.util.Map.of("status", true, "message", "Hủy đơn hàng thành công"));
     }
@@ -105,6 +124,23 @@ public class OrderController {
         }
 
         return ResponseEntity.ok(result);
+    }
+
+    private boolean isAdminOrStaff(Authentication auth) {
+        if (auth == null || !auth.isAuthenticated())
+            return false;
+        return auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_STAFF"));
+    }
+
+    private Integer getUserId(Authentication auth) {
+        if (auth == null || !auth.isAuthenticated() || auth.getName().equals("anonymousUser"))
+            return null;
+        try {
+            return orderService.getUserIdByUsername(auth.getName());
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private EntityModel<OrderDto> toModel(OrderDto dto) {

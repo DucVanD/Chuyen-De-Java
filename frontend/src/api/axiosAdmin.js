@@ -29,7 +29,7 @@ axiosAdmin.interceptors.response.use(
         console.warn("👉 Redirecting to /admin/login because session is no longer valid.");
         localStorage.removeItem("adminUser");
         localStorage.removeItem("adminToken");
-        window.location.href = "/admin/login";
+        window.location.href = "/admin/login?expired=true";
         return Promise.reject(refreshError);
       }
     }
