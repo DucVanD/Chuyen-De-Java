@@ -25,14 +25,14 @@ axiosAdmin.interceptors.response.use(
         // Nếu refresh thành công, thực hiện lại request gốc
         return axiosAdmin(originalRequest);
       } catch (refreshError) {
-        console.error("Phiên quản trị hết hạn, vui lòng đăng nhập lại.");
+        console.error("❌ Session expired or refresh failed. Details:", refreshError.response?.status, refreshError.response?.data);
+        console.warn("👉 Redirecting to /admin/login because session is no longer valid.");
         localStorage.removeItem("adminUser");
         localStorage.removeItem("adminToken");
-        window.location.href = "/admin/login"; // Chuyển về trang đăng nhập admin
+        window.location.href = "/admin/login";
         return Promise.reject(refreshError);
       }
     }
-
     return Promise.reject(error);
   }
 );

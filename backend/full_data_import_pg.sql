@@ -78,56 +78,87 @@ INSERT INTO categories (id, name, slug, description, image, parent_id, status, c
 
 -- 7. PRODUCTS (Full 48 products)
 -- List abbreviated for token limit but providing representative set
-INSERT INTO products (id, name, slug, description, detail, sale_price, cost_price, qty, unit_label, sale_type, brand_id, category_id, status, created_at, updated_at, updated_by) VALUES
-(1, 'Cải thảo Đà Lạt', 'cai-thao-da-lat', 'Cải thảo tươi từ Đà Lạt', 'Chi tiết Cải thảo', 20000, 12000, 500, 'kg', 'WEIGHT', 7, 7, 1, NOW(), NOW(), 1),
-(2, 'Rau muống', 'rau-muong', 'Rau muống tươi xanh', 'Chi tiết Rau muống', 5000, 3000, 800, 'bó', 'UNIT', 7, 7, 1, NOW(), NOW(), 1),
-(3, 'Cà chua', 'ca-chua', 'Cà chua tươi đỏ', 'Chi tiết Cà chua', 25000, 15000, 600, 'kg', 'WEIGHT', 7, 7, 1, NOW(), NOW(), 1),
-(4, 'Xà lách xoong', 'xa-lach-xoong', 'Xà lách xoong tươi', 'Chi tiết xà lách', 15000, 8000, 400, 'bó', 'UNIT', 7, 7, 1, NOW(), NOW(), 1),
--- Adding more products to cover all 48
-(5,'Cam sành','cam-sanh','Cam sành','Chi tiết cam',40000,25000,800,'kg','WEIGHT',7,8,1,NOW(),NOW(),1),
-(6,'Táo Fuji','tao-fuji','Táo Fuji','Chi tiết táo',120000,80000,500,'kg','WEIGHT',7,8,1,NOW(),NOW(),1),
-(7,'Chuối tiêu','chuoi-tieu','Chuối tiêu','Chi tiết chuối',25000,15000,1000,'nải','UNIT',7,8,1,NOW(),NOW(),1),
-(8,'Xoài cát Hòa Lộc','xoai-cat-hoa-loc','Xoài cát','Chi tiết xoài',60000,40000,600,'kg','WEIGHT',7,8,1,NOW(),NOW(),1),
-(9,'Thịt ba chỉ heo','thit-ba-chi-heo','Thịt ba chỉ','Chi tiết thịt',120000,80000,300,'kg','WEIGHT',8,9,1,NOW(),NOW(),1),
-(10,'Thịt nạc vai heo','thit-nac-vai-heo','Thịt nạc vai','Chi tiết thịt',130000,150000,19900,'kg','WEIGHT',8,9,1,NOW(),NOW(),1),
-(11,'Sườn non heo','suon-non-heo','Sườn non','Chi tiết sườn',150000,100000,250,'kg','WEIGHT',8,9,1,NOW(),NOW(),1),
-(12,'Cá rô phi','ca-ro-phi','Cá rô phi','Chi tiết cá',60000,40000,200,'kg','WEIGHT',7,10,1,NOW(),NOW(),1),
-(13,'Cá thu','ca-thu','Cá thu','Chi tiết cá',100000,70000,150,'kg','WEIGHT',7,10,1,NOW(),NOW(),1),
-(14,'Cá hồi Na Uy','ca-hoi-na-uy','Cá hồi','Chi tiết cá',350000,250000,100,'kg','WEIGHT',7,10,1,NOW(),NOW(),1),
-(15,'Gạo ST25','gao-st25','Gạo ST25','Chi tiết gạo',130000,90000,500,'túi','UNIT',7,11,1,NOW(),NOW(),1),
-(16,'Gạo Jasmine','gao-jasmine','Gạo Jasmine','Chi tiết gạo',85000,60000,800,'túi','UNIT',7,11,1,NOW(),NOW(),1),
-(17,'Gạo Nàng Hoa 9','gao-nang-hoa-9','Gạo Nàng Hoa','Chi tiết gạo',75000,50000,600,'túi','UNIT',7,11,1,NOW(),NOW(),1),
-(18,'Mì Shin Ramyun','mi-shin-ramyun','Mì cay','Chi tiết mì',18000,12000,1000,'gói','UNIT',13,12,1,NOW(),NOW(),1),
-(19,'Mì Chapagetti','mi-chapagetti','Mì Jjajang','Chi tiết mì',20000,13000,800,'gói','UNIT',13,12,1,NOW(),NOW(),1),
-(20,'Mì trứng khô','mi-trung-kho','Mì trứng','Chi tiết mì',25000,15000,600,'gói','UNIT',11,12,1,NOW(),NOW(),1),
-(21,'Coca-Cola lon 330ml','coca-cola-lon-330ml','Nước ngọt','Chi tiết nước',12000,8000,1500,'lon','UNIT',9,13,1,NOW(),NOW(),1),
-(22,'Pepsi lon 330ml','pepsi-lon-330ml','Nước ngọt','Chi tiết nước',12000,8000,1500,'lon','UNIT',10,13,1,NOW(),NOW(),1),
-(23,'Sprite lon 330ml','sprite-lon-330ml','Nước ngọt','Chi tiết nước',12000,8000,1500,'lon','UNIT',9,13,1,NOW(),NOW(),1),
-(24,'Fanta cam lon 330ml','fanta-cam-lon-330ml','Nước ngọt','Chi tiết nước',12000,8000,1200,'lon','UNIT',9,13,1,NOW(),NOW(),1),
-(25,'Nước khoáng Lavie 500ml','nuoc-khoang-lavie-500ml','Nước khoáng','Chi tiết nước',5000,3000,2000,'chai','UNIT',14,14,1,NOW(),NOW(),1),
-(26,'Nước tinh khiết Aquafina 500ml','nuoc-tinh-khiet-aquafina-500ml','Nước tinh khiết','Chi tiết nước',5000,3000,2000,'chai','UNIT',15,14,1,NOW(),NOW(),1),
-(27,'Nước khoáng Lavie 1.5L','nuoc-khoang-lavie-1-5l','Nước khoáng','Chi tiết nước',10000,6000,1000,'chai','UNIT',14,14,1,NOW(),NOW(),1),
-(28,'Sữa tươi Vinamilk 100% 1L','sua-tuoi-vinamilk-100-1l','Sữa tươi','Chi tiết sữa',35000,25000,600,'hộp','UNIT',1,15,1,NOW(),NOW(),1),
-(29,'Sữa tươi TH True Milk 1L','sua-tuoi-th-true-milk-1l','Sữa tươi','Chi tiết sữa',38000,28000,500,'hộp','UNIT',2,15,1,NOW(),NOW(),1),
-(30,'Sữa chua uống Vinamilk Probi','sua-chua-uong-vinamilk-probi','Sữa chua','Chi tiết sữa',25000,18000,800,'lốc','UNIT',1,15,1,NOW(),NOW(),1),
-(31,'Sữa bột Vinamilk ColosBaby Gold 800g','sua-bot-vinamilk-colosbaby-gold-800g','Sữa bột','Chi tiết sữa',280000,200000,300,'lon','UNIT',1,16,1,NOW(),NOW(),1),
-(32,'Sữa bột Nestlé NAN Optipro 800g','sua-bot-nestle-nan-optipro-800g','Sữa bột','Chi tiết sữa',350000,250000,250,'lon','UNIT',11,16,1,NOW(),NOW(),1),
-(33,'Sữa bột Vinamilk Dielac Alpha Gold 900g','sua-bot-vinamilk-dielac-alpha-gold-900g','Sữa bột','Chi tiết sữa',250000,180000,400,'lon','UNIT',1,16,1,NOW(),NOW(),1),
-(34,'Bánh quy Cosy Marie','banh-quy-cosy-marie','Bánh quy','Chi tiết bánh',38000,25000,500,'hộp','UNIT',4,17,1,NOW(),NOW(),1),
-(35,'Bánh quy Oreo Original','banh-quy-oreo-original','Bánh quy','Chi tiết bánh',22000,15000,600,'gói','UNIT',12,17,1,NOW(),NOW(),1),
-(36,'Bánh quy Cosy Choco Chip','banh-quy-cosy-choco-chip','Bánh quy','Chi tiết bánh',30000,20000,400,'hộp','UNIT',4,17,1,NOW(),NOW(),1),
-(37,'Kẹo mềm Alpenliebe','keo-mem-alpenliebe','Kẹo mềm','Chi tiết kẹo',18000,12000,799,'túi','UNIT',4,18,1,NOW(),NOW(),1),
-(38,'Kẹo dẻo Haribo Goldbears','keo-deo-haribo-goldbears','Kẹo dẻo','Chi tiết kẹo',25000,15000,599,'túi','UNIT',12,18,1,NOW(),NOW(),1),
-(39,'Kẹo ngậm Halls','keo-ngam-halls','Kẹo ngậm','Chi tiết kẹo',12000,8000,699,'gói','UNIT',4,18,1,NOW(),NOW(),1),
-(40,'Snack khoai tây Pringles','snack-khoai-tay-pringles','Snack','Chi tiết snack',45000,30000,497,'lon','UNIT',12,19,1,NOW(),NOW(),1),
-(41,'Snack Oishi Potato','snack-oishi-potato','Snack','Chi tiết snack',8000,5000,1000,'gói','UNIT',12,19,1,NOW(),NOW(),1),
-(42,'Snack Swing lon 150g','snack-swing-lon-150g','Snack','Chi tiết snack',28000,18000,600,'lon','UNIT',12,19,1,NOW(),NOW(),1),
-(43,'Nước mắm Chinsu 500ml','nuoc-mam-chinsu-500ml','Nước mắm','Chi tiết mắm',25000,15000,800,'chai','UNIT',3,20,1,NOW(),NOW(),1),
-(44,'Nước mắm Nam Ngư 650ml','nuoc-mam-nam-ngu-650ml','Nước mắm','Chi tiết mắm',32000,20000,600,'chai','UNIT',3,20,1,NOW(),NOW(),1),
-(45,'Nước mắm Phú Quốc 500ml','nuoc-mam-phu-quoc-500ml','Nước mắm','Chi tiết mắm',50000,35000,400,'chai','UNIT',3,20,1,NOW(),NOW(),1),
-(46,'Dầu ăn Neptune Gold 1L','dau-an-neptune-gold-1l','Dầu ăn','Chi tiết dầu',50000,35000,599,'chai','UNIT',6,21,1,NOW(),NOW(),1),
-(47,'Dầu ăn Simply 1L','dau-an-simply-1l','Dầu ăn','Chi tiết dầu',45000,30000,700,'chai','UNIT',6,21,1,NOW(),NOW(),1),
-(48,'Dầu olive Extra Virgin 500ml','dau-olive-extra-virgin-500ml','Dầu olive','Chi tiết dầu',180000,120000,200,'chai','UNIT',6,21,1,NOW(),NOW(),1);
+-- 7. PRODUCTS (Total 148 products: 48 fixed + 100 random)
+INSERT INTO products (id, name, slug, description, detail, sale_price, cost_price, discount_price, qty, unit_label, sale_type, brand_id, category_id, status, created_at, updated_at, updated_by, image, image_public_id) VALUES
+(1, 'Cải thảo Đà Lạt', 'cai-thao-da-lat', 'Cải thảo tươi từ Đà Lạt', 'Chi tiết Cải thảo', 20000, 12000, 18000, 500, 'kg', 'WEIGHT', 7, 7, 1, NOW(), NOW(), 1, NULL, NULL),
+(2, 'Rau muống', 'rau-muong', 'Rau muống tươi xanh', 'Chi tiết Rau muống', 5000, 3000, 4500, 800, 'bó', 'UNIT', 7, 7, 1, NOW(), NOW(), 1, NULL, NULL),
+(3, 'Cà chua', 'ca-chua', 'Cà chua tươi đỏ', 'Chi tiết Cà chua', 25000, 15000, 22000, 600, 'kg', 'WEIGHT', 7, 7, 1, NOW(), NOW(), 1, NULL, NULL),
+(4, 'Xà lách xoong', 'xa-lach-xoong', 'Xà lách xoong tươi', 'Chi tiết xà lách', 15000, 8000, 13000, 400, 'bó', 'UNIT', 7, 7, 1, NOW(), NOW(), 1, NULL, NULL),
+(5,'Cam sành','cam-sanh','Cam sành','Chi tiết cam',40000,25000,36000,800,'kg','WEIGHT',7,8,1,NOW(),NOW(),1, NULL, NULL),
+(6,'Táo Fuji','tao-fuji','Táo Fuji','Chi tiết táo',120000,80000,110000,500,'kg','WEIGHT',7,8,1,NOW(),NOW(),1, NULL, NULL),
+(7,'Chuối tiêu','chuoi-tieu','Chuối tiêu','Chi tiết chuối',25000,15000,22000,1000,'nải','UNIT',7,8,1,NOW(),NOW(),1, NULL, NULL),
+(8,'Xoài cát Hòa Lộc','xoai-cat-hoa-loc','Xoài cát','Chi tiết xoài',60000,40000,55000,600,'kg','WEIGHT',7,8,1,NOW(),NOW(),1, NULL, NULL),
+(9,'Thịt ba chỉ heo','thit-ba-chi-heo','Thịt ba chỉ','Chi tiết thịt',120000,80000,110000,300,'kg','WEIGHT',8,9,1,NOW(),NOW(),1, NULL, NULL),
+(10,'Thịt nạc vai heo','thit-nac-vai-heo','Thịt nạc vai','Chi tiết thịt',130000,150000,120000,19900,'kg','WEIGHT',8,9,1,NOW(),NOW(),1, NULL, NULL),
+(11,'Sườn non heo','suon-non-heo','Sườn non','Chi tiết sườn',150000,100000,140000,250,'kg','WEIGHT',8,9,1,NOW(),NOW(),1, NULL, NULL),
+(12,'Cá rô phi','ca-ro-phi','Cá rô phi','Chi tiết cá',60000,40000,55000,200,'kg','WEIGHT',7,10,1,NOW(),NOW(),1, NULL, NULL),
+(13,'Cá thu','ca-thu','Cá thu','Chi tiết cá',100000,70000,90000,150,'kg','WEIGHT',7,10,1,NOW(),NOW(),1, NULL, NULL),
+(14,'Cá hồi Na Uy','ca-hoi-na-uy','Cá hồi','Chi tiết cá',350000,250000,320000,100,'kg','WEIGHT',7,10,1,NOW(),NOW(),1, NULL, NULL),
+(15,'Gạo ST25','gao-st25','Gạo ST25','Chi tiết gạo',130000,90000,120000,500,'túi','UNIT',7,11,1,NOW(),NOW(),1, NULL, NULL),
+(16,'Gạo Jasmine','gao-jasmine','Gạo Jasmine','Chi tiết gạo',85000,60000,75000,800,'túi','UNIT',7,11,1,NOW(),NOW(),1, NULL, NULL),
+(17,'Gạo Nàng Hoa 9','gao-nang-hoa-9','Gạo Nàng Hoa','Chi tiết gạo',75000,50000,65000,600,'túi','UNIT',7,11,1,NOW(),NOW(),1, NULL, NULL),
+(18,'Mì Shin Ramyun','mi-shin-ramyun','Mì cay','Chi tiết mì',18000,12000,16000,1000,'gói','UNIT',13,12,1,NOW(),NOW(),1, NULL, NULL),
+(19,'Mì Chapagetti','mi-chapagetti','Mì Jjajang','Chi tiết mì',20000,13000,18000,800,'gói','UNIT',13,12,1,NOW(),NOW(),1, NULL, NULL),
+(20,'Mì trứng khô','mi-trung-kho','Mì trứng','Chi tiết mì',25000,15000,22000,600,'gói','UNIT',11,12,1,NOW(),NOW(),1, NULL, NULL),
+(21,'Coca-Cola lon 330ml','coca-cola-lon-330ml','Nước ngọt','Chi tiết nước',12000,8000,11000,1500,'lon','UNIT',9,13,1,NOW(),NOW(),1, NULL, NULL),
+(22,'Pepsi lon 330ml','pepsi-lon-330ml','Nước ngọt','Chi tiết nước',12000,8000,11000,1500,'lon','UNIT',10,13,1,NOW(),NOW(),1, NULL, NULL),
+(23,'Sprite lon 330ml','sprite-lon-330ml','Nước ngọt','Chi tiết nước',12000,8000,11000,1500,'lon','UNIT',9,13,1,NOW(),NOW(),1, NULL, NULL),
+(24,'Fanta cam lon 330ml','fanta-cam-lon-330ml','Nước ngọt','Chi tiết nước',12000,8000,11000,1200,'lon','UNIT',9,13,1,NOW(),NOW(),1, NULL, NULL),
+(25,'Nước khoáng Lavie 500ml','nuoc-khoang-lavie-500ml','Nước khoáng','Chi tiết nước',5000,3000,4500,2000,'chai','UNIT',14,14,1,NOW(),NOW(),1, NULL, NULL),
+(26,'Nước tinh khiết Aquafina 500ml','nuoc-tinh-khiet-aquafina-500ml','Nước tinh khiết','Chi tiết nước',5000,3000,4500,2000,'chai','UNIT',15,14,1,NOW(),NOW(),1, NULL, NULL),
+(27,'Nước khoáng Lavie 1.5L','nuoc-khoang-lavie-1-5l','Nước khoáng','Chi tiết nước',10000,6000,9000,1000,'chai','UNIT',14,14,1,NOW(),NOW(),1, NULL, NULL),
+(28,'Sữa tươi Vinamilk 100% 1L','sua-tuoi-vinamilk-100-1l','Sữa tươi','Chi tiết sữa',35000,25000,32000,600,'hộp','UNIT',1,15,1,NOW(),NOW(),1, NULL, NULL),
+(29,'Sữa tươi TH True Milk 1L','sua-tuoi-th-true-milk-1l','Sữa tươi','Chi tiết sữa',38000,28000,35000,500,'hộp','UNIT',2,15,1,NOW(),NOW(),1, NULL, NULL),
+(30,'Sữa chua uống Vinamilk Probi','sua-chua-uong-vinamilk-probi','Sữa chua','Chi tiết sữa',25000,18000,23000,800,'lốc','UNIT',1,15,1,NOW(),NOW(),1, NULL, NULL),
+(31,'Sữa bột Vinamilk ColosBaby Gold 800g','sua-bot-vinamilk-colosbaby-gold-800g','Sữa bột','Chi tiết sữa',280000,200000,260000,300,'lon','UNIT',1,16,1,NOW(),NOW(),1, NULL, NULL),
+(32,'Sữa bột Nestlé NAN Optipro 800g','sua-bot-nestle-nan-optipro-800g','Sữa bột','Chi tiết sữa',350000,250000,320000,250,'lon','UNIT',11,16,1,NOW(),NOW(),1, NULL, NULL),
+(33,'Sữa bột Vinamilk Dielac Alpha Gold 900g','sua-bot-vinamilk-dielac-alpha-gold-900g','Sữa bột','Chi tiết sữa',250000,180000,230000,400,'lon','UNIT',1,16,1,NOW(),NOW(),1, NULL, NULL),
+(34,'Bánh quy Cosy Marie','banh-quy-cosy-marie','Bánh quy','Chi tiết bánh',38000,25000,35000,500,'hộp','UNIT',4,17,1,NOW(),NOW(),1, NULL, NULL),
+(35,'Bánh quy Oreo Original','banh-quy-oreo-original','Bánh quy','Chi tiết bánh',22000,15000,20000,600,'gói','UNIT',12,17,1,NOW(),NOW(),1, NULL, NULL),
+(36,'Bánh quy Cosy Choco Chip','banh-quy-cosy-choco-chip','Bánh quy','Chi tiết bánh',30000,20000,28000,400,'hộp','UNIT',4,17,1,NOW(),NOW(),1, NULL, NULL),
+(37,'Kẹo mềm Alpenliebe','keo-mem-alpenliebe','Kẹo mềm','Chi tiết kẹo',18000,12000,16000,799,'túi','UNIT',4,18,1,NOW(),NOW(),1, NULL, NULL),
+(38,'Kẹo dẻo Haribo Goldbears','keo-deo-haribo-goldbears','Kẹo dẻo','Chi tiết kẹo',25000,15000,22000,599,'túi','UNIT',12,18,1,NOW(),NOW(),1, NULL, NULL),
+(39,'Kẹo ngậm Halls','keo-ngam-halls','Kẹo ngậm','Chi tiết kẹo',12000,8000,11000,699,'gói','UNIT',4,18,1,NOW(),NOW(),1, NULL, NULL),
+(40,'Snack khoai tây Pringles','snack-khoai-tay-pringles','Snack','Chi tiết snack',45000,30000,42000,497,'lon','UNIT',12,19,1,NOW(),NOW(),1, NULL, NULL),
+(41,'Snack Oishi Potato','snack-oishi-potato','Snack','Chi tiết snack',8000,5000,7000,1000,'gói','UNIT',12,19,1,NOW(),NOW(),1, NULL, NULL),
+(42,'Snack Swing lon 150g','snack-swing-lon-150g','Snack','Chi tiết snack',28000,18000,25000,600,'lon','UNIT',12,19,1,NOW(),NOW(),1, NULL, NULL),
+(43,'Nước mắm Chinsu 500ml','nuoc-mam-chinsu-500ml','Nước mắm','Chi tiết mắm',25000,15000,22000,800,'chai','UNIT',3,20,1,NOW(),NOW(),1, NULL, NULL),
+(44,'Nước mắm Nam Ngư 650ml','nuoc-mam-nam-ngu-650ml','Nước mắm','Chi tiết mắm',32000,20000,30000,600,'chai','UNIT',3,20,1,NOW(),NOW(),1, NULL, NULL),
+(45,'Nước mắm Phú Quốc 500ml','nuoc-mam-phu-quoc-500ml','Nước mắm','Chi tiết mắm',50000,35000,45000,400,'chai','UNIT',3,20,1,NOW(),NOW(),1, NULL, NULL),
+(46,'Dầu ăn Neptune Gold 1L','dau-an-neptune-gold-1l','Dầu ăn','Chi tiết dầu',50000,35000,48000,599,'chai','UNIT',6,21,1,NOW(),NOW(),1, NULL, NULL),
+(47,'Dầu ăn Simply 1L','dau-an-simply-1l','Dầu ăn','Chi tiết dầu',45000,30000,42000,700,'chai','UNIT',6,21,1,NOW(),NOW(),1, NULL, NULL),
+(48,'Dầu olive Extra Virgin 500ml','dau-olive-extra-virgin-500ml','Dầu olive','Chi tiết dầu',180000,120000,170000,200,'chai','UNIT',6,21,1,NOW(),NOW(),1, NULL, NULL);
+
+-- Generate 100 Random Products
+DO $$
+DECLARE
+    i INT;
+    v_name TEXT;
+    v_slug TEXT;
+    v_sale_price NUMERIC;
+    v_cost_price NUMERIC;
+    v_type TEXT[] := ARRAY['Trái cây', 'Rau củ', 'Thịt', 'Cá', 'Sữa', 'Bánh', 'Kẹo', 'Nước', 'Gạo', 'Gia vị'];
+    v_adj TEXT[] := ARRAY['tươi', 'sạch', 'cao cấp', 'hữu cơ', 'ngon', 'loại 1', 'Đà Lạt', 'nhập khẩu'];
+    v_units TEXT[] := ARRAY['kg', 'bó', 'gói', 'chai', 'lon', 'hộp'];
+    v_cats INT[] := ARRAY[7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
+BEGIN
+    FOR i IN 49..148 LOOP
+        v_name := v_type[floor(random() * 10 + 1)] || ' ' || v_adj[floor(random() * 8 + 1)] || ' ' || i;
+        v_slug := lower(regexp_replace(v_name, '\s+', '-', 'g')) || '-' || i;
+        v_sale_price := floor(random() * (300000 - 10000 + 1) + 10000);
+        v_cost_price := v_sale_price * 0.7;
+        
+        INSERT INTO products (id, name, slug, description, detail, sale_price, cost_price, discount_price, qty, unit_label, sale_type, brand_id, category_id, status, created_at, updated_at, updated_by, image, image_public_id)
+        VALUES (
+            i, v_name, v_slug, 'Mô tả ' || v_name, 'Chi tiết ' || v_name, 
+            v_sale_price, v_cost_price, v_sale_price * 0.85, 
+            floor(random() * 500 + 10), v_units[floor(random() * 6 + 1)], 
+            CASE WHEN i % 3 = 0 THEN 'WEIGHT' ELSE 'UNIT' END,
+            floor(random() * 15 + 1), v_cats[floor(random() * 15 + 1)], 
+            1, NOW(), NOW(), 1, NULL, NULL
+        );
+    END LOOP;
+END $$;
 
 -- 8. POSTS
 INSERT INTO posts (id, content, created_at, deleted_at, description, image, image_public_id, post_type, slug, status, title, updated_at, topic_id) VALUES

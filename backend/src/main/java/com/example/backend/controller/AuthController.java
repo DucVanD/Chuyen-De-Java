@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 
 @RestController
@@ -20,7 +21,7 @@ public class AuthController {
         private final AuthService authService;
 
         @PostMapping("/login")
-        public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDto req) {
+        public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDto req, HttpServletRequest request) {
                 Map<String, Object> result = authService.login(req);
                 String accessToken = (String) result.get("accessToken");
                 String refreshToken = (String) result.get("refreshToken");
@@ -29,8 +30,8 @@ public class AuthController {
                         return ResponseEntity.status(500).body(Map.of("message", "Token generation failed"));
                 }
 
-                ResponseCookie accessCookie = createCookie("accessToken", accessToken, 15 * 60);
-                ResponseCookie refreshCookie = createCookie("refreshToken", refreshToken, 7 * 24 * 60 * 60);
+                ResponseCookie accessCookie = createCookie(request, "accessToken", accessToken, 15 * 60);
+                ResponseCookie refreshCookie = createCookie(request, "refreshToken", refreshToken, 7 * 24 * 60 * 60);
 
                 return ResponseEntity.ok()
                                 .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
@@ -39,7 +40,9 @@ public class AuthController {
         }
 
         @PostMapping("/refresh")
-        public ResponseEntity<?> refresh(@CookieValue(name = "refreshToken", required = false) String refreshToken) {
+        public ResponseEntity<?> refresh(
+                        @CookieValue(name = "refreshToken", required = false) String refreshToken,
+                        HttpServletRequest request) {
                 if (refreshToken == null) {
                         return ResponseEntity.status(401).body(Map.of("message", "Refresh token missing"));
                 }
@@ -52,8 +55,8 @@ public class AuthController {
                         return ResponseEntity.status(500).body(Map.of("message", "Token generation failed"));
                 }
 
-                ResponseCookie accessCookie = createCookie("accessToken", newAccessToken, 15 * 60);
-                ResponseCookie refreshCookie = createCookie("refreshToken", newRefreshToken, 7 * 24 * 60 * 60);
+                ResponseCookie accessCookie = createCookie(request, "accessToken", newAccessToken, 15 * 60);
+                ResponseCookie refreshCookie = createCookie(request, "refreshToken", newRefreshToken, 7 * 24 * 60 * 60);
 
                 return ResponseEntity.ok()
                                 .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
@@ -62,9 +65,9 @@ public class AuthController {
         }
 
         @PostMapping("/logout")
-        public ResponseEntity<?> logout() {
-                ResponseCookie accessCookie = createCookie("accessToken", "", 0);
-                ResponseCookie refreshCookie = createCookie("refreshToken", "", 0);
+        public ResponseEntity<?> logout(HttpServletRequest request) {
+                ResponseCookie accessCookie = createCookie(request, "accessToken", "", 0);
+                ResponseCookie refreshCookie = createCookie(request, "refreshToken", "", 0);
 
                 return ResponseEntity.ok()
                                 .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
@@ -79,13 +82,16 @@ public class AuthController {
                                 "user", authService.register(req)));
         }
 
-        private ResponseCookie createCookie(String name, String value, long maxAge) {
+        private ResponseCookie createCookie(HttpServletRequest request, String name, String value, long maxAge) {
+                // Kiểm tra nếu là HTTPS (trực tiếp hoặc qua Proxy như Render/Vercel)
+                boolean isSecure = request.isSecure() || "https".equals(request.getHeader("X-Forwarded-Proto"));
+
                 return ResponseCookie.from(name, value)
                                 .httpOnly(true)
-                                .secure(false) // Changed back to false for local HTTP compatibility
+                                .secure(isSecure)
                                 .path("/")
                                 .maxAge(maxAge)
-                                .sameSite("Lax") // Changed back to Lax
+                                .sameSite(isSecure ? "None" : "Lax")
                                 .build();
         }
 
