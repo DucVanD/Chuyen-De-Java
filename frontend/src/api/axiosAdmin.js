@@ -26,6 +26,9 @@ axiosAdmin.interceptors.response.use(
         return axiosAdmin(originalRequest);
       } catch (refreshError) {
         console.error("Phiên quản trị hết hạn, vui lòng đăng nhập lại.");
+        localStorage.removeItem("adminUser");
+        localStorage.removeItem("adminToken");
+        window.location.href = "/admin/login"; // Chuyển về trang đăng nhập admin
         return Promise.reject(refreshError);
       }
     }

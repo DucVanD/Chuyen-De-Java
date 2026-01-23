@@ -1,4 +1,4 @@
-import axiosAdmin from "../axios";
+import axiosAdmin from "../axiosAdmin";
 
 const apiStockAdmin = {
     // Lấy tất cả (không phân trang) - Dùng cho các mục đích đặc biệt
