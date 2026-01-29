@@ -83,7 +83,7 @@ public class SecurityConfig {
                                                         response.setContentType("application/json;charset=UTF-8");
                                                         response.setStatus(403);
                                                         response.getWriter().write(
-                                                                        "{\"status\": 403, \"error\": \"Truy cập bị từ chối\", \"message\": \"Bạn không có quyền truy cập vào mục này!\"}");
+                                                                        "{\"status\": 403, \"error\": \"Truy cập bị từ chối\", \"message\": \"DEBUG: Bạn không có quyền Admin/Staff (Vui lòng đăng nhập lại account Admin)!\"}");
                                                 })
                                                 // Lỗi 401: Token sai, hết hạn hoặc chưa đăng nhập
                                                 .authenticationEntryPoint((request, response, authException) -> {

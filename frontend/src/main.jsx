@@ -6,11 +6,15 @@ import { AuthProvider } from "./context/AuthContext.jsx";
 import React from 'react';
 
 
-createRoot(document.getElementById('root')).render(
+import { Provider } from 'react-redux';
+import store from './Redux/store';
 
+createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <AuthProvider>
-      <App />
-    </AuthProvider>
+    <Provider store={store}>
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    </Provider>
   </StrictMode>,
 )

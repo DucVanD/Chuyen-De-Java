@@ -81,9 +81,16 @@ public class GlobalExceptionHandler {
         // 4. Xử lý tất cả các lỗi khác
         @ExceptionHandler(Exception.class)
         public ResponseEntity<java.util.Map<String, Object>> handleGeneralException(Exception e) {
+                e.printStackTrace();
+                java.io.StringWriter sw = new java.io.StringWriter();
+                java.io.PrintWriter pw = new java.io.PrintWriter(sw);
+                e.printStackTrace(pw);
+                String stackTrace = sw.toString();
+
                 return ResponseEntity.status(500).body(java.util.Map.of(
                                 "status", 500,
                                 "error", "Lỗi hệ thống",
-                                "message", "Đã có lỗi xảy ra: " + e.getMessage()));
+                                "message", "Đã có lỗi xảy ra: " + e.getMessage(),
+                                "debug", stackTrace.substring(0, Math.min(stackTrace.length(), 1000))));
         }
 }

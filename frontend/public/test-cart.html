@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cart Sync Test Tool</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            margin: 25px 0;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        .test-section h2 {
+            color: #34495e;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .status.pass { background: #2ecc71; color: white; }
+        .status.fail { background: #e74c3c; color: white; }
+        .status.warning { background: #f39c12; color: white; }
+        .result {
+            margin: 10px 0;
+            padding: 15px;
+            background: white;
+            border-left: 4px solid #3498db;
+            border-radius: 4px;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+        .code {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            margin: 10px 0;
+        }
+        .instruction {
+            background: #e8f4f8;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Cart Synchronization Test Tool</h1>
+        <p>Công cụ kiểm tra tự động đồng bộ giỏ hàng giữa Frontend và Backend</p>
+
+        <!-- Test 1: Authentication -->
+        <div class="test-section">
+            <h2>Test 1: Kiểm Tra Đăng Nhập</h2>
+            <button onclick="checkAuth()">▶ Chạy Test</button>
+            <div id="auth-result"></div>
+        </div>
+
+        <!-- Test 2: LocalStorage Cart -->
+        <div class="test-section">
+            <h2>Test 2: Kiểm Tra Giỏ Hàng LocalStorage</h2>
+            <button onclick="checkLocalCart()">▶ Chạy Test</button>
+            <div id="localcart-result"></div>
+        </div>
+
+        <!-- Test 3: Backend Connection -->
+        <div class="test-section">
+            <h2>Test 3: Kiểm Tra Kết Nối Backend</h2>
+            <button onclick="testBackend()">▶ Chạy Test</button>
+            <div id="backend-result"></div>
+        </div>
+
+        <!-- Test 4: Admin API -->
+        <div class="test-section">
+            <h2>Test 4: Kiểm Tra Admin API (Cần Token Admin)</h2>
+            <button onclick="testAdminAPI()">▶ Chạy Test</button>
+            <div id="admin-result"></div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="instruction">
+            <strong>📋 Hướng dẫn sử dụng:</strong><br>
+            1. Mở file này trong trình duyệt sau khi frontend đang chạy<br>
+            2. Đảm bảo bạn đang ở trang web (http://localhost:5173)<br>
+            3. Chạy từng test theo thứ tự<br>
+            4. Nếu Test 1 FAIL → Bạn cần đăng nhập trước!<br>
+            5. Nếu Test 2 có items nhưng Test 4 không có → Bạn thêm sản phẩm khi chưa đăng nhập!
+        </div>
+    </div>
+
+    <script>
+        function checkAuth() {
+            const result = document.getElementById('auth-result');
+            const token = localStorage.getItem('token');
+            
+            if (token) {
+                result.innerHTML = `
+                    <div class="result">
+                        <span class="status pass">✓ PASS</span>
+                        <p><strong>Trạng thái:</strong> Đã đăng nhập</p>
+                        <p><strong>Token:</strong> ${token.substring(0, 50)}...</p>
+                        <p style="color: #27ae60;">✓ Giỏ hàng sẽ đồng bộ với backend khi thêm sản phẩm</p>
+                    </div>
+                `;
+            } else {
+                result.innerHTML = `
+                    <div class="result">
+                        <span class="status fail">✗ FAIL</span>
+                        <p><strong>Trạng thái:</strong> CHƯA đăng nhập</p>
+                        <p style="color: #e74c3c;">✗ Giỏ hàng CHỈ lưu trong localStorage</p>
+                        <p style="color: #e74c3c;">✗ Admin KHÔNG thể xem giỏ hàng của bạn</p>
+                        <button onclick="window.location.href='/registered'">Đi tới trang đăng nhập</button>
+                    </div>
+                `;
+            }
+        }
+
+        function checkLocalCart() {
+            const result = document.getElementById('localcart-result');
+            const cartItems = localStorage.getItem('cartItems');
+            
+            if (cartItems) {
+                const items = JSON.parse(cartItems);
+                const itemsList = items.map(item => `
+                    <li>${item.name} (x${item.qty}) - ${(item.discountPrice || item.salePrice).toLocaleString()}₫</li>
+                `).join('');
+                
+                result.innerHTML = `
+                    <div class="result">
+                        <span class="status pass">✓ PASS</span>
+                        <p><strong>Số lượng sản phẩm:</strong> ${items.length}</p>
+                        <ul>${itemsList}</ul>
+                        ${!localStorage.getItem('token') ? 
+                            '<p style="color: #f39c12;">⚠ Cảnh báo: Bạn chưa đăng nhập! Những sản phẩm này CHỈ tồn tại trong trình duyệt.</p>' : 
+                            '<p style="color: #27ae60;">✓ Nếu bạn vừa thêm những sản phẩm này sau khi đăng nhập, chúng đã được đồng bộ lên server.</p>'
+                        }
+                    </div>
+                `;
+            } else {
+                result.innerHTML = `
+                    <div class="result">
+                        <span class="status warning">⚠ WARNING</span>
+                        <p>LocalStorage không có sản phẩm nào</p>
+                        <p>Khả năng: Giỏ hàng trống HOẶC đã được đồng bộ với backend</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testBackend() {
+            const result = document.getElementById('backend-result');
+            result.innerHTML = '<p>Đang kiểm tra...</p>';
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/products', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    result.innerHTML = `
+                        <div class="result">
+                            <span class="status pass">✓ PASS</span>
+                            <p><strong>Backend Status:</strong> Running</p>
+                            <p><strong>URL:</strong> http://localhost:8080</p>
+                            <p style="color: #27ae60;">✓ Backend đang hoạt động bình thường</p>
+                        </div>
+                    `;
+                } else {
+                    throw new Error('Backend responded with error');
+                }
+            } catch (error) {
+                result.innerHTML = `
+                    <div class="result">
+                        <span class="status fail">✗ FAIL</span>
+                        <p><strong>Lỗi:</strong> Không kết nối được backend</p>
+                        <p style="color: #e74c3c;">Vui lòng kiểm tra backend có đang chạy không (port 8080)</p>
+                        <div class="code">Error: ${error.message}</div>
+                    </div>
+                `;
+            }
+        }
+
+        async function testAdminAPI() {
+            const result = document.getElementById('admin-result');
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                result.innerHTML = `
+                    <div class="result">
+                        <span class="status fail">✗ FAIL</span>
+                        <p>Bạn cần đăng nhập để chạy test này</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            result.innerHTML = '<p>Đang kiểm tra admin API...</p>';
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/admin/carts', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const carts = await response.json();
+                    result.innerHTML = `
+                        <div class="result">
+                            <span class="status pass">✓ PASS</span>
+                            <p><strong>Số lượng giỏ hàng trong database:</strong> ${carts.length}</p>
+                            ${carts.length > 0 ? `
+                                <p><strong>Chi tiết:</strong></p>
+                                <ul>
+                                    ${carts.map(cart => `
+                                        <li>Cart ID: ${cart.id} - User: ${cart.user.name} - Items: ${cart.items.length}</li>
+                                    `).join('')}
+                                </ul>
+                                <p style="color: #27ae60;">✓ Giỏ hàng đã được đồng bộ thành công!</p>
+                            ` : `
+                                <p style="color: #f39c12;">⚠ Chưa có giỏ hàng nào trong database</p>
+                                <p>Nguyên nhân: Chưa có user nào đăng nhập và thêm sản phẩm</p>
+                            `}
+                        </div>
+                    `;
+                } else if (response.status === 401) {
+                    result.innerHTML = `
+                        <div class="result">
+                            <span class="status fail">✗ FAIL</span>
+                            <p><strong>Lỗi:</strong> Unauthorized (401)</p>
+                            <p style="color: #e74c3c;">Token không hợp lệ hoặc bạn không phải Admin</p>
+                            <p>Vui lòng đăng nhập bằng tài khoản Admin</p>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                result.innerHTML = `
+                    <div class="result">
+                        <span class="status fail">✗ FAIL</span>
+                        <p><strong>Lỗi:</strong> ${error.message}</p>
+                        <p style="color: #e74c3c;">Không thể gọi Admin API</p>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

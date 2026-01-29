@@ -41,11 +41,11 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY) // Lazy để tối ưu hiệu năng
+    @ManyToOne(fetch = FetchType.EAGER) // EAGER để tránh LazyInitializationException khi serialize JSON
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
-    @ManyToOne(fetch = FetchType.LAZY) // Lazy để tối ưu hiệu năng
+    @ManyToOne(fetch = FetchType.EAGER) // EAGER để tránh LazyInitializationException khi serialize JSON
     @JoinColumn(name = "brand_id", nullable = false)
     private Brand brand;
 

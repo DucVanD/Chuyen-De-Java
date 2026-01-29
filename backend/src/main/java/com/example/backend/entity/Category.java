@@ -24,10 +24,12 @@ public class Category {
     // Map parent_id (Đa cấp)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id") // Tự động là nullable = true mặc định
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Category parent;
 
     // (Tùy chọn) Để lấy danh sách con nếu cần
     @OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @Builder.Default
     private List<Category> children = new ArrayList<>();
 

@@ -75,6 +75,10 @@ import ListContact from "../pages/admin/Contact/ListContact";
 // Customer
 import ListCustomer from "../pages/admin/Customer/ListCustomer";
 
+// Cart
+import ListCart from "../pages/admin/Cart/ListCart";
+import CartDetail from "../pages/admin/Cart/CartDetail";
+
 
 // định nghĩa các route cho trang admin
 const AdminRoute = [
@@ -150,6 +154,10 @@ const AdminRoute = [
 
   // Customer
   { path: "customers", component: ListCustomer, role: "ADMIN" },
+
+  // Cart
+  { path: "carts", component: ListCart, role: "ADMIN" },
+  { path: "cart/detail/:id", component: CartDetail, role: "ADMIN" },
 ];
 
 export default AdminRoute;

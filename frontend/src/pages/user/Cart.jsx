@@ -38,7 +38,7 @@ const Cart = () => {
 
   // --- Logic Xử lý ---
 
-  const changeQuantity = (id, qty, maxQty) => {
+  const changeQuantity = (id, qty, maxQty, cartItemId) => {
     if (qty < 1) qty = 1;
     if (qty > maxQty) {
       qty = maxQty;
@@ -47,11 +47,11 @@ const Cart = () => {
         autoClose: 1000,
       });
     }
-    dispatch(updateQuantity({ id, qty }));
+    dispatch(updateQuantity({ id, qty, cartItemId }));
   };
 
-  const removeItem = (id) => {
-    dispatch(removeFromCart(id));
+  const removeItem = (id, cartItemId) => {
+    dispatch(removeFromCart({ id, cartItemId }));
   };
 
   const clearAllCart = () => {
@@ -274,7 +274,7 @@ const Cart = () => {
                       <div className="col-span-2 flex justify-center">
                         <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden h-9">
                           <button
-                            onClick={() => changeQuantity(item.id, item.qty - 1, maxAvailable)}
+                            onClick={() => changeQuantity(item.id, item.qty - 1, maxAvailable, item.cartItemId)}
                             className="px-2 h-full hover:bg-gray-100 transition flex items-center"
                           >
                             <FaMinus className="text-xs" />
@@ -282,13 +282,13 @@ const Cart = () => {
                           <input
                             type="number"
                             value={item.qty}
-                            onChange={(e) => changeQuantity(item.id, parseInt(e.target.value) || 1, maxAvailable)}
+                            onChange={(e) => changeQuantity(item.id, parseInt(e.target.value) || 1, maxAvailable, item.cartItemId)}
                             className="w-10 text-center border-x border-gray-200 focus:outline-none h-full text-sm font-bold"
                             min="1"
                             max={maxAvailable}
                           />
                           <button
-                            onClick={() => changeQuantity(item.id, item.qty + 1, maxAvailable)}
+                            onClick={() => changeQuantity(item.id, item.qty + 1, maxAvailable, item.cartItemId)}
                             className="px-2 h-full hover:bg-gray-100 transition flex items-center"
                           >
                             <FaPlus className="text-xs" />
@@ -309,7 +309,7 @@ const Cart = () => {
                       {/* Cột: Xóa */}
                       <div className="col-span-1 flex justify-center">
                         <button
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => removeItem(item.id, item.cartItemId)}
                           className="text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-full transition-all"
                         >
                           <FaTrash />
@@ -442,7 +442,7 @@ const Cart = () => {
           </div>
         ))}
       </section>
-    </div>
+    </div >
   );
 };
 

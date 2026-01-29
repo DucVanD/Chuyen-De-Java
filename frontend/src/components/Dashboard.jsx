@@ -95,17 +95,17 @@ const Dashboard = () => {
                         Danh mục
                       </Link>
                     </li>
-                      {isAdmin && (
-                    <li>
-                      <Link
-                        to="brands"
-                        className="flex items-center text-[15px] px-4 py-2.5 rounded-md hover:bg-gray-700 font-medium"
-                      >
-                        <i className="fas fa-copyright mr-3 text-indigo-400"></i>
-                        Thương hiệu
-                      </Link>
-                    </li>
-                      )}          
+                    {isAdmin && (
+                      <li>
+                        <Link
+                          to="brands"
+                          className="flex items-center text-[15px] px-4 py-2.5 rounded-md hover:bg-gray-700 font-medium"
+                        >
+                          <i className="fas fa-copyright mr-3 text-indigo-400"></i>
+                          Thương hiệu
+                        </Link>
+                      </li>
+                    )}
                   </ul>
                 </div>
 
@@ -224,6 +224,15 @@ const Dashboard = () => {
                       >
                         <i className="fas fa-shopping-cart mr-3 text-indigo-400"></i>
                         Đơn hàng
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/admin/carts"
+                        className="flex items-center text-[15px] px-4 py-2.5 rounded-md hover:bg-gray-700 font-medium"
+                      >
+                        <i className="fas fa-shopping-basket mr-3 text-indigo-400"></i>
+                        Giỏ hàng
                       </Link>
                     </li>
                     <li>
