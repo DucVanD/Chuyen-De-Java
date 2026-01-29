@@ -3,6 +3,7 @@ package com.example.backend.service.impl;
 import com.example.backend.config.CloudinaryService;
 import com.example.backend.dto.BrandDto;
 import com.example.backend.entity.Brand;
+import com.example.backend.exception.BusinessException;
 import com.example.backend.mapper.BrandMapper;
 import com.example.backend.repository.BrandRepository;
 import com.example.backend.service.BrandService;
@@ -40,7 +41,7 @@ public class BrandServiceImpl implements BrandService {
     @Override
     public BrandDto getById(Integer id) {
         Brand brand = brandRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Brand not found"));
+                .orElseThrow(() -> new BusinessException("Không tìm thấy thương hiệu"));
         return BrandMapper.toDto(brand);
     }
 
@@ -60,7 +61,7 @@ public class BrandServiceImpl implements BrandService {
     @Override
     public BrandDto update(Integer id, BrandDto dto) {
         Brand brand = brandRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Brand not found"));
+                .orElseThrow(() -> new BusinessException("Không tìm thấy thương hiệu"));
 
         brand.setName(dto.getName());
         brand.setDescription(dto.getDescription());
@@ -102,12 +103,12 @@ public class BrandServiceImpl implements BrandService {
     @Transactional
     public void delete(Integer id) {
         Brand brand = brandRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Brand not found"));
+                .orElseThrow(() -> new BusinessException("Không tìm thấy thương hiệu"));
 
         // ✅ VALIDATE: Không được xóa nếu có sản phẩm
         long productCount = productRepository.countByBrandId(id);
         if (productCount > 0) {
-            throw new IllegalStateException(
+            throw new BusinessException(
                     "Không thể xóa thương hiệu đang có " + productCount + " sản phẩm. " +
                             "Vui lòng chuyển sản phẩm sang thương hiệu khác trước.");
         }

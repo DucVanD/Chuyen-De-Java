@@ -44,12 +44,8 @@ public class AdminBrandController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> delete(@PathVariable Integer id) {
-        try {
-            brandService.delete(id);
-            return ResponseEntity.ok().body("Xóa thương hiệu thành công");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Lỗi: " + e.getMessage()));
-        }
+    public ResponseEntity<Map<String, String>> delete(@PathVariable Integer id) {
+        brandService.delete(id);
+        return ResponseEntity.ok(Map.of("message", "Xóa thương hiệu thành công"));
     }
 }

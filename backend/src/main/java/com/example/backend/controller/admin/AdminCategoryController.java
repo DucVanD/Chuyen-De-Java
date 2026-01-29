@@ -62,16 +62,8 @@ public class AdminCategoryController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> delete(@PathVariable Integer id) {
-        try {
-            categoryService.delete(id);
-            return ResponseEntity.ok().body("Xóa danh mục thành công");
-        } catch (IllegalStateException e) {
-            // Validation errors (có sản phẩm, có danh mục con)
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
-        } catch (Exception e) {
-            // Other errors
-            return ResponseEntity.badRequest().body(Map.of("message", "Lỗi: " + e.getMessage()));
-        }
+    public ResponseEntity<Map<String, String>> delete(@PathVariable Integer id) {
+        categoryService.delete(id);
+        return ResponseEntity.ok(Map.of("message", "Xóa danh mục thành công"));
     }
 }

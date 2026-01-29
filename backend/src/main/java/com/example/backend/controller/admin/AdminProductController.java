@@ -102,16 +102,10 @@ public class AdminProductController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, String>> delete(@PathVariable Integer id) {
-        try {
-            productService.delete(id);
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "Xóa sản phẩm thành công");
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, String> response = new HashMap<>();
-            response.put("message", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
+        productService.delete(id);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Xóa sản phẩm thành công");
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/toggle-status/{id}")

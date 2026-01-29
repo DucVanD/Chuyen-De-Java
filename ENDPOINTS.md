@@ -213,8 +213,3 @@ This file enumerates backend HTTP endpoints (method + path) found under `backend
 - GET /api/admin/stock-movements/last-supplier/{productId}
 - GET /api/admin/stock-movements/by-type/{type}
 
----
-
-If you want I can:
-- Expand each endpoint with parameter and request/response DTO details, or
-- Generate `FRONTEND_API_MAP.md` linking frontend pages to the APIs they call.

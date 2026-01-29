@@ -82,4 +82,3 @@ Generated: 2026-01-29
 
 ---
 
-If you want the exhaustive endpoint list or the frontend→API mapping, reply "Endpoints" or "Mapping" and I’ll generate it and add to `FEATURES.md`.
