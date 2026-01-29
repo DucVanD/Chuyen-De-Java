@@ -31,18 +31,21 @@ public class ProductServiceImpl implements ProductService {
     private final BrandRepository brandRepository;
     private final CloudinaryService cloudinaryService;
     private final com.example.backend.repository.OrderDetailRepository orderDetailRepository;
+    private final com.example.backend.repository.StockMovementRepository stockMovementRepository;
 
     public ProductServiceImpl(
             ProductRepository productRepository,
             CategoryRepository categoryRepository,
             BrandRepository brandRepository,
             CloudinaryService cloudinaryService,
-            com.example.backend.repository.OrderDetailRepository orderDetailRepository) {
+            com.example.backend.repository.OrderDetailRepository orderDetailRepository,
+            com.example.backend.repository.StockMovementRepository stockMovementRepository) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.brandRepository = brandRepository;
         this.cloudinaryService = cloudinaryService;
         this.orderDetailRepository = orderDetailRepository;
+        this.stockMovementRepository = stockMovementRepository;
     }
 
     // =====================
@@ -292,7 +295,15 @@ public class ProductServiceImpl implements ProductService {
         if (orderCount > 0) {
             throw new com.example.backend.exception.BusinessException(
                     "Không thể xóa sản phẩm này vì đã có trong lịch sử đơn hàng. " +
-                            "Bạn nên 'Ẩn' sản phẩm hoặc đưa vào 'Thùng rác' thay vì xóa vĩnh viễn.");
+                            "Bạn nên 'Ẩn' sản phẩm thay vì xóa vĩnh viễn.");
+        }
+
+        // 🔎 CHECK VALIDATION: Sản phẩm đã có trong lịch sử kho thì không được xóa
+        long stockCount = stockMovementRepository.countByProductId(id);
+        if (stockCount > 0) {
+            throw new com.example.backend.exception.BusinessException(
+                    "Không thể xóa sản phẩm này vì đã có lịch sử nhập/xuất kho. " +
+                            "Bạn nên 'Ẩn' sản phẩm thay vì xóa vĩnh viễn.");
         }
 
         // 1️⃣ XÓA ẢNH CLOUDINARY

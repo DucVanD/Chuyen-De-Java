@@ -193,11 +193,7 @@ const Checkout = () => {
             // Get payment URL from HATEOAS link if available, otherwise call API
             const hateoasPaymentUrl = (order._links || order.links)?.payment_url?.href;
 
-            if (hateoasPaymentUrl) {
-              window.location.href = hateoasPaymentUrl;
-              return;
-            }
-
+            // Always call POST to create VNPay payment URL (don't navigate HATEOAS link with GET)
             const paymentRes = await apiOrder.createVnpayPayment(order.id);
             if (paymentRes?.paymentUrl) {
               // Redirect to VNPay payment page

@@ -78,7 +78,44 @@ public class GlobalExceptionHandler {
                                 "message", "Bạn không có quyền truy cập vào chức năng này!"));
         }
 
-        // 4. Xử lý tất cả các lỗi khác
+        // 4. Xử lý lỗi không tìm thấy tài nguyên (Static resources, Swagger)
+        @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+        public ResponseEntity<java.util.Map<String, Object>> handleNoResourceFoundException(
+                        jakarta.servlet.http.HttpServletRequest request,
+                        org.springframework.web.servlet.resource.NoResourceFoundException e) {
+                return ResponseEntity.status(404).body(java.util.Map.of(
+                                "status", 404,
+                                "error", "Không tìm thấy tài nguyên",
+                                "path", request.getRequestURI(),
+                                "message", "Đường dẫn không tồn tại: " + e.getResourcePath()));
+        }
+
+        // 5. Xử lý lỗi phương thức HTTP không hỗ trợ (Ví dụ: Gọi GET vào API chỉ nhận
+        // POST)
+        @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
+        public ResponseEntity<java.util.Map<String, Object>> handleMethodNotSupported(
+                        jakarta.servlet.http.HttpServletRequest request,
+                        org.springframework.web.HttpRequestMethodNotSupportedException e) {
+                return ResponseEntity.status(405).body(java.util.Map.of(
+                                "status", 405,
+                                "path", request.getRequestURI(),
+                                "error", "Phương thức không hỗ trợ",
+                                "message",
+                                String.format("Phương thức %s không được hỗ trợ cho đường dẫn này. Vui lòng dùng %s",
+                                                e.getMethod(), e.getSupportedHttpMethods())));
+        }
+
+        // 6. Xử lý lỗi ràng buộc dữ liệu (DB Constraint Violation)
+        @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+        public ResponseEntity<java.util.Map<String, Object>> handleDataIntegrityViolation(
+                        org.springframework.dao.DataIntegrityViolationException e) {
+                return ResponseEntity.status(400).body(java.util.Map.of(
+                                "status", 400,
+                                "error", "Lỗi ràng buộc dữ liệu",
+                                "message", "Dữ liệu đang được sử dụng ở nơi khác, không thể xóa hoặc sửa đổi."));
+        }
+
+        // 7. Xử lý tất cả các lỗi khác
         @ExceptionHandler(Exception.class)
         public ResponseEntity<java.util.Map<String, Object>> handleGeneralException(Exception e) {
                 e.printStackTrace();

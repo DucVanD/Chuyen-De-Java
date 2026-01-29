@@ -142,10 +142,8 @@ const cartSlice = createSlice({
           state.items.push(product);
         }
         localStorage.setItem("cartItems", JSON.stringify(state.items));
-        toast.success("Đã thêm vào giỏ hàng!");
       } else {
-        // Logged in success (toast handled here or by re-fetch)
-        toast.success("Đã thêm vào giỏ hàng!");
+        // Logged in success (toast handled by hook)
       }
     });
 

@@ -75,6 +75,24 @@ const HistoryBought = () => {
   // Support tickets
   const [orderTickets, setOrderTickets] = useState({}); // { orderCode: [tickets] }
 
+  // VNPay payment handler (use POST API instead of navigating HATEOAS GET link)
+  const handleVnpayPayment = async (order) => {
+    setLoading(true);
+    try {
+      const res = await apiOrder.createVnpayPayment(order.id);
+      if (res?.paymentUrl) {
+        window.location.href = res.paymentUrl;
+        return;
+      }
+      toast.error("Không thể tạo link thanh toán VNPay. Vui lòng thử lại!");
+    } catch (err) {
+      console.error("VNPay payment error:", err);
+      toast.error("Không thể tạo link thanh toán VNPay. Vui lòng thử lại!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // ---------------- FETCH HISTORY ----------------
   const fetchHistory = async (pageNum = 1) => {
     setLoading(true);
@@ -523,9 +541,9 @@ const HistoryBought = () => {
                   )}
 
                   {/* HATEOAS: Thanh toán ngay button (if payment_url link exists) */}
-                  {order._links?.payment_url && (
+                  {order.paymentMethod === "VNPAY" && order.paymentStatus === "UNPAID" && (
                     <button
-                      onClick={() => window.location.href = order._links.payment_url.href}
+                      onClick={() => handleVnpayPayment(order)}
                       className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm transition flex items-center gap-1"
                     >
                       💳 Thanh toán ngay

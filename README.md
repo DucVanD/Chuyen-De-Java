@@ -1,89 +1,91 @@
-# 🛒 Siêu Thị Mini - Hệ Thống Quản Lý Siêu Thị Thông Minh
+# Siêu Thị Mini
 
-Chào mừng bạn đến với dự án **Siêu Thị Mini**. Đây là một ứng dụng thương mại điện tử toàn diện được xây dựng với kiến trúc hiện đại, tích hợp Trí tuệ nhân tạo (AI) và các cổng thanh toán trực tuyến hàng đầu.
+Ứng dụng thương mại điện tử (e‑commerce) đa chức năng: mua sắm, quản trị, thanh toán VNPay và hỗ trợ AI.
 
-## 🏗 Kiến trúc hệ thống
+Thư mục chính:
 
-Dự án được chia thành 2 phần chính:
-- **Backend**: Spring Boot (Java), MySQL/PostgreSQL, Spring Security (JWT).
-- **Frontend**: React (Vite), Tailwind CSS, Redux Toolkit.
+- `backend/` — Spring Boot API và business logic
+- `frontend/` — React (Vite) SPA
 
----
+## Tính năng chính
 
-## 🌟 Tính năng chính
+- Authentication: đăng ký, đăng nhập, logout, refresh token, quên mật khẩu.
+- User: profile, lịch sử đơn hàng, quản lý địa chỉ.
+- Sản phẩm: danh sách, tìm kiếm, lọc, chi tiết.
+- Giỏ hàng: thêm, sửa, xóa, xóa toàn bộ.
+- Đơn hàng: tạo đơn, thay đổi trạng thái, hủy, lịch sử, xuất hoá đơn.
+- Thanh toán: tích hợp VNPay (tạo link, callback xử lý kết quả).
+- Voucher: tạo/ap dụng mã giảm giá.
+- Bài viết / Blog: quản lý post, topic.
+- Quản trị (Admin/Staff): CRUD sản phẩm, danh mục, thương hiệu, nhà cung cấp, đơn hàng, khách hàng, voucher, post, inventory.
+- Inventory: nhập/xuất/điều chỉnh tồn kho.
+- Upload: upload ảnh (Cloudinary), xóa ảnh.
+- Chat AI: chatbot hỗ trợ.
 
-### 1. Dành cho Khách hàng
-- **Mua sắm thông minh**: Tìm kiếm, lọc sản phẩm, giỏ hàng mượt mà.
-- **Chatbot AI (Gemini)**: Hỗ trợ tìm kiếm sản phẩm và giải đáp thắc mắc bằng ngôn ngữ tự nhiên.
-- **Thanh toán đa dạng**: Tích hợp cổng thanh toán **VNPay** và COD (Thanh toán khi nhận hàng).
-- **Quản lý tài khoản**: Đăng ký, đăng nhập, theo dõi lịch sử đơn hàng.
+## Công nghệ
 
-### 2. Dành cho Quản trị (Admin & Staff)
-- **Dashboard Thống kê**: Biểu đồ doanh thu, thống kê đơn hàng và khách hàng.
-- **Quản lý danh mục**: Sản phẩm, Danh mục, Thương hiệu, Nhà cung cấp.
-- **Bộ máy nhân sự**: Quản lý nhân viên với phân quyền chi tiết (**ADMIN** vs **STAFF**).
-- **Voucher & Khuyến mãi**: Tạo và quản lý mã giảm giá theo thời gian và số lượng.
+- Backend: Java, Spring Boot, Spring Security, Spring Data JPA
+- Frontend: React, Vite, Tailwind CSS, Redux Toolkit, Axios
+- DB: MySQL / PostgreSQL
+- Storage: Cloudinary
+- Payment: VNPay
 
----
+## Yêu cầu
 
-## 🛠 Công nghệ sử dụng
-
-| Lớp | Công nghệ |
-|-----|-----------|
-| **Backend** | Spring Boot, Hibernate (JPA), JWT, Java Mail, Cloudinary SDK |
-| **Frontend** | ReactJS, Vite, Tailwind CSS, Axios, React-Toastify |
-| **Database** | MySQL (Development), PostgreSQL (Production/Render) |
-| **AI** | Google Gemini API (Generative AI) |
-| **Payment** | VNPay Sandbox |
-
----
-
-## 🚀 Hướng dẫn cài đặt
-
-### 1. Yêu cầu hệ thống
 - JDK 17+
 - Node.js 18+
+- Maven 3+
 - MySQL hoặc PostgreSQL
 
-### 2. Chạy Backend
+## Cài đặt & chạy (local)
+
+1) Backend
+
 ```bash
 cd backend
-mvn install
+# chỉnh file cấu hình DB và các keys trong src/main/resources/application.properties
+mvn clean install
 mvn spring-boot:run
 ```
-*Lưu ý: Cấu hình DB và API Keys trong `src/main/resources/application.properties`.*
 
-### 3. Chạy Frontend
+2) Frontend
+
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
+## Biến môi trường (ví dụ)
+
+- Backend (`application.properties`):
+  - `spring.datasource.url`, `spring.datasource.username`, `spring.datasource.password`
+  - `vnpay.*` (cấu hình VNPay)
+  - `cloudinary.*` (Cloudinary keys)
+
+- Frontend (`.env`):
+  - `VITE_API_URL=http://localhost:8080/api`
+
+## Lệnh hữu ích
+
+- Chạy backend (maven): `mvn spring-boot:run` (từ `backend/`)
+- Build jar: `mvn clean package`
+- Chạy frontend: `npm run dev` (từ `frontend/`)
+- Build frontend: `npm run build`
+
+## Debug nhanh
+
+- Lỗi 405 (Method Not Allowed) khi truy cập `/api/vnpay/create-payment`: endpoint này là `POST` — tránh mở trực tiếp URL bằng trình duyệt (GET). Sử dụng client gửi POST hoặc frontend gọi `createVnpayPayment`.
+- Lỗi CORS: kiểm tra `CorsConfig` trong backend và header `withCredentials`/cookies từ frontend.
+
+## Tài liệu nội bộ & mở rộng
+
+- Controllers (backend): `backend/src/main/java/com/example/backend/controller`
+- Pages (frontend): `frontend/src/pages`
+- API wrappers: `frontend/src/api`
+
+Tôi có thể giúp tạo file chi tiết `ENDPOINTS.md` (tất cả endpoints) hoặc `FRONTEND_API_MAP.md` (ánh xạ trang→API). Trả lời "Endpoints" hoặc "Mapping" để tôi sinh file tương ứng.
+
 ---
 
-## 📁 Cấu trúc thư mục
-```bash
-.
-├── backend/            # Mã nguồn Spring Boot
-│   ├── src/main/java/  # Logic xử lý chính (Controller, Service, Repository)
-│   ├── src/test/       # Unit Tests (43 test cases)
-│   └── pom.xml         # Quản lý dependencies
-├── frontend/           # Mã nguồn React
-│   ├── src/pages/      # Các trang giao diện
-│   ├── src/api/        # Cấu hình gọi API
-│   └── package.json    # Quản lý dependencies
-└── docs/               # Tài liệu dự án
-```
-
----
-
-## 📄 Tài liệu tham khảo thêm
-- [Hướng dẫn Backend](file:///d:/Learn/Chuyen-De-Java/backend/README.md)
-- [Hướng dẫn Frontend](file:///d:/Learn/Chuyen-De-Java/frontend/README.md)
-- [Báo cáo Unit Test](file:///d:/Learn/Chuyen-De-Java/backend/src/test/README.md)
-
----
-
-> [!NOTE]  
-> Dự án được phát triển dưới dạng đồ án chuyên đề Java. Mọi thắc mắc vui lòng liên hệ đội ngũ phát triển.
+© Dự án học thuật — sử dụng nội bộ.

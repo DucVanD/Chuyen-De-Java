@@ -96,7 +96,9 @@ public class SecurityConfig {
                                 // 🔐 ĐỊNH NGHĨA QUY TẮC PHÂN QUYỀN (ACCESS CONTROL)
                                 .authorizeHttpRequests(auth -> auth
                                                 // Các link công khai ai cũng vào được
-                                                .requestMatchers("/api/auth/**", "/api/chat/**", "/api/vnpay/callback")
+                                                .requestMatchers("/api/auth/**", "/api/chat/**", "/api/vnpay/**",
+                                                                "/v3/api-docs/**", "/v3/api-docs", "/swagger-ui/**",
+                                                                "/swagger-ui.html", "/webjars/**")
                                                 .permitAll()
 
                                                 // Cho phép khách xem sản phẩm, bài viết mà không cần login
@@ -110,7 +112,10 @@ public class SecurityConfig {
                                                 // Chặn API Admin: Chỉ cho phép ADMIN hoặc STAFF (Nhân viên)
                                                 .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "STAFF")
 
-                                                // Các API upload ảnh cho Admin
+                                                // Các API upload ảnh cho User (Avatar)
+                                                .requestMatchers("/api/upload/user").authenticated()
+
+                                                // Các API upload ảnh khác cho Admin: Chỉ cho phép ADMIN hoặc STAFF
                                                 .requestMatchers("/api/upload/**").hasAnyRole("ADMIN", "STAFF")
 
                                                 // Mọi request còn lại đều phải login mới được vào
