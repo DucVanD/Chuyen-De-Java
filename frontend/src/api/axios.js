@@ -16,20 +16,14 @@ const axiosInstance = axios.create({
 // ✅ Interceptor: Request (Dùng Cookie nên không cần gắn Header Authorization)
 axiosInstance.interceptors.request.use(
   (config) => {
+    // Nếu data là FormData, xóa Content-Type để Axios tự gắn kèm boundary
+    if (config.data instanceof FormData) {
+      delete config.headers["Content-Type"];
+    }
     return config;
   },
   (error) => Promise.reject(error)
 );
-
-// === Chế độ upload ===
-axiosInstance.enableUploadFile = () => {
-  axiosInstance.defaults.headers["Content-Type"] = "multipart/form-data";
-};
-
-// === Chế độ JSON ===
-axiosInstance.enableJson = () => {
-  axiosInstance.defaults.headers["Content-Type"] = "application/json";
-};
 
 // === Response Interceptor: Xử lý Refresh Token & Retry ===
 axiosInstance.interceptors.response.use(

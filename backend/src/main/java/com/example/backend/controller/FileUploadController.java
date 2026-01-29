@@ -28,8 +28,9 @@ public class FileUploadController {
             return ResponseEntity.ok(
                     cloudinaryService.uploadImage(file, "categories"));
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest()
-                    .body("Upload category thất bại");
+                    .body("Upload category thất bại: " + e.getMessage());
         }
     }
 
@@ -43,8 +44,9 @@ public class FileUploadController {
             return ResponseEntity.ok(
                     cloudinaryService.uploadImage(file, "products"));
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest()
-                    .body("Upload product thất bại");
+                    .body("Upload product thất bại: " + e.getMessage());
         }
     }
 
@@ -58,8 +60,9 @@ public class FileUploadController {
             return ResponseEntity.ok(
                     cloudinaryService.uploadImage(file, "brands"));
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest()
-                    .body("Upload brand thất bại");
+                    .body("Upload brand thất bại: " + e.getMessage());
         }
     }
 
@@ -91,8 +94,9 @@ public class FileUploadController {
             return ResponseEntity.ok(
                     cloudinaryService.uploadImage(file, "posts"));
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest()
-                    .body("Upload post thất bại");
+                    .body("Upload post thất bại: " + e.getMessage());
         }
     }
 }
